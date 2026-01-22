@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
+
+import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (status == AnimationStatus.completed) {
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const OnboardingPage()),
+            MaterialPageRoute(builder: (context) => const DashboardPage()),
           );
         }
       }
