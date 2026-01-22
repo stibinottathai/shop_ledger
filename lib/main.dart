@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shop_ledger/core/theme/app_theme.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // TODO: Replace with your actual Supabase URL and Anon Key
   await Supabase.initialize(
     url: 'YOUR_SUPABASE_URL',
@@ -21,15 +23,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Shop Ledger',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const Scaffold(
-        body: Center(
-          child: Text('Shop Ledger Initialized'),
-        ),
-      ),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      home: const SplashScreen(),
     );
   }
 }

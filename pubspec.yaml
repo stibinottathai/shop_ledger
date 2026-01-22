@@ -38,6 +38,7 @@ dependencies:
   supabase_flutter: ^2.12.0
   equatable: ^2.0.8
   dartz: ^0.10.1
+  google_fonts: ^7.1.0
 
 dev_dependencies:
   flutter_test:
