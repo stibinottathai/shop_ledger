@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/signup_page.dart';
+import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -84,15 +85,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!value.contains('@')) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
                       decoration: InputDecoration(
                         hintText: 'name@shop.com',
                         hintStyle: TextStyle(
@@ -133,15 +125,6 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 8),
                     TextFormField(
                       obscureText: _obscurePassword,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
                       decoration: InputDecoration(
                         hintText: 'Enter your password',
                         hintStyle: TextStyle(
@@ -195,12 +178,15 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // TODO: Implement Login Logic
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing Login')),
-                          );
-                        }
+                        // TODO: Implement Login Logic
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Processing Login')),
+                        );
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => const DashboardPage(),
+                          ),
+                        );
                       },
                       child: const Text('Login'),
                     ),

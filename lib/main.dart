@@ -9,8 +9,8 @@ void main() async {
 
   // TODO: Replace with your actual Supabase URL and Anon Key
   await Supabase.initialize(
-    url: 'YOUR_SUPABASE_URL',
-    anonKey: 'YOUR_SUPABASE_ANON_KEY',
+    url: 'https://sdcibdhdkbwdzmuzqtwu.supabase.co',
+    anonKey: 'sb_publishable_0BoS3JOgkmBr-SQcV6cxQw_0sBKe4VY',
   );
 
   runApp(const ProviderScope(child: MyApp()));
