@@ -1,0 +1,63 @@
+# Code Organization Rules
+
+- Each feature must live inside `/features/<feature>/`
+- Presentation must not import from data layer
+- Data layer can import from domain, but not from presentation
+- Domain layer must not import from presentation or data
+
+# Riverpod Rules
+
+- Avoid `ref.watch()` inside `build()` of widgets that rebuild frequently
+- Use `Provider.autoDispose` for:
+  - transient screens
+  - pagination controllers
+- All async calls use `FutureProvider` or `AsyncNotifier`
+- State must not be mutated directly
+- Use `AsyncValue` for Supabase requests
+
+# Supabase Rules
+
+- Service layer talks to Supabase (`supabase.from(...)`)
+- Repository converts Supabase result → Entity
+- Domain UseCase orchestrates the flow
+- Errors are represented in domain (not UI)
+
+# UI Rules
+
+- No business logic in Widgets
+- Widgets only react to providers
+- Themes & Colors must not be hardcoded in widgets
+- Responsive layout for web or desktop
+
+# Naming Rules
+
+- Providers end with `Provider`
+- UseCases end with `UseCase`
+- Repositories end with `Repository`
+- Models end with `Model`
+- Entities end with `Entity`
+
+Example:
+- `UserEntity`
+- `UserModel`
+- `UserRepository`
+- `GetUserUseCase`
+- `userProvider`
+
+# File Naming Rules
+- `snake_case.dart`
+
+Example:
+- `user_repository.dart`
+- `create_user_usecase.dart`
+
+# Commit Rules
+
+You can enforce:
+- `feat`: new feature
+- `fix`: bug fix
+- `refactor`: no functionality change
+- `style`: formatting
+- `docs`: documentation
+- `test`: test cases
+- `chore`: build scripts
