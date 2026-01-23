@@ -16,7 +16,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
-  Future<List<Transaction>> getTransactions(String customerId) async {
-    return await remoteDataSource.getTransactions(customerId);
+  Future<List<Transaction>> getTransactions({
+    String? customerId,
+    String? supplierId,
+  }) async {
+    return await remoteDataSource.getTransactions(
+      customerId: customerId,
+      supplierId: supplierId,
+    );
   }
 }

@@ -1,122 +1,224 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
+import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
 
-class AddSupplierPage extends StatelessWidget {
+class AddSupplierPage extends ConsumerStatefulWidget {
   const AddSupplierPage({super.key});
+
+  @override
+  ConsumerState<AddSupplierPage> createState() => _AddSupplierPageState();
+}
+
+class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _gstController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _gstController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveSupplier() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final supplier = Supplier(
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        gstNumber: _gstController.text.trim().isEmpty
+            ? null
+            : _gstController.text.trim(),
+      );
+
+      await ref.read(supplierListProvider.notifier).addSupplier(supplier);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Supplier added successfully')),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error adding supplier: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top App Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
-                border: Border(
-                  bottom: BorderSide(color: AppColors.inputBorder),
-                ),
-              ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[100],
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new,
-                        size: 20,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                  ),
-                  const Expanded(
-                    child: Text(
-                      'Add New Supplier',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 40), // Balance the back button
-                ],
-              ),
-            ),
-
-            // Form Content
-            Expanded(
-              child: SingleChildScrollView(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Add New Supplier',
+          style: TextStyle(
+            color: AppColors.textDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: Colors.grey[100], height: 1.0),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildTextField(
-                      label: 'Supplier Name',
-                      placeholder: 'e.g. Ramesh Bananas',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      label: 'Phone Number',
-                      placeholder: '10-digit mobile number',
-                      keyboardType: TextInputType.phone,
-                      icon: Icons.call,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTextField(
-                      label: 'City/Location',
-                      placeholder: 'e.g. Mandya Market',
-                      icon: Icons.location_on,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildOpeningBalanceField(),
-                  ],
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.local_shipping,
+                          color: AppColors.textDark,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'New Supplier',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          Text(
+                            'Enter details for the supplier',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(height: 8),
+              _buildTextField(
+                label: 'Supplier Name',
+                hint: 'Enter full name',
+                controller: _nameController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a name';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextField(
+                label: 'Phone Number',
+                hint: 'Enter 10-digit mobile number',
+                prefixText: '+91',
+                keyboardType: TextInputType.phone,
+                controller: _phoneController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a phone number';
+                  }
+                  if (value.length != 10) {
+                    return 'Please enter a valid 10-digit number';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextField(
+                label: 'GST Number (Optional)',
+                hint: 'Enter GSTIN if available',
+                textCapitalization: TextCapitalization.characters,
+                controller: _gstController,
+              ),
+              // Spacer
+              const SizedBox(height: 32),
 
-            // Bottom Action Button
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: AppColors.inputBorder)),
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    elevation: 4,
-                    shadowColor: AppColors.primary.withOpacity(0.2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              // Save Button
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _saveSupplier,
+                    icon: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.textDark,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.check_circle,
+                            color: AppColors.textDark,
+                            size: 24,
+                          ),
+                    label: Text(
+                      _isLoading ? 'Saving...' : 'Save Supplier',
+                      style: const TextStyle(
+                        color: AppColors.textDark,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Save Supplier',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -124,152 +226,70 @@ class AddSupplierPage extends StatelessWidget {
 
   Widget _buildTextField({
     required String label,
-    required String placeholder,
-    TextInputType? keyboardType,
-    IconData? icon,
+    required String hint,
+    required TextEditingController controller,
+    String? prefixText,
+    TextInputType keyboardType = TextInputType.text,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    String? Function(String?)? validator,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 6),
-          child: Text(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
             label,
             style: const TextStyle(
+              fontWeight: FontWeight.bold,
               fontSize: 14,
-              fontWeight: FontWeight.w600,
               color: AppColors.textDark,
             ),
           ),
-        ),
-        Stack(
-          children: [
-            TextField(
-              keyboardType: keyboardType,
-              decoration: InputDecoration(
-                hintText: placeholder,
-                hintStyle: const TextStyle(color: AppColors.greyText),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.inputBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.inputBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            textCapitalization: textCapitalization,
+            validator: validator,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: Colors.grey),
+              prefixIcon: prefixText != null
+                  ? Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        prefixText,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.inputBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.inputBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
                 ),
               ),
-            ),
-            if (icon != null)
-              Positioned(
-                right: 16,
-                top: 0,
-                bottom: 0,
-                child: Icon(icon, color: AppColors.greyText, size: 20),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOpeningBalanceField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 6),
-          child: Text(
-            'Opening Balance (₹)',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
+              contentPadding: const EdgeInsets.all(16),
             ),
           ),
-        ),
-        Row(
-          children: [
-            Container(
-              height: 54, // Match TextField height approximately
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F4F2),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
-                border: Border.all(color: AppColors.inputBorder),
-              ),
-              child: const Center(
-                child: Text(
-                  '₹',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: TextField(
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: '0.00',
-                  hintStyle: const TextStyle(color: AppColors.greyText),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    borderSide: BorderSide(color: AppColors.inputBorder),
-                  ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    borderSide: BorderSide(color: AppColors.inputBorder),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    borderSide: BorderSide(color: AppColors.primary),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const Padding(
-          padding: EdgeInsets.only(left: 4, top: 6),
-          child: Text(
-            'Enter negative value if you owe them money.',
-            style: TextStyle(
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-              color: AppColors.greyText,
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

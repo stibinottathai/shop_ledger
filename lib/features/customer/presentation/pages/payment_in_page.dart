@@ -49,7 +49,7 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
       final transaction = Transaction(
         customerId: widget.customer.id!,
         amount: double.parse(amountText),
-        type: TransactionType.payment,
+        type: TransactionType.paymentIn,
         date: _selectedDate,
         details: _detailsController.text.isNotEmpty
             ? _detailsController.text

@@ -358,12 +358,12 @@ class CustomerDetailPage extends ConsumerWidget {
                             transaction.type == TransactionType.sale
                                 ? '₹${transaction.amount.toStringAsFixed(2)}'
                                 : '--',
-                            transaction.type == TransactionType.payment
+                            transaction.type == TransactionType.paymentIn
                                 ? '₹${transaction.amount.toStringAsFixed(2)}'
                                 : '--',
                             index % 2 == 1,
                             isPayment:
-                                transaction.type == TransactionType.payment,
+                                transaction.type == TransactionType.paymentIn,
                           );
                         },
                       );

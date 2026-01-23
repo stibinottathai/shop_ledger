@@ -1,10 +1,11 @@
 import 'package:equatable/equatable.dart';
 
-enum TransactionType { sale, payment }
+enum TransactionType { sale, paymentIn, purchase, paymentOut }
 
 class Transaction extends Equatable {
   final String? id;
-  final String customerId;
+  final String? customerId;
+  final String? supplierId;
   final double amount;
   final TransactionType type;
   final DateTime date;
@@ -13,7 +14,8 @@ class Transaction extends Equatable {
 
   const Transaction({
     this.id,
-    required this.customerId,
+    this.customerId,
+    this.supplierId,
     required this.amount,
     required this.type,
     required this.date,
@@ -25,6 +27,7 @@ class Transaction extends Equatable {
   List<Object?> get props => [
     id,
     customerId,
+    supplierId,
     amount,
     type,
     date,

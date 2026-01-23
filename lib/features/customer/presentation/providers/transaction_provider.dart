@@ -39,7 +39,7 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
 
   Future<List<Transaction>> _fetchTransactions() async {
     final repository = ref.read(transactionRepositoryProvider);
-    return await repository.getTransactions(_customerId);
+    return await repository.getTransactions(customerId: _customerId);
   }
 
   Future<void> addTransaction(Transaction transaction) async {
