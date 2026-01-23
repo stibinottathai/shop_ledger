@@ -49,6 +49,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
             username: _ownerNameController.text.trim(),
+            shopName: _shopNameController.text.trim(),
           );
     }
   }

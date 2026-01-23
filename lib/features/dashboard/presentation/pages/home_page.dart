@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,6 +86,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFixedHeader(BuildContext context) {
+    final user = ref.read(authRepositoryProvider).getCurrentUser();
+    final shopName =
+        user?.userMetadata?['shop_name'] ??
+        user?.userMetadata?['username'] ??
+        'My Shop';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: AppColors.backgroundLight,
@@ -112,9 +120,9 @@ class _HomePageState extends State<HomePage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'M.K. Wholesale',
-                        style: TextStyle(
+                      Text(
+                        shopName,
+                        style: const TextStyle(
                           color: AppColors.textDark,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
