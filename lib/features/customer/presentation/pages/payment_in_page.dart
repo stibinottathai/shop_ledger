@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
@@ -60,7 +61,7 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
           .addTransaction(transaction);
 
       if (mounted) {
-        Navigator.pop(context);
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
@@ -86,7 +87,7 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Payment In',

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:shop_ledger/features/customer/data/repositories/customer_repository_impl.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
@@ -27,6 +28,8 @@ final customerListProvider =
 class CustomerListNotifier extends AsyncNotifier<List<Customer>> {
   @override
   Future<List<Customer>> build() async {
+    // Watch auth state to force refresh on user change
+    ref.watch(authStateProvider);
     return _fetchCustomers();
   }
 

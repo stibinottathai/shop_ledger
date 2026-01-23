@@ -43,14 +43,18 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   @override
   Future<List<CustomerModel>> getCustomers({String? query}) async {
     try {
-      print('Fetching customers with query: $query');
+      final userId = supabaseClient.auth.currentUser?.id;
+      print('Fetching customers for user: $userId (Query: $query)');
+
+      if (userId == null) {
+        print('Error: User not logged in, cannot fetch customers');
+        return [];
+      }
+
       var queryBuilder = supabaseClient.from('customers').select();
 
-      // Filter by current user
-      final userId = supabaseClient.auth.currentUser?.id;
-      if (userId != null) {
-        queryBuilder = queryBuilder.eq('user_id', userId);
-      }
+      // STRICTLY Filter by current user
+      queryBuilder = queryBuilder.eq('user_id', userId);
 
       if (query != null && query.isNotEmpty) {
         queryBuilder = queryBuilder.ilike('name', '%$query%');
@@ -62,7 +66,9 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
             (data) =>
                 (data as List).map((e) => CustomerModel.fromJson(e)).toList(),
           );
-      print('Successfully fetched ${response.length} customers');
+      print(
+        'Successfully fetched ${response.length} customers for user $userId',
+      );
       return response;
     } catch (e, stack) {
       print('Error fetching customers: $e');

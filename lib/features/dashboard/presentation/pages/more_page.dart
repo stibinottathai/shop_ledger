@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
@@ -13,10 +14,7 @@ class MorePage extends ConsumerWidget {
     ref.listen(authStateProvider, (previous, next) {
       next.whenData((authState) {
         if (authState.event == AuthChangeEvent.signedOut) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginPage()),
-            (route) => false,
-          );
+          context.go('/login');
         }
       });
     });
@@ -68,13 +66,14 @@ class MorePage extends ConsumerWidget {
                     content: const Text('Are you sure you want to logout?'),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => context.pop(),
                         child: const Text('Cancel'),
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          context.pop();
                           ref.read(authControllerProvider.notifier).signOut();
+                          // Auth state listener will handle redirection, but explicit is fine too
                         },
                         child: const Text(
                           'Logout',

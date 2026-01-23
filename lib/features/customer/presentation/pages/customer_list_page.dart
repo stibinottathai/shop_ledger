@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
-import 'package:shop_ledger/features/customer/presentation/pages/add_customer_page.dart';
-import 'package:shop_ledger/features/customer/presentation/pages/customer_detail_page.dart';
+
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 
@@ -53,10 +53,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddCustomerPage()),
-          );
+          context.go('/customers/add');
         },
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
@@ -184,12 +181,7 @@ class CustomerListItem extends ConsumerWidget {
 
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CustomerDetailPage(customer: customer),
-          ),
-        );
+        context.go('/customers/${customer.id}', extra: customer);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
@@ -60,7 +61,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Signup Successful! Please Login.')),
           );
-          Navigator.pop(context);
+          context.pop();
         },
         error: (e, stack) {
           String errorMessage = e.toString();
@@ -284,7 +285,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      context.pop();
                     },
                     child: const Text(
                       'Login',
