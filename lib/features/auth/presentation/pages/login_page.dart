@@ -1,22 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/signup_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   bool _obscurePassword = true;
   bool _keepSignedIn = false;
-  final _formKey = GlobalKey<FormState>(); // Added form key
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      ref
+          .read(authControllerProvider.notifier)
+          .signIn(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
+      next.when(
+        data: (_) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const DashboardPage()),
+          );
+        },
+        error: (e, stack) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
+        },
+        loading: () {},
+      );
+    });
+
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
@@ -85,6 +126,19 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
+                      controller: _emailController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        final emailRegex = RegExp(
+                          r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                        );
+                        if (!emailRegex.hasMatch(value)) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
                       decoration: InputDecoration(
                         hintText: 'name@shop.com',
                         hintStyle: TextStyle(
@@ -124,6 +178,16 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
+                      controller: _passwordController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         hintText: 'Enter your password',
@@ -177,18 +241,10 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 32),
                     ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implement Login Logic
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Processing Login')),
-                        );
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => const DashboardPage(),
-                          ),
-                        );
-                      },
-                      child: const Text('Login'),
+                      onPressed: isLoading ? null : _submit,
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Login'),
                     ),
 
                     const SizedBox(height: 32),

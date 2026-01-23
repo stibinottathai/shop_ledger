@@ -1,15 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
+import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
+import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 
-class PaymentInPage extends StatefulWidget {
-  final String? customerName;
-  const PaymentInPage({super.key, this.customerName});
+class PaymentInPage extends ConsumerStatefulWidget {
+  final Customer customer;
+  const PaymentInPage({super.key, required this.customer});
 
   @override
-  State<PaymentInPage> createState() => _PaymentInPageState();
+  ConsumerState<PaymentInPage> createState() => _PaymentInPageState();
 }
 
-class _PaymentInPageState extends State<PaymentInPage> {
+class _PaymentInPageState extends ConsumerState<PaymentInPage> {
+  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _detailsController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController(
+    text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+  );
+  DateTime _selectedDate = DateTime.now();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _detailsController.dispose();
+    _dateController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _savePayment() async {
+    final amountText = _amountController.text;
+    if (amountText.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter an amount')));
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final transaction = Transaction(
+        customerId: widget.customer.id!,
+        amount: double.parse(amountText),
+        type: TransactionType.payment,
+        date: _selectedDate,
+        details: _detailsController.text.isNotEmpty
+            ? _detailsController.text
+            : 'Payment Received',
+      );
+
+      await ref
+          .read(transactionListProvider(widget.customer.id!).notifier)
+          .addTransaction(transaction);
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving payment: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,7 +123,7 @@ class _PaymentInPageState extends State<PaymentInPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.customerName ?? 'Unknown Customer',
+                    widget.customer.name,
                     style: const TextStyle(
                       color: AppColors.textDark,
                       fontSize: 18,
@@ -74,11 +141,12 @@ class _PaymentInPageState extends State<PaymentInPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: _buildTextField(
                 label: 'Amount Given',
-                hint: '₹ 0.00',
-                keyboardType: TextInputType.number,
+                hint: '0.00',
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 isBold: true,
                 fontSize: 24,
                 prefixText: '₹ ',
+                controller: _amountController,
               ),
             ),
 
@@ -100,6 +168,7 @@ class _PaymentInPageState extends State<PaymentInPage> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    controller: _dateController,
                     decoration: InputDecoration(
                       hintText: 'Select Date',
                       suffixIcon: const Icon(
@@ -125,10 +194,22 @@ class _PaymentInPageState extends State<PaymentInPage> {
                         vertical: 14,
                       ),
                     ),
-                    controller: TextEditingController(text: '2023-11-20'),
                     readOnly: true,
                     onTap: () async {
-                      // Date picker logic here
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _selectedDate = picked;
+                          _dateController.text = DateFormat(
+                            'yyyy-MM-dd',
+                          ).format(picked);
+                        });
+                      }
                     },
                   ),
                 ],
@@ -144,6 +225,7 @@ class _PaymentInPageState extends State<PaymentInPage> {
                 label: 'Details (Optional)',
                 hint: 'Enter payment details (e.g. UPI Ref, Check No...)',
                 maxLines: 4,
+                controller: _detailsController,
               ),
             ),
 
@@ -160,11 +242,20 @@ class _PaymentInPageState extends State<PaymentInPage> {
         child: SizedBox(
           height: 56,
           child: ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.check_circle, color: Colors.white, size: 24),
-            label: const Text(
-              'Receive Payment',
-              style: TextStyle(
+            onPressed: _isLoading ? null : _savePayment,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.check_circle, color: Colors.white, size: 24),
+            label: Text(
+              _isLoading ? 'Processing...' : 'Receive Payment',
+              style: const TextStyle(
                 color: Colors.white, // White text on primary button
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -186,7 +277,7 @@ class _PaymentInPageState extends State<PaymentInPage> {
   Widget _buildTextField({
     required String label,
     required String hint,
-    String? value,
+    TextEditingController? controller,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
     bool isBold = false,
@@ -208,7 +299,7 @@ class _PaymentInPageState extends State<PaymentInPage> {
         TextField(
           keyboardType: keyboardType,
           maxLines: maxLines,
-          controller: value != null ? TextEditingController(text: value) : null,
+          controller: controller,
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,

@@ -4,6 +4,7 @@ import 'package:shop_ledger/features/customer/presentation/pages/customer_list_p
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_list_page.dart';
 
 import 'package:shop_ledger/features/reports/presentation/pages/reports_page.dart';
+import 'package:shop_ledger/features/dashboard/presentation/pages/more_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -26,7 +27,7 @@ class _DashboardPageState extends State<DashboardPage> {
           const CustomerListPage(),
           const SupplierListPage(),
           const ReportsPage(),
-          const Scaffold(body: Center(child: Text('More'))), // Placeholder
+          const MorePage(),
         ],
       ),
       // Bottom Navigation

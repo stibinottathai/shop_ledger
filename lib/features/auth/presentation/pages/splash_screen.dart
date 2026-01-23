@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -25,12 +28,33 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
 
-    _controller.addStatusListener((status) {
+    _controller.addStatusListener((status) async {
       if (status == AnimationStatus.completed) {
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
-          );
+          final session = Supabase.instance.client.auth.currentSession;
+          if (session != null) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const DashboardPage()),
+            );
+          } else {
+            // Check if onboarding seen
+            final prefs = await SharedPreferences.getInstance();
+            final seenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
+            if (mounted) {
+              if (seenOnboarding) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const OnboardingPage(),
+                  ),
+                );
+              }
+            }
+          }
         }
       }
     });
