@@ -8,15 +8,15 @@ import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 
-class AddPurchasePage extends ConsumerStatefulWidget {
+class PaymentOutPage extends ConsumerStatefulWidget {
   final Supplier supplier;
-  const AddPurchasePage({super.key, required this.supplier});
+  const PaymentOutPage({super.key, required this.supplier});
 
   @override
-  ConsumerState<AddPurchasePage> createState() => _AddPurchasePageState();
+  ConsumerState<PaymentOutPage> createState() => _PaymentOutPageState();
 }
 
-class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
+class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _dateController = TextEditingController(
@@ -33,7 +33,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
     super.dispose();
   }
 
-  Future<void> _savePurchase() async {
+  Future<void> _savePayment() async {
     final amountText = _amountController.text;
     if (amountText.isEmpty) {
       ScaffoldMessenger.of(
@@ -50,17 +50,12 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
       final transaction = Transaction(
         supplierId: widget.supplier.id,
         amount: double.parse(amountText),
-        type: TransactionType.purchase,
+        type: TransactionType.paymentOut,
         date: _selectedDate,
         details: _detailsController.text.isNotEmpty
             ? _detailsController.text
-            : 'Purchase',
+            : 'Payment Out',
       );
-
-      // Using transactionRepositoryProvider directly via transactionListProvider logic?
-      // No, we should use our new supplierTransactionListProvider if it supports 'add'.
-      // But we didn't add 'addTransaction' to SupplierTransactionListNotifier.
-      // We should use transactionRepositoryProvider directly.
 
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
@@ -75,7 +70,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error saving purchase: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error saving payment: $e')));
       }
     } finally {
       if (mounted) {
@@ -91,7 +86,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Add Purchase'),
+        title: const Text('Payment Out'),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -109,14 +104,14 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: Colors.red.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Purchase From',
+                    'Paying To',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.greyText,
@@ -139,7 +134,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
 
             // Amount
             _buildTextField(
-              label: 'Amount',
+              label: 'Amount Paid',
               hint: '0.00',
               controller: _amountController,
               isBold: true,
@@ -203,7 +198,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             // Details
             _buildTextField(
               label: 'Details',
-              hint: 'e.g. 50 Crates Robusta',
+              hint: 'e.g. Bank Transfer Ref: ...',
               controller: _detailsController,
               maxLines: 3,
             ),
@@ -214,9 +209,9 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _savePurchase,
+                onPressed: _isLoading ? null : _savePayment,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: Colors.red,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -224,11 +219,11 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
-                        'Save Purchase',
+                        'Save Payment',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
+                          color: Colors.white,
                         ),
                       ),
               ),

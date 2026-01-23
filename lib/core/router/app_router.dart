@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/signup_page.dart';
@@ -21,6 +19,8 @@ import 'package:shop_ledger/features/suppliers/presentation/pages/add_purchase_p
 import 'package:shop_ledger/features/suppliers/presentation/pages/add_supplier_page.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_ledger_page.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_list_page.dart';
+import 'package:shop_ledger/features/suppliers/presentation/pages/payment_out_page.dart';
+import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // We do NOT watch authStateProvider here to prevent GoRouter from rebuilding
@@ -106,11 +106,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: ':id',
-                    builder: (context, state) => const SupplierLedgerPage(),
+                    builder: (context, state) {
+                      final supplier = state.extra as Supplier;
+                      return SupplierLedgerPage(supplier: supplier);
+                    },
                     routes: [
                       GoRoute(
                         path: 'purchase',
-                        builder: (context, state) => const AddPurchasePage(),
+                        builder: (context, state) {
+                          final supplier = state.extra as Supplier;
+                          return AddPurchasePage(supplier: supplier);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'payment',
+                        builder: (context, state) {
+                          final supplier = state.extra as Supplier;
+                          return PaymentOutPage(supplier: supplier);
+                        },
                       ),
                     ],
                   ),
