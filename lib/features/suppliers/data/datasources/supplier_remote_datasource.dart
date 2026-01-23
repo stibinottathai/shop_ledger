@@ -7,6 +7,7 @@ abstract class SupplierRemoteDataSource {
   Future<void> addSupplier(SupplierModel supplier);
   Future<void> deleteSupplier(String id);
   Future<List<SupplierModel>> getSuppliers({String? query});
+  Future<SupplierModel?> getSupplierById(String id);
 }
 
 class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
@@ -80,5 +81,17 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
       }
       rethrow;
     }
+  }
+
+  @override
+  Future<SupplierModel?> getSupplierById(String id) async {
+    final response = await supabaseClient
+        .from('suppliers')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return SupplierModel.fromJson(response);
   }
 }

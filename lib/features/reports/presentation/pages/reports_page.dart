@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 
-class ReportsPage extends StatefulWidget {
+class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
 
   @override
-  State<ReportsPage> createState() => _ReportsPageState();
+  ConsumerState<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _ReportsPageState extends State<ReportsPage> {
+class _ReportsPageState extends ConsumerState<ReportsPage> {
   int _selectedTabIndex = 2; // Default to 'Summary' (2)
   int _selectedDateFilter = 0; // 0: Today, 1: This Week, 2: Range
   DateTimeRange? _selectedDateRange;
 
   @override
   Widget build(BuildContext context) {
+    // Watch the reports provider
+    final reportsAsync = ref.watch(reportsProvider);
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
@@ -25,55 +31,59 @@ class _ReportsPageState extends State<ReportsPage> {
 
             // Main Content Scrolls
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTabs(),
-                    const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              child: reportsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Center(child: Text('Error: $err')),
+                data: (state) => SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTabs(),
+                      const Divider(height: 1, color: Color(0xFFE5E7EB)),
 
-                    // Chips
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _buildChip(
-                              icon: Icons.calendar_today,
-                              label: 'Today',
-                              isSelected: _selectedDateFilter == 0,
-                              onTap: () =>
-                                  setState(() => _selectedDateFilter = 0),
-                            ),
-                            const SizedBox(width: 12),
-                            _buildChip(
-                              icon: Icons.calendar_month,
-                              label: 'This Week',
-                              isSelected: _selectedDateFilter == 1,
-                              onTap: () =>
-                                  setState(() => _selectedDateFilter = 1),
-                            ),
-                            const SizedBox(width: 12),
-                            _buildChip(
-                              icon: Icons.date_range,
-                              label:
-                                  _selectedDateFilter == 2 &&
-                                      _selectedDateRange != null
-                                  ? '${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}'
-                                  : 'Range',
-                              isSelected: _selectedDateFilter == 2,
-                              onTap: _selectDateRange,
-                            ),
-                          ],
+                      // Chips
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildChip(
+                                icon: Icons.calendar_today,
+                                label: 'Today',
+                                isSelected: _selectedDateFilter == 0,
+                                onTap: () =>
+                                    setState(() => _selectedDateFilter = 0),
+                              ),
+                              const SizedBox(width: 12),
+                              _buildChip(
+                                icon: Icons.calendar_month,
+                                label: 'This Week',
+                                isSelected: _selectedDateFilter == 1,
+                                onTap: () =>
+                                    setState(() => _selectedDateFilter = 1),
+                              ),
+                              const SizedBox(width: 12),
+                              _buildChip(
+                                icon: Icons.date_range,
+                                label:
+                                    _selectedDateFilter == 2 &&
+                                        _selectedDateRange != null
+                                    ? '${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}'
+                                    : 'Range',
+                                isSelected: _selectedDateFilter == 2,
+                                onTap: _selectDateRange,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
-                    // Dynamic Content based on Tab
-                    _buildTabContent(),
-                  ],
+                      // Dynamic Content based on Tab
+                      _buildTabContent(state),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -118,31 +128,43 @@ class _ReportsPageState extends State<ReportsPage> {
         _selectedDateRange = picked;
         _selectedDateFilter = 2;
       });
-    } else if (_selectedDateFilter != 2 && _selectedDateRange == null) {
-      // If no range picked and not already on range tab, don't switch.
-      // But if user tapped specific range button, maybe we should switch to 2 anyway?
-      // For now let's just do nothing if cancelled.
     } else {
-      // If they tap custom range but don't pick one, maybe we should keep it selected if it was already selected?
-      setState(() {
-        _selectedDateFilter = 2;
-      });
+      // If needed, handle cancellation or existing selection logic
+      if (_selectedDateFilter != 2 && _selectedDateRange != null) {
+        setState(() {
+          _selectedDateFilter = 2;
+        });
+      }
     }
   }
 
-  Widget _buildTabContent() {
+  Widget _buildTabContent(ReportsState state) {
     switch (_selectedTabIndex) {
       case 0:
-        return _buildSalesView();
+        return _buildSalesView(state);
       case 1:
-        return _buildPurchasesView();
+        return _buildPurchasesView(state);
       case 2:
       default:
-        return _buildSummaryView();
+        return _buildSummaryView(state);
     }
   }
 
-  Widget _buildSalesView() {
+  Widget _buildSalesView(ReportsState state) {
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 2,
+    );
+
+    // Normalize monthly sales for bar chart (0.0 to 1.0)
+    final maxSale = state.monthlySales.reduce(
+      (curr, next) => curr > next ? curr : next,
+    );
+    final normalizedBars = state.monthlySales
+        .map((e) => maxSale > 0 ? e / maxSale : 0.0)
+        .toList();
+
     return Column(
       children: [
         // Sales Chart Section
@@ -150,10 +172,13 @@ class _ReportsPageState extends State<ReportsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
             title: 'Total Sales',
-            amount: '₹4,82,450',
-            percentage: '+15.2%',
+            amount: formatter.format(state.totalSales),
+            percentage: '+${state.salesGrowth.toStringAsFixed(1)}%',
+            percentageColor: state.salesGrowth >= 0
+                ? AppColors.primary
+                : Colors.red,
             primaryColor: AppColors.primary,
-            bars: [0.55, 0.40, 0.70, 0.50, 0.90, 0.80], // Dummy sales data
+            bars: normalizedBars,
           ),
         ),
         const SizedBox(height: 24),
@@ -174,32 +199,45 @@ class _ReportsPageState extends State<ReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
-            children: [
-              _buildSummaryCard(
-                title: 'Top Customer',
-                value: 'Total: ₹52,400',
-                subtitle: 'Rajesh Kumar',
-                icon: Icons.person,
-                iconColor: AppColors.primary,
-                iconBgColor: AppColors.primary.withOpacity(0.1),
-              ),
-              const SizedBox(height: 16),
-              _buildSummaryCard(
-                title: 'Best Selling Item',
-                value: '450 Crates',
-                subtitle: 'Yelakki Banana',
-                icon: Icons.local_offer,
-                iconColor: Colors.blue,
-                iconBgColor: Colors.blue.withOpacity(0.1),
-              ),
-            ],
+            children: state.topCustomers.map((performer) {
+              return Column(
+                children: [
+                  _buildSummaryCard(
+                    title: 'Top Customer',
+                    value: formatter.format(performer.amount),
+                    subtitle: performer
+                        .name, // Display Name as subtitle for now to match old design structure? Or swap?
+                    // Old design: Title: Top Customer, Value: Total, Subtitle: Name.
+                    // Let's swap: Title: Customer Name. Value: Amount. Subtitle: 'Top Customer'
+                    // Actually let's stick to design: Title "Top Customer", Value "Total: ...", Subtitle "Name"
+                    icon: Icons.person,
+                    iconColor: AppColors.primary,
+                    iconBgColor: AppColors.primary.withOpacity(0.1),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }).toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPurchasesView() {
+  Widget _buildPurchasesView(ReportsState state) {
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 2,
+    );
+
+    final maxPurchase = state.monthlyPurchases.reduce(
+      (curr, next) => curr > next ? curr : next,
+    );
+    final normalizedBars = state.monthlyPurchases
+        .map((e) => maxPurchase > 0 ? e / maxPurchase : 0.0)
+        .toList();
+
     return Column(
       children: [
         // Purchase Chart Section
@@ -207,10 +245,14 @@ class _ReportsPageState extends State<ReportsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
             title: 'Total Purchases',
-            amount: '₹3,12,000',
-            percentage: '+8.4%',
+            amount: formatter.format(state.totalPurchases),
+            percentage: '+${state.purchaseGrowth.toStringAsFixed(1)}%',
+            percentageColor: state.purchaseGrowth >= 0
+                ? AppColors.accentOrange
+                : Colors
+                      .red, // Orange for purchase growth? Maybe red if cost increases? sticking to design
             primaryColor: AppColors.accentOrange,
-            bars: [0.35, 0.25, 0.50, 0.40, 0.60, 0.75], // Dummy purchase data
+            bars: normalizedBars,
           ),
         ),
         const SizedBox(height: 24),
@@ -231,45 +273,53 @@ class _ReportsPageState extends State<ReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
-            children: [
-              _buildSummaryCard(
-                title: 'Top Supplier',
-                value: 'Total: ₹1,12,000',
-                subtitle: 'Patel Banana Farms',
-                icon: Icons.local_shipping,
-                iconColor: AppColors.accentOrange,
-                iconBgColor: AppColors.accentOrange.withOpacity(0.1),
-                subtitleColor: AppColors.accentOrange,
-              ),
-              const SizedBox(height: 16),
-              _buildSummaryCard(
-                title: 'Pending Payments',
-                value: '₹45,000',
-                subtitle: 'Due within 7 days',
-                icon: Icons.schedule,
-                iconColor: Colors.red,
-                iconBgColor: Colors.red.withOpacity(0.1),
-                subtitleColor: Colors.red,
-              ),
-            ],
+            children: state.topSuppliers.map((performer) {
+              return Column(
+                children: [
+                  _buildSummaryCard(
+                    title: 'Top Supplier',
+                    value: formatter.format(performer.amount),
+                    subtitle: performer.name,
+                    icon: Icons.local_shipping,
+                    iconColor: AppColors.accentOrange,
+                    iconBgColor: AppColors.accentOrange.withOpacity(0.1),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }).toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSummaryView() {
+  Widget _buildSummaryView(ReportsState state) {
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 2,
+    );
+
     return Column(
       children: [
-        // Main Chart Section (Summary)
+        // Main Chart Section (Summary - Sales mainly?)
+        // Reusing Sales chart for summary but maybe combining?
+        // Let's us total Revenue (sales) for Monthly Performance chart
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
             title: 'Monthly Performance',
-            amount: '₹4,52,000',
-            percentage: '+12.5%',
+            amount: formatter.format(state.totalSales),
+            percentage: '+${state.salesGrowth.toStringAsFixed(1)}%',
+            percentageColor: AppColors.primary,
             primaryColor: AppColors.primary,
-            bars: [0.45, 0.30, 0.60, 0.40, 0.85, 1.0],
+            bars: state.monthlySales.map((e) {
+              final max = state.monthlySales.reduce(
+                (curr, next) => curr > next ? curr : next,
+              );
+              return max > 0 ? e / max : 0.0;
+            }).toList(),
           ),
         ),
 
@@ -296,33 +346,26 @@ class _ReportsPageState extends State<ReportsPage> {
           child: Column(
             children: [
               _buildSummaryCard(
-                title: 'Monthly Total',
-                value: '₹4,52,000',
-                subtitle: 'Up from last month',
+                title: 'Monthly Sales',
+                value: formatter.format(state.monthlySales.last),
+                subtitle: 'Current Month',
                 icon: Icons.trending_up,
                 iconColor: AppColors.primary,
                 iconBgColor: AppColors.primary.withOpacity(0.1),
               ),
               const SizedBox(height: 16),
               _buildSummaryCard(
-                title: 'Gross Difference',
-                value: '₹85,000',
-                subtitle: 'Net profit margin',
+                title: 'Net Profit (Est)',
+                value: formatter.format(
+                  state.totalSales - state.totalPurchases,
+                ),
+                subtitle: 'Sales - Purchases',
                 icon: Icons.account_balance_wallet,
                 iconColor: Colors.blue,
                 iconBgColor: Colors.blue.withOpacity(0.1),
                 subtitleColor: AppColors.greyText,
               ),
-              const SizedBox(height: 16),
-              _buildSummaryCard(
-                title: 'Best Day',
-                value: '₹42,300',
-                subtitle: 'Tuesday, Dec 12',
-                icon: Icons.workspace_premium,
-                iconColor: Colors.amber,
-                iconBgColor: Colors.amber.withOpacity(0.1),
-                subtitleColor: AppColors.greyText,
-              ),
+              // Removed "Best Day" as we verify simplicity required for now
             ],
           ),
         ),
@@ -336,7 +379,15 @@ class _ReportsPageState extends State<ReportsPage> {
     required String percentage,
     required Color primaryColor,
     required List<double> bars,
+    Color? percentageColor,
   }) {
+    // Generate month labels for last 6 months
+    final now = DateTime.now();
+    final months = List.generate(6, (i) {
+      final d = DateTime(now.year, now.month - (5 - i), 1);
+      return DateFormat('MMM').format(d).toUpperCase();
+    });
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -372,7 +423,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     amount,
                     style: const TextStyle(
                       color: AppColors.textDark,
-                      fontSize: 30,
+                      fontSize: 24, // Reduced slightly to fit huge numbers
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -381,13 +432,13 @@ class _ReportsPageState extends State<ReportsPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: (percentageColor ?? primaryColor).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   percentage,
                   style: TextStyle(
-                    color: primaryColor,
+                    color: percentageColor ?? primaryColor,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -401,14 +452,17 @@ class _ReportsPageState extends State<ReportsPage> {
             height: 180,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildBar(primaryColor, 'JUL', bars[0], false),
-                _buildBar(primaryColor, 'AUG', bars[1], false),
-                _buildBar(primaryColor, 'SEP', bars[2], false),
-                _buildBar(primaryColor, 'OCT', bars[3], false),
-                _buildBar(primaryColor, 'NOV', bars[4], true, isCurrent: true),
-                _buildBar(primaryColor, 'DEC', bars[5], true),
-              ].map((e) => Expanded(child: e)).toList(),
+              children: List.generate(6, (index) {
+                return Expanded(
+                  child: _buildBar(
+                    primaryColor,
+                    months[index],
+                    bars.length > index ? bars[index] : 0.0,
+                    bars.length > index ? bars[index] > 0 : false,
+                    isCurrent: index == 5,
+                  ),
+                );
+              }),
             ),
           ),
         ],
@@ -437,7 +491,7 @@ class _ReportsPageState extends State<ReportsPage> {
               ),
             ),
           ),
-          const SizedBox(width: 40),
+          // const SizedBox(width: 40), // No back button so no balancing needed if title centered by Expanded
         ],
       ),
     );
@@ -556,7 +610,9 @@ class _ReportsPageState extends State<ReportsPage> {
           child: Align(
             alignment: Alignment.bottomCenter,
             child: FractionallySizedBox(
-              heightFactor: fillPercentage,
+              heightFactor: fillPercentage > 0
+                  ? fillPercentage
+                  : 0.05, // Minimum height for visibility
               child: Container(
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 4),

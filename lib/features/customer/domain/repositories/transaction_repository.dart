@@ -6,4 +6,5 @@ abstract class TransactionRepository {
     String? customerId,
     String? supplierId,
   });
+  Future<List<Transaction>> getAllTransactions();
 }
