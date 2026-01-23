@@ -10,6 +10,7 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String password,
     required String username,
+    required String shopName,
   });
 
   Future<void> signOut();
@@ -40,11 +41,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String email,
     required String password,
     required String username,
+    required String shopName,
   }) async {
     return await supabaseClient.auth.signUp(
       email: email,
       password: password,
-      data: {'username': username},
+      data: {'username': username, 'shop_name': shopName},
     );
   }
 

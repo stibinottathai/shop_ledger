@@ -85,10 +85,16 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String email,
     required String password,
     required String username,
+    required String shopName,
   }) async {
     state = const AsyncValue.loading();
     final result = await _signUpUseCase(
-      SignUpParams(email: email, password: password, username: username),
+      SignUpParams(
+        email: email,
+        password: password,
+        username: username,
+        shopName: shopName,
+      ),
     );
     result.fold(
       (failure) => state = AsyncValue.error(failure, StackTrace.current),
