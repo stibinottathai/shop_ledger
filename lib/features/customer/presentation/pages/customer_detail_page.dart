@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-import 'package:shop_ledger/features/sales/presentation/pages/add_sale_page.dart';
+import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
+import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/payment_in_page.dart';
+import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
+import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
+import 'package:shop_ledger/features/sales/presentation/pages/add_sale_page.dart';
 
-class CustomerDetailPage extends StatelessWidget {
-  const CustomerDetailPage({super.key});
+class CustomerDetailPage extends ConsumerWidget {
+  final Customer customer;
+
+  const CustomerDetailPage({super.key, required this.customer});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(customerStatsProvider(customer.id!));
+    final transactionsAsync = ref.watch(transactionListProvider(customer.id!));
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
@@ -20,16 +31,16 @@ class CustomerDetailPage extends StatelessWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Arun Kumar',
-              style: TextStyle(
+            Text(
+              customer.name,
+              style: const TextStyle(
                 color: AppColors.textDark,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
             ),
             Text(
-              'Customer Since Aug 2023',
+              customer.phone,
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: 12,
@@ -47,7 +58,12 @@ class CustomerDetailPage extends StatelessWidget {
               color: AppColors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.call, color: AppColors.textDark, size: 20),
+            child: IconButton(
+              icon: const Icon(Icons.call, color: AppColors.textDark, size: 20),
+              onPressed: () {
+                // Implement call functionality
+              },
+            ),
           ),
           Container(
             width: 40,
@@ -57,10 +73,25 @@ class CustomerDetailPage extends StatelessWidget {
               color: Colors.grey[100],
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.more_vert,
-              color: AppColors.textDark,
-              size: 20,
+            child: PopupMenuButton<String>(
+              icon: const Icon(
+                Icons.more_vert,
+                color: AppColors.textDark,
+                size: 20,
+              ),
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _showDeleteConfirmation(context, ref);
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return [
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text('Delete Customer'),
+                  ),
+                ];
+              },
             ),
           ),
         ],
@@ -97,10 +128,12 @@ class CustomerDetailPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      '₹45,200.00',
+                    Text(
+                      '₹${stats.outstandingBalance.toStringAsFixed(2)}',
                       style: TextStyle(
-                        color: AppColors.textDark,
+                        color: stats.outstandingBalance > 0
+                            ? AppColors.accentRed
+                            : AppColors.textDark,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
@@ -122,9 +155,9 @@ class CustomerDetailPage extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const Text(
-                              '₹1,20,000',
-                              style: TextStyle(
+                            Text(
+                              '₹${stats.totalSales.toStringAsFixed(2)}',
+                              style: const TextStyle(
                                 color: AppColors.textDark,
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -148,9 +181,9 @@ class CustomerDetailPage extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const Text(
-                              '₹74,800',
-                              style: TextStyle(
+                            Text(
+                              '₹${stats.totalPaid.toStringAsFixed(2)}',
+                              style: const TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -176,9 +209,8 @@ class CustomerDetailPage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AddSalePage(
-                              customerName: 'Arun Kumar', // Or use variable
-                            ),
+                            builder: (context) =>
+                                AddSalePage(customer: customer),
                           ),
                         );
                       },
@@ -203,7 +235,7 @@ class CustomerDetailPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                const PaymentInPage(customerName: 'Arun Kumar'),
+                                PaymentInPage(customer: customer),
                           ),
                         );
                       },
@@ -226,70 +258,8 @@ class CustomerDetailPage extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.description,
-                    color: AppColors.textDark,
-                  ),
-                  label: const Text('Generate Bill Statement'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textDark,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: BorderSide(color: Colors.grey[300]!, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ),
-              ),
-            ),
 
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search transactions...',
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: AppColors.greyText,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.tune, color: AppColors.greyText),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 24),
 
             // Ledger Table Header
             Padding(
@@ -304,14 +274,6 @@ class CustomerDetailPage extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.0,
-                    ),
-                  ),
-                  const Text(
-                    'View All',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -375,48 +337,95 @@ class CustomerDetailPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildTransactionRow(
-                    '14 Oct, 2023',
-                    '45 Crates Robusta',
-                    '₹12,400',
-                    '--',
-                    false,
-                  ),
-                  _buildTransactionRow(
-                    '12 Oct, 2023',
-                    'Cash Payment',
-                    '--',
-                    '₹8,000',
-                    true,
-                    isPayment: true,
-                  ),
-                  _buildTransactionRow(
-                    '10 Oct, 2023',
-                    '20 Crates Yelakki',
-                    '₹6,800',
-                    '--',
-                    false,
-                  ),
-                  _buildTransactionRow(
-                    '08 Oct, 2023',
-                    'UPI - Google Pay',
-                    '--',
-                    '₹15,000',
-                    true,
-                    isPayment: true,
-                  ),
-                  _buildTransactionRow(
-                    '05 Oct, 2023',
-                    '60 Crates Cavendish',
-                    '₹18,200',
-                    '--',
-                    false,
+                  transactionsAsync.when(
+                    data: (transactions) {
+                      if (transactions.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'No transactions yet',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: transactions.length,
+                        itemBuilder: (context, index) {
+                          final transaction = transactions[index];
+                          return _buildTransactionRow(
+                            DateFormat('dd MMM, yyyy').format(transaction.date),
+                            transaction.details ??
+                                (transaction.type == TransactionType.sale
+                                    ? 'Sale'
+                                    : 'Payment'),
+                            transaction.type == TransactionType.sale
+                                ? '₹${transaction.amount.toStringAsFixed(2)}'
+                                : '--',
+                            transaction.type == TransactionType.payment
+                                ? '₹${transaction.amount.toStringAsFixed(2)}'
+                                : '--',
+                            index % 2 == 1,
+                            isPayment:
+                                transaction.type == TransactionType.payment,
+                          );
+                        },
+                      );
+                    },
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (e, s) => Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text('Error: $e'),
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Customer'),
+        content: const Text(
+          'Are you sure you want to delete this customer? This action cannot be undone and will delete all associated transactions.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close dialog
+              try {
+                // Assuming CustomerProvider has delete method
+                await ref
+                    .read(customerListProvider.notifier)
+                    .deleteCustomer(customer.id!);
+                if (context.mounted) {
+                  Navigator.pop(context); // Go back to list
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting customer: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }

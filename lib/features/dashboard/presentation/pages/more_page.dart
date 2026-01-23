@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,7 +14,7 @@ class MorePage extends ConsumerWidget {
       next.whenData((authState) {
         if (authState.event == AuthChangeEvent.signedOut) {
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const OnboardingPage()),
+            MaterialPageRoute(builder: (context) => const LoginPage()),
             (route) => false,
           );
         }

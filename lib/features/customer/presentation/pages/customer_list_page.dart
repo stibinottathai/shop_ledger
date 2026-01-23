@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/add_customer_page.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/customer_detail_page.dart';
+import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
+import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 
-class CustomerListPage extends StatefulWidget {
+class CustomerListPage extends ConsumerStatefulWidget {
   const CustomerListPage({super.key});
 
   @override
-  State<CustomerListPage> createState() => _CustomerListPageState();
+  ConsumerState<CustomerListPage> createState() => _CustomerListPageState();
 }
 
-class _CustomerListPageState extends State<CustomerListPage> {
+class _CustomerListPageState extends ConsumerState<CustomerListPage> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final customerListAsync = ref.watch(customerListProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -64,6 +78,12 @@ class _CustomerListPageState extends State<CustomerListPage> {
                 ],
               ),
               child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  ref
+                      .read(customerListProvider.notifier)
+                      .searchCustomers(value);
+                },
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   hintText: 'Search customers...',
@@ -92,86 +112,83 @@ class _CustomerListPageState extends State<CustomerListPage> {
               ),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Text(
-                  'ACTIVE LEDGERS (24)',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
-                  ),
+          customerListAsync.when(
+            data: (customers) {
+              return Expanded(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            'ALL CUSTOMERS (${customers.length})',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: customers.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No customers found',
+                                style: TextStyle(color: Colors.grey[500]),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: customers.length,
+                              itemBuilder: (context, index) {
+                                final customer = customers[index];
+                                return _buildCustomerItem(customer);
+                              },
+                            ),
+                    ),
+                  ],
                 ),
-              ],
+              );
+            },
+            loading: () => const Expanded(
+              child: Center(child: CircularProgressIndicator()),
             ),
-          ),
-          Expanded(
-            child: ListView(
-              children: [
-                _buildCustomerItem(
-                  'Rajesh Kumar',
-                  'Last: 2 hours ago',
-                  '₹12,500',
-                  'Due Now',
-                  AppColors.accentRed,
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuD9_OOZ2DcpL2B_DtTXrD8_c4iiqEhGLgR-dAV9WVLwHfH8CXwM1I_QShsw5RaeVTI32blv2SwvwHSYm9nafJsHtrDIVpU6-2r6VcjW5Y1gfriCfT2RicVMDQhbyLKcsXyGYSF29WFgs0Lxr5vgZnCjkewcK-rKG7cZdXDe5fDT1OoUuF6SKCcap2Xd9psSTyE3Pptmenij3Rod49MMK0c4XurC25GazZe9P5Ic0xHmEvk_MY9zdh6OxOoJvY3UEJrfHdyFlszK8ZpL',
-                ),
-                _buildCustomerItem(
-                  'Suresh Fruit Mart',
-                  'Last: Yesterday',
-                  '₹8,200',
-                  'Pending',
-                  AppColors.accentOrange,
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCfoKgW8zemCs7oJJFgiPFI1SfPQKvRN-3ZY7aIWcezZbuzX0jLwOXrVBr7HRnnHo7UwJaF3cm-_nMDOIeossZoG9kaPSQPOkCpRpHhHJfgOrT1PjZ2jfS07GLJC_AHOk1MycNHp-HZEE6_ezYTK5lCO7lTNU1fJ8mnyax2vAiAvPbP9G8Z6VSrM9CipOY5A9PiMpPhsT3dlXXM_l4bA-jZEyiD8f5chQrM4YgL86rojB1HvLFVcoWFIcpM0KXYETA3CVTeW2A899M3',
-                ),
-                _buildCustomerItem(
-                  'Anil Verma',
-                  'Last: 3 days ago',
-                  '₹1,450',
-                  'Due Now',
-                  AppColors.accentRed,
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuBaXPgQ3IVJy5VlvVwVJEq6R0HkeXpfn9tnjCG2lRYCBfJpmlYUI41RzT3own6bBs0Fu53WuntRX-zz-X8D07Z9fIbpc2G_IeFmKmGh1q_ljM_qu5m0BIsQTSKQWyFN7ELLtFGL51r6_fMMbnHIVvrYbRzUDoNkfzra7yPkXsMzwLH7s4fSYv-Xl4mIoIdFiGK70a_h5Sku6tmbOXx8Oe8nbPuXaA7TGGddocKCCHyV0gwhupBNzvi8cQBVxiVgPlR7a-jIj5N2YXtJ',
-                ),
-                _buildCustomerItem(
-                  'Kunal Brothers',
-                  'Last: 4 days ago',
-                  '₹24,000',
-                  'Overdue',
-                  AppColors.accentRed,
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCCctO1coi9oFjnornLrHyexnN-hDOdo6xMIxdGc04WyF7uKCDjJtjwKQJ_GypvsAlTfxvPjMtIydDeLuFsMa10aC9bs9oj2HeLx4Y3ApbbNvY7BPO2khouqZAUHnS7v0RCnuvVGf6VK_MOEYLqbbM-Ia5P9-Xtc-7WLXAXn9w-LgMPAzkWjrZxD8e6EvBHHNOTrrL81L5BuHoRgLNDMehbAQVOXC__6oEnMb8U7rsyq8i_N9yCB-H7NOvYwb1T_QuHKI3Sg_kB0LMZ',
-                ),
-                _buildCustomerItem(
-                  'Green Leaf Organic',
-                  'Last: 1 week ago',
-                  '₹450',
-                  'Pending',
-                  AppColors.accentOrange,
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDXe5DiUy0QlDd0aDD_Sw0XF-PMD0LrpruRAO8dSPP91Y0Rxqi6GDgO4R77M2dj8AbOM7O05RHnhHL0rjhP6orG0FXJIACUKSXQgT0AfVxW2-KLamKvAiN5-nMyPydao795yoeGeCcVRpz-kG0v00d2guT8Vg3oN-PuXkbTreVkAgsmIttWQm_KviRFKXeJcxyP4YIq8cdWAyecpXofrZsHFnipOV17gPcyvlaz6suNICmDwQamqi2P50VK8YbDQ1WdaLUoy1JgnpT6',
-                ),
-              ],
-            ),
+            error: (error, stackTrace) =>
+                Expanded(child: Center(child: Text('Error: $error'))),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCustomerItem(
-    String name,
-    String lastActive,
-    String amount,
-    String status,
-    Color statusColor,
-    String imageUrl,
-  ) {
+  Widget _buildCustomerItem(Customer customer) {
+    return CustomerListItem(customer: customer);
+  }
+}
+
+class CustomerListItem extends ConsumerWidget {
+  final Customer customer;
+
+  const CustomerListItem({super.key, required this.customer});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(customerStatsProvider(customer.id!));
+    // Generate random color or use logic if needed for visual flair
+    // Placeholder image logic
+    final imageUrl =
+        'https://ui-avatars.com/api/?name=${customer.name}&background=random';
+
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const CustomerDetailPage()),
+          MaterialPageRoute(
+            builder: (context) => CustomerDetailPage(customer: customer),
+          ),
         );
       },
       child: Container(
@@ -190,9 +207,27 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   color: AppColors.primary.withOpacity(0.2),
                   width: 2,
                 ),
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
+              ),
+              child: ClipOval(
+                child: Image.network(
+                  imageUrl,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: AppColors.primary,
+                      alignment: Alignment.center,
+                      child: Text(
+                        customer.name.isNotEmpty
+                            ? customer.name[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -202,7 +237,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    name,
+                    customer.name,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -211,7 +246,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    lastActive,
+                    customer.phone,
                     style: TextStyle(color: Colors.grey[500], fontSize: 14),
                   ),
                 ],
@@ -223,17 +258,21 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      amount,
+                      '₹${stats.outstandingBalance.toStringAsFixed(2)}',
                       style: TextStyle(
-                        color: statusColor,
+                        color: stats.outstandingBalance > 0
+                            ? AppColors.accentRed
+                            : AppColors.textDark,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     Text(
-                      status.toUpperCase(),
+                      stats.outstandingBalance > 0 ? 'DUE' : 'PAID',
                       style: TextStyle(
-                        color: statusColor.withOpacity(0.8),
+                        color: stats.outstandingBalance > 0
+                            ? AppColors.accentRed
+                            : Colors.green,
                         fontWeight: FontWeight.bold,
                         fontSize: 10,
                       ),

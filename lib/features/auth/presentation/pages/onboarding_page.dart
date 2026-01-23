@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -24,10 +25,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
   }
 
-  void _finishOnboarding() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
+  Future<void> _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
   }
 
   @override
