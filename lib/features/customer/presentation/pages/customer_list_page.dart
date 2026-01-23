@@ -273,6 +273,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
           width: 56,
           height: 56,
           child: FloatingActionButton(
+            heroTag: 'customer_add_fab',
             onPressed: () {
               context.go('/customers/add');
             },

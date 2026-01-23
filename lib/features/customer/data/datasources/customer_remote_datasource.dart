@@ -6,6 +6,7 @@ abstract class CustomerRemoteDataSource {
   Future<void> addCustomer(CustomerModel customer);
   Future<void> deleteCustomer(String id);
   Future<List<CustomerModel>> getCustomers({String? query});
+  Future<CustomerModel?> getCustomerById(String id);
 }
 
 class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
@@ -75,5 +76,17 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
       print(stack);
       rethrow;
     }
+  }
+
+  @override
+  Future<CustomerModel?> getCustomerById(String id) async {
+    final response = await supabaseClient
+        .from('customers')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return CustomerModel.fromJson(response);
   }
 }

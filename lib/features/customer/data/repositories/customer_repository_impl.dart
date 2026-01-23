@@ -24,4 +24,10 @@ class CustomerRepositoryImpl implements CustomerRepository {
     final customerModels = await remoteDataSource.getCustomers(query: query);
     return customerModels;
   }
+
+  @override
+  Future<Customer?> getCustomerById(String id) async {
+    final customerModel = await remoteDataSource.getCustomerById(id);
+    return customerModel;
+  }
 }

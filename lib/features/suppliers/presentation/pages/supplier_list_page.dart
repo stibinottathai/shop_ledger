@@ -270,6 +270,7 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
           width: 56,
           height: 56,
           child: FloatingActionButton(
+            heroTag: 'supplier_add_fab',
             onPressed: () {
               context.go('/suppliers/add');
             },

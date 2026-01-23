@@ -22,4 +22,9 @@ class SupplierRepositoryImpl implements SupplierRepository {
   Future<List<Supplier>> getSuppliers({String? query}) async {
     return remoteDataSource.getSuppliers(query: query);
   }
+
+  @override
+  Future<Supplier?> getSupplierById(String id) async {
+    return remoteDataSource.getSupplierById(id);
+  }
 }
