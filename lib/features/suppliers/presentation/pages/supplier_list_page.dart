@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-import 'package:shop_ledger/features/suppliers/presentation/pages/add_supplier_page.dart';
-import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_ledger_page.dart';
 
 class SupplierListPage extends StatelessWidget {
   const SupplierListPage({super.key});
@@ -196,10 +195,7 @@ class SupplierListPage extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 24),
         child: FloatingActionButton(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddSupplierPage()),
-            );
+            context.go('/suppliers/add');
           },
           heroTag: 'supplier_fab',
           backgroundColor: AppColors.primary,
@@ -219,10 +215,8 @@ class SupplierListPage extends StatelessWidget {
   ) {
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const SupplierLedgerPage()),
-        );
+        // Placeholder ID for now since it's hardcoded UI
+        context.go('/suppliers/1');
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

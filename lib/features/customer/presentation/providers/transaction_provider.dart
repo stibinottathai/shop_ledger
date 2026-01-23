@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/customer/data/datasources/transaction_remote_datasource.dart';
 import 'package:shop_ledger/features/customer/data/repositories/transaction_repository_impl.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
@@ -32,6 +33,7 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
 
   @override
   Future<List<Transaction>> build() async {
+    ref.watch(authStateProvider);
     return _fetchTransactions();
   }
 

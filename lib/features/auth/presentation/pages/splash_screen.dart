@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
-import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -33,9 +32,7 @@ class _SplashScreenState extends State<SplashScreen>
         if (mounted) {
           final session = Supabase.instance.client.auth.currentSession;
           if (session != null) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const DashboardPage()),
-            );
+            context.go('/home');
           } else {
             // Check if onboarding seen
             final prefs = await SharedPreferences.getInstance();
@@ -43,15 +40,9 @@ class _SplashScreenState extends State<SplashScreen>
 
             if (mounted) {
               if (seenOnboarding) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
+                context.go('/login');
               } else {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const OnboardingPage(),
-                  ),
-                );
+                context.go('/onboarding');
               }
             }
           }

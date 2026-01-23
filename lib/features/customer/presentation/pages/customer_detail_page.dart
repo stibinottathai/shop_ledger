@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
@@ -26,7 +27,7 @@ class CustomerDetailPage extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,12 +207,9 @@ class CustomerDetailPage extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                AddSalePage(customer: customer),
-                          ),
+                        context.go(
+                          '/customers/${customer.id}/sale',
+                          extra: customer,
                         );
                       },
                       icon: const Icon(Icons.add, color: AppColors.textDark),
@@ -231,12 +229,9 @@ class CustomerDetailPage extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                PaymentInPage(customer: customer),
-                          ),
+                        context.go(
+                          '/customers/${customer.id}/payment',
+                          extra: customer,
                         );
                       },
                       icon: const Icon(
@@ -401,19 +396,19 @@ class CustomerDetailPage extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => context.pop(),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(dialogContext); // Close dialog
+              context.pop(); // Close dialog
               try {
                 // Assuming CustomerProvider has delete method
                 await ref
                     .read(customerListProvider.notifier)
                     .deleteCustomer(customer.id!);
                 if (context.mounted) {
-                  Navigator.pop(context); // Go back to list
+                  context.pop(); // Go back to list
                 }
               } catch (e) {
                 if (context.mounted) {

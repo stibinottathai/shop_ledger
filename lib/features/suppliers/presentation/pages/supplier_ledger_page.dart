@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-import 'package:shop_ledger/features/suppliers/presentation/pages/add_purchase_page.dart';
 
 class SupplierLedgerPage extends StatelessWidget {
   const SupplierLedgerPage({super.key});
@@ -22,7 +22,7 @@ class SupplierLedgerPage extends StatelessWidget {
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () => context.pop(),
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: const BoxDecoration(
@@ -376,12 +376,7 @@ class SupplierLedgerPage extends StatelessWidget {
                   height: 56,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AddPurchasePage(),
-                        ),
-                      );
+                      context.go('/suppliers/1/purchase');
                     },
                     icon: const Icon(
                       Icons.add_shopping_cart,

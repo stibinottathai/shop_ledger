@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -30,9 +30,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     await prefs.setBool('hasSeenOnboarding', true);
 
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
+      context.go('/login');
     }
   }
 

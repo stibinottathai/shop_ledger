@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-import 'package:shop_ledger/features/auth/presentation/pages/signup_page.dart';
-import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -42,9 +43,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
       next.when(
         data: (_) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
-          );
+          // Check if we are actually logged in to avoid redirecting on signOut success
+          final session = Supabase.instance.client.auth.currentSession;
+          if (session != null) {
+            context.go('/home');
+          }
         },
         error: (e, stack) {
           ScaffoldMessenger.of(
@@ -257,12 +260,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SignupPage(),
-                              ),
-                            );
+                            context.push('/signup');
                           },
                           child: const Text(
                             'Create Account',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
@@ -46,7 +47,7 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Customer added successfully')),
         );
-        Navigator.pop(context);
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
@@ -70,7 +71,7 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Add New Customer',
