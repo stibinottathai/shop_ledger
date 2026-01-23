@@ -1,20 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 
-class SignupPage extends StatefulWidget {
+class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});
 
   @override
-  State<SignupPage> createState() => _SignupPageState();
+  ConsumerState<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignupPageState extends State<SignupPage> {
+class _SignupPageState extends ConsumerState<SignupPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   final _formKey = GlobalKey<FormState>();
 
+  final _shopNameController = TextEditingController();
+  final _ownerNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _shopNameController.dispose();
+    _ownerNameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      if (_passwordController.text != _confirmPasswordController.text) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+        return;
+      }
+      // Using Owner Name as username for now.
+      ref
+          .read(authControllerProvider.notifier)
+          .signUp(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+            username: _ownerNameController.text.trim(),
+          );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
+      next.when(
+        data: (_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Signup Successful! Please Login.')),
+          );
+          Navigator.pop(context);
+        },
+        error: (e, stack) {
+          String errorMessage = e.toString();
+          if (errorMessage.contains('Email rate limit exceeded')) {
+            errorMessage = 'Too many attempts. Please try again later.';
+          }
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(errorMessage)));
+        },
+        loading: () {},
+      );
+    });
+
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -66,6 +129,7 @@ class _SignupPageState extends State<SignupPage> {
                   children: [
                     _buildLabel('Shop Name'),
                     _buildTextField(
+                      controller: _shopNameController,
                       hint: 'Enter your shop\'s trade name',
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -78,6 +142,7 @@ class _SignupPageState extends State<SignupPage> {
                     const SizedBox(height: 20),
                     _buildLabel('Owner Name'),
                     _buildTextField(
+                      controller: _ownerNameController,
                       hint: 'Full name of the owner',
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -90,6 +155,7 @@ class _SignupPageState extends State<SignupPage> {
                     const SizedBox(height: 20),
                     _buildLabel('Phone Number'),
                     _buildTextField(
+                      controller: _phoneController,
                       hint: '+1 (555) 000-0000',
                       inputType: TextInputType.phone,
                       validator: (value) {
@@ -105,8 +171,29 @@ class _SignupPageState extends State<SignupPage> {
                     ),
 
                     const SizedBox(height: 20),
+                    _buildLabel('Email Address'),
+                    _buildTextField(
+                      controller: _emailController,
+                      hint: 'name@shop.com',
+                      inputType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email is required';
+                        }
+                        final emailRegex = RegExp(
+                          r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                        );
+                        if (!emailRegex.hasMatch(value)) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
                     _buildLabel('Password'),
                     TextFormField(
+                      controller: _passwordController,
                       obscureText: _obscurePassword,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -140,6 +227,7 @@ class _SignupPageState extends State<SignupPage> {
                     const SizedBox(height: 20),
                     _buildLabel('Confirm Password'),
                     TextFormField(
+                      controller: _confirmPasswordController,
                       // Changed to TextFormField
                       obscureText: _obscureConfirmPassword,
                       validator: (value) {
@@ -176,15 +264,10 @@ class _SignupPageState extends State<SignupPage> {
 
                     const SizedBox(height: 40),
                     ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // TODO: Implement Signup Logic
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing Signup')),
-                          );
-                        }
-                      },
-                      child: const Text('Sign Up'),
+                      onPressed: isLoading ? null : _submit,
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Sign Up'),
                     ),
                     // Close Form and Column
                   ],
@@ -233,10 +316,12 @@ class _SignupPageState extends State<SignupPage> {
 
   Widget _buildTextField({
     required String hint,
+    required TextEditingController controller,
     TextInputType inputType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
+      controller: controller,
       keyboardType: inputType,
       validator: validator,
       decoration: InputDecoration(

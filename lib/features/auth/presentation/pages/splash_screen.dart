@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -28,9 +29,16 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
-          );
+          final session = Supabase.instance.client.auth.currentSession;
+          if (session != null) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const DashboardPage()),
+            );
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const OnboardingPage()),
+            );
+          }
         }
       }
     });
