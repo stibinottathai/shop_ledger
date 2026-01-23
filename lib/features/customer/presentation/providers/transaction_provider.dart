@@ -18,6 +18,21 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
   return TransactionRepositoryImpl(remoteDataSource: remoteDataSource);
 });
 
+// Global update signal
+final transactionUpdateProvider =
+    NotifierProvider<TransactionUpdateNotifier, int>(
+      TransactionUpdateNotifier.new,
+    );
+
+class TransactionUpdateNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() {
+    state++;
+  }
+}
+
 // Transaction List Provider Family (grouped by customerId)
 final transactionListProvider =
     AsyncNotifierProvider.family<
@@ -44,11 +59,18 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
 
   Future<void> addTransaction(Transaction transaction) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    try {
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
-      return _fetchTransactions();
-    });
+
+      // Trigger global update
+      ref.read(transactionUpdateProvider.notifier).increment();
+
+      state = await AsyncValue.guard(() => _fetchTransactions());
+    } catch (e, stack) {
+      state = AsyncError(e, stack);
+      rethrow;
+    }
   }
 }
 

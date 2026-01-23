@@ -60,6 +60,9 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
 
+      // Trigger global update for dashboard
+      ref.read(transactionUpdateProvider.notifier).increment();
+
       // Refresh the list
       ref.invalidate(supplierTransactionListProvider(widget.supplier.id!));
 

@@ -65,6 +65,9 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
 
+      // Trigger global update for dashboard
+      ref.read(transactionUpdateProvider.notifier).increment();
+
       // Refresh the list
       ref.invalidate(supplierTransactionListProvider(widget.supplier.id!));
 

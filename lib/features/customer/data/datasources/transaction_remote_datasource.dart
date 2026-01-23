@@ -27,6 +27,12 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
     final now = DateTime.now().toIso8601String();
     data['updated_at'] = now;
 
+    // Add user_id
+    final user = supabaseClient.auth.currentUser;
+    if (user != null) {
+      data['user_id'] = user.id;
+    }
+
     // Ensure we don't send nulls if not needed, or let Supabase handle it.
     // However, we need to ensure either customer_id or supplier_id is present.
     if (transaction.customerId == null && transaction.supplierId == null) {
@@ -41,16 +47,18 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
     String? customerId,
     String? supplierId,
   }) async {
-    if (customerId == null && supplierId == null) {
-      throw Exception('Must provide either customerId or supplierId');
-    }
-
     var query = supabaseClient.from('transactions').select();
+
+    // Filter by current user
+    final user = supabaseClient.auth.currentUser;
+    if (user != null) {
+      query = query.eq('user_id', user.id);
+    }
 
     if (customerId != null) {
       query = query.eq('customer_id', customerId);
-    } else {
-      query = query.eq('supplier_id', supplierId!);
+    } else if (supplierId != null) {
+      query = query.eq('supplier_id', supplierId);
     }
 
     final response = await query

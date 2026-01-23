@@ -1,8 +1,13 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
+
+import 'package:shop_ledger/core/theme/app_colors.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -13,72 +18,474 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(dashboardStatsProvider.notifier).refresh();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final statsAsync = ref.watch(dashboardStatsProvider);
+    final user = ref.read(authRepositoryProvider).getCurrentUser();
+    final shopName =
+        user?.userMetadata?['shop_name'] ??
+        user?.userMetadata?['username'] ??
+        'Raju Traders'; // Default from design
+    final dateStr = DateFormat('EEE, d MMM').format(DateTime.now());
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      body: Stack(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _buildFixedHeader(context),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Column(
+      backgroundColor: AppColors.background,
+      body: statsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (stats) {
+          final pendingAmount = stats.todaysSale - stats.todaysCollection;
+
+          return Column(
+            children: [
+              // Header
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  MediaQuery.of(context).padding.top + 16,
+                  20,
+                  16,
+                ),
+                decoration: const BoxDecoration(
+                  color: Color(
+                    0xFFFFFFFC,
+                  ), // Slightly off-white/blur simulation
+                  border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.slate100,
+                            border: Border.all(color: AppColors.slate200),
+                            image: const DecorationImage(
+                              image: NetworkImage(
+                                "https://lh3.googleusercontent.com/aida-public/AB6AXuAlN4XDfP3iW_dnEZIThQ-iuStOOe5hZ5uUaxCAFed_CF9wfn387q9RR_8FTOB_Q6NiDCn2ucZhI_jjZeFr9QLT28sqkZYmeMXC4VqfpudkBPhQINq5B3FqxNr-PfmWo5Rucrr281lkvk53DF6ZNwfGTKYB2mCkRF75BZmKTQHQxin7QlkHJs-S0RI1AQviZHr088dux-sop_Tl1vzmr-mW4yhB7AXKFZuyroa_vRjMUAYVd-s5CJEmzRitCoLP_0upZGivfeRlRQB-",
+                              ),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 16),
-                            _buildTodaysSaleCard(),
-                            const SizedBox(height: 12),
-                            _buildSummaryGrid(),
-                            const SizedBox(height: 12),
-                            _buildToGetToGiveGrid(),
-                            const SizedBox(height: 24),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Recent Transactions',
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textDark,
-                                      ),
-                                ),
-                                TextButton(
-                                  onPressed: () {},
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: AppColors.primary,
-                                    textStyle: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  child: const Text('View All'),
-                                ),
-                              ],
+                            Text(
+                              shopName,
+                              style: GoogleFonts.inter(
+                                color: AppColors.textMain,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                height: 1.25,
+                              ),
                             ),
-                            const SizedBox(height: 8),
+                            Text(
+                              dateStr,
+                              style: GoogleFonts.inter(
+                                color: AppColors.textMuted,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.only(
-                            left: 16,
-                            right: 16,
-                            bottom: 100,
+                      ],
+                    ),
+                    Container(
+                      height: 40,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            offset: const Offset(0, 1),
+                            blurRadius: 2,
                           ),
-                          child: _buildRecentTransactions(),
-                        ),
+                        ],
                       ),
-                    ],
+                      child: IconButton(
+                        icon: const Icon(Icons.settings, size: 20),
+                        color: AppColors.slate600,
+                        onPressed: () {},
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Main Content
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    return ref.read(dashboardStatsProvider.notifier).refresh();
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 24,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Today's Cashflow Header
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Today's Cashflow",
+                              style: GoogleFonts.inter(
+                                color: AppColors.textMain,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Real-time daily transaction tracking",
+                              style: GoogleFonts.inter(
+                                color: AppColors.textMuted,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 24,
+                        ), // Reduced from gap-8 (32) purely for mobile fit? No, gap-1 in header, gap-8 in main. 32px.
+                        // Today's Cashflow Grid
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildGaugeCard(
+                                context,
+                                amount: stats.todaysSale,
+                                label: "Sales",
+                                icon: Icons.storefront,
+                                color: AppColors.primary,
+                                percent: 1.0,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildGaugeCard(
+                                context,
+                                amount: stats.todaysCollection,
+                                label: "Received",
+                                icon: Icons.payments,
+                                color: AppColors.emerald500,
+                                percent: stats.todaysSale > 0
+                                    ? (stats.todaysCollection /
+                                          stats.todaysSale)
+                                    : 0,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildGaugeCard(
+                                context,
+                                amount: pendingAmount, // Calculated pending
+                                label: "Pending",
+                                icon: Icons.pending_actions,
+                                color: Colors.orange[400]!,
+                                percent: stats.todaysSale > 0
+                                    ? (pendingAmount / stats.todaysSale)
+                                    : 0,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Ledger Section
+                        Text(
+                          "Ledger",
+                          style: GoogleFonts.inter(
+                            color: AppColors.textMain,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Ledger Grid
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final width = (constraints.maxWidth - 12) / 2;
+                            return Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    _buildLedgerCard(
+                                      width: width,
+                                      title: "Total Sales",
+                                      amount: stats.totalSales,
+                                      subtitle:
+                                          "+12% this week", // Static for now as per design
+                                      subtitleColor: const Color(
+                                        0xFF059669,
+                                      ), // Emerald 600
+                                      icon: Icons.trending_up,
+                                      iconBg: const Color(
+                                        0xFFECFDF5,
+                                      ), // Emerald 50
+                                      iconColor: const Color(0xFF059669),
+                                      gradientColor: const Color(0xFFECFDF5),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _buildLedgerCard(
+                                      width: width,
+                                      title: "Total Purchase",
+                                      amount: stats.totalPurchases,
+                                      subtitle: "Current period",
+                                      subtitleColor: AppColors.textMain,
+                                      icon: Icons.shopping_bag,
+                                      iconBg: const Color(0xFFFEF2F2), // Red 50
+                                      iconColor: const Color(
+                                        0xFFEF4444,
+                                      ), // Red 500
+                                      gradientColor: const Color(0xFFFEF2F2),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    _buildActionLedgerCard(
+                                      width: width,
+                                      title: "Receivables",
+                                      amount: stats.toGet,
+                                      subtitle: "To collect",
+                                      icon:
+                                          Icons.arrow_circle_down, // Rotate -45
+                                      iconColor: const Color(
+                                        0xFF10B981,
+                                      ), // Emerald 500
+                                      hoverBorderColor: const Color(
+                                        0xFFA7F3D0,
+                                      ), // Emerald 200
+                                      isRotateNegative: true,
+                                      onTap: () => context.push('/customers'),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _buildActionLedgerCard(
+                                      width: width,
+                                      title: "Payables",
+                                      amount: stats.toGive,
+                                      subtitle: "To pay",
+                                      icon: Icons.arrow_circle_up, // Rotate 45
+                                      iconColor: const Color(
+                                        0xFFF87171,
+                                      ), // Red 400
+                                      hoverBorderColor: const Color(
+                                        0xFFFECACA,
+                                      ), // Red 200
+                                      isRotateNegative: false,
+                                      onTap: () => context.push('/suppliers'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Business Insight
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC), // Slate 50
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFE2E8F0),
+                            ), // Slate 200
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color.fromRGBO(
+                                  0,
+                                  0,
+                                  0,
+                                  0.05,
+                                ), // shadow-sm
+                                offset: Offset(0, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFFF1F5F9),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      offset: const Offset(0, 1),
+                                      blurRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.lightbulb_outline,
+                                  color: Colors.amber,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Business Insight",
+                                      style: GoogleFonts.inter(
+                                        color: AppColors.textMain,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    RichText(
+                                      text: TextSpan(
+                                        style: GoogleFonts.inter(
+                                          color: AppColors.slate600,
+                                          fontSize: 12,
+                                          height: 1.5,
+                                        ),
+                                        children: [
+                                          const TextSpan(text: "You have "),
+                                          TextSpan(
+                                            text:
+                                                "${stats.highDueCustomerCount} customers",
+                                            style: GoogleFonts.inter(
+                                              color: AppColors.textMain,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                " with pending dues exceeding ₹5,000. Follow up today to improve cashflow.",
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+                    ),
                   ),
                 ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGaugeCard(
+    BuildContext context, {
+    required double amount,
+    required String label,
+    required IconData icon,
+    required Color color,
+    required double percent,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            offset: Offset(0, 1),
+            blurRadius: 3,
+          ),
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.01),
+            offset: Offset(0, 1),
+            blurRadius: 2,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CustomPaint(
+                  size: const Size(56, 56),
+                  painter: GaugePainter(
+                    color: color,
+                    percent: percent.clamp(0.0, 1.0),
+                    backgroundColor: AppColors.slate100,
+                  ),
+                ),
+                Icon(
+                  icon,
+                  color: color,
+                  size: 20,
+                ), // Reduced size to fit inside gauge
               ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _formatCurrency(amount),
+            style: GoogleFonts.inter(
+              color: AppColors.textMain,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.inter(
+              color: const Color(0xFF94a3b8), // Slate 400
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -86,124 +493,30 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildFixedHeader(BuildContext context) {
-    final user = ref.read(authRepositoryProvider).getCurrentUser();
-    final shopName =
-        user?.userMetadata?['shop_name'] ??
-        user?.userMetadata?['username'] ??
-        'My Shop';
-
+  Widget _buildLedgerCard({
+    required double width,
+    required String title,
+    required double amount,
+    required String subtitle,
+    required Color subtitleColor,
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required Color gradientColor,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AppColors.backgroundLight,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary, width: 2),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://lh3.googleusercontent.com/aida-public/AB6AXuDqTD-FgFsatq6WWSExGn1rTrzM1iWAPZKPKzXk-jvEZbHcEjCQi5hSnKIYPYuSKNJ6qiOm5d5tHXQqKEg75pHWcPOSdcqe9MIAgEtLyw0eUE4533oGaJ0VIr5TlUoEN70U4wrCXY_vZHUAqgSXSflAteIf-gHuilFMoQWLFzzjvol253mJnQSIgMn7putGXAwUdIZiPol3eulRESyhTuRP4s38tA5ZnchdDhkTNtURT454PY9BlmVLq4KS1_qXynIpEvKKv9Hwqx5k',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        shopName,
-                        style: const TextStyle(
-                          color: AppColors.textDark,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'BANANA LEDGER',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  const SizedBox(width: 8),
-                  Stack(
-                    children: [
-                      _buildIconButton(Icons.notifications_outlined),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIconButton(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(8),
+      width: width,
+      height: 112, // 28 * 4 = 112
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.slate100),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Icon(icon, color: Colors.grey[700], size: 20),
-    );
-  }
-
-  Widget _buildTodaysSaleCard() {
-    return Container(
-      height: 140,
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            offset: Offset(0, 1),
+            blurRadius: 3,
           ),
         ],
       ),
@@ -211,61 +524,50 @@ class _HomePageState extends ConsumerState<HomePage> {
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    color: Colors.white.withOpacity(0.8),
-                    size: 14,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    "TODAY'S SALE",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
-                    '₹42,850',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
+                  Text(
+                    title.toUpperCase(),
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF94a3b8), // Slate 400
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
+                      color: iconBg,
+                      shape: BoxShape.circle,
                     ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.trending_up, color: Colors.white, size: 12),
-                        SizedBox(width: 4),
-                        Text(
-                          '+8%',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    child: Icon(icon, color: iconColor, size: 14),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _formatCurrency(amount),
+                    style: GoogleFonts.inter(
+                      color: AppColors.textMain,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      color: subtitleColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -273,309 +575,167 @@ class _HomePageState extends ConsumerState<HomePage> {
             ],
           ),
           Positioned(
-            bottom: -20,
-            right: -20,
-            child: Icon(
-              Icons.shopping_bag,
-              color: Colors.white.withOpacity(0.1),
-              size: 120,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryGrid() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSummaryCard(
-            'TOTAL SALES',
-            '₹4,82,450',
-            AppColors.primary,
-            0.7,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSummaryCard(
-            'TOTAL PURCHASES',
-            '₹3,12,000',
-            Colors.grey[400]!,
-            0.55,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSummaryCard(
-    String title,
-    String value,
-    Color progressColor,
-    double progress,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[100]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textDark,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.grey[100],
-              color: progressColor,
-              minHeight: 4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToGetToGiveGrid() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatusCard(
-            'TO GET',
-            '₹84,200',
-            '12 Customers',
-            Icons.call_received,
-            AppColors.primary,
-            () => context.go('/customers'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatusCard(
-            'TO GIVE',
-            '₹32,500',
-            '4 Suppliers',
-            Icons.call_made,
-            AppColors.accentOrange,
-            () => context.go('/suppliers'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusCard(
-    String title,
-    String amount,
-    String subtext,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border(bottom: BorderSide(color: color, width: 4)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
+            bottom: -16,
+            right: -16,
+            child: Container(
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              amount,
-              style: TextStyle(
-                color: color,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtext,
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentTransactions() {
-    return Column(
-      children: [
-        _buildTransactionItem(
-          Icons.add_shopping_cart,
-          Colors.green,
-          'Sale: 15 Bunches G9',
-          'Rajesh Kumar • 10:30 AM',
-          '+₹2,450',
-          AppColors.primary,
-        ),
-        const SizedBox(height: 12),
-        _buildTransactionItem(
-          Icons.payments,
-          Colors.red,
-          'Supplier Payment',
-          'Anna Farm Hub • 09:15 AM',
-          '-₹12,000',
-          AppColors.accentRed,
-        ),
-        _buildTransactionItem(
-          Icons.payments,
-          Colors.red,
-          'Supplier Payment',
-          'Anna Farm Hub • 09:15 AM',
-          '-₹12,000',
-          AppColors.accentRed,
-        ),
-        _buildTransactionItem(
-          Icons.payments,
-          Colors.red,
-          'Supplier Payment',
-          'Anna Farm Hub • 09:15 AM',
-          '-₹12,000',
-          AppColors.accentRed,
-        ),
-        _buildTransactionItem(
-          Icons.payments,
-          Colors.red,
-          'Supplier Payment',
-          'Anna Farm Hub • 09:15 AM',
-          '-₹12,000',
-          AppColors.accentRed,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTransactionItem(
-    IconData icon,
-    Color iconColor,
-    String title,
-    String subtitle,
-    String amount,
-    Color amountColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[100]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [gradientColor, gradientColor.withOpacity(0)],
                 ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                  ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
                 ),
-              ],
-            ),
-          ),
-          Text(
-            amount,
-            style: TextStyle(
-              color: amountColor,
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildActionLedgerCard({
+    required double width,
+    required String title,
+    required double amount,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color
+    hoverBorderColor, // Note: Hover effects in mobile are limited to InkWell ripples usually
+    required bool isRotateNegative,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: width,
+          height: 112,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.slate100),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(0, 0, 0, 0.05),
+                offset: Offset(0, 1),
+                blurRadius: 3,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title.toUpperCase(),
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF94a3b8), // Slate 400
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  Transform.rotate(
+                    angle: isRotateNegative ? -math.pi / 4 : math.pi / 4,
+                    child: Icon(icon, color: iconColor, size: 18),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _formatCurrency(amount),
+                    style: GoogleFonts.inter(
+                      color: AppColors.textMain,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF94a3b8), // Slate 400
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatCurrency(double amount) {
+    return NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 2,
+    ).format(amount);
+  }
+}
+
+class GaugePainter extends CustomPainter {
+  final Color color;
+  final double percent;
+  final Color backgroundColor;
+
+  GaugePainter({
+    required this.color,
+    required this.percent,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 3) / 2; // Subtract stroke width / 2
+    const strokeWidth = 3.0;
+
+    final bgPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    canvas.drawCircle(center, radius, bgPaint);
+
+    if (percent > 0) {
+      final fgPaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+
+      // Start from top (-pi/2)
+      // Sweep angle is 2*pi * percent
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -math.pi / 2,
+        2 * math.pi * percent,
+        false,
+        fgPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant GaugePainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.percent != percent;
   }
 }
