@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
+import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:shop_ledger/features/customer/data/repositories/customer_repository_impl.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
@@ -63,6 +66,14 @@ class CustomerListNotifier extends AsyncNotifier<List<Customer>> {
   Future<void> deleteCustomer(String id) async {
     final repository = ref.read(customerRepositoryProvider);
     await repository.deleteCustomer(id);
+
+    // Trigger global update (as dashboard stats depend on customers)
+    // Small delay to ensure DB consistency
+    await Future.delayed(const Duration(milliseconds: 1000));
+    ref.read(dashboardStatsProvider.notifier).refresh();
+    ref.read(reportsProvider.notifier).refresh();
+    ref.read(transactionUpdateProvider.notifier).increment();
+
     await refresh();
   }
 }

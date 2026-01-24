@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/suppliers/data/datasources/supplier_remote_datasource.dart';
 import 'package:shop_ledger/features/suppliers/data/repositories/supplier_repository_impl.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
@@ -55,12 +57,28 @@ class SupplierListNotifier extends AsyncNotifier<List<Supplier>> {
   Future<void> addSupplier(Supplier supplier) async {
     final repository = ref.read(supplierRepositoryProvider);
     await repository.addSupplier(supplier);
+
+    // Trigger global update (good practice for consistency, though less critical than delete)
+    // Small delay to ensure DB consistency
+    await Future.delayed(const Duration(milliseconds: 1000));
+    ref.read(dashboardStatsProvider.notifier).refresh();
+    ref.read(reportsProvider.notifier).refresh();
+    ref.read(transactionUpdateProvider.notifier).increment();
+
     await refresh();
   }
 
   Future<void> deleteSupplier(String id) async {
     final repository = ref.read(supplierRepositoryProvider);
     await repository.deleteSupplier(id);
+
+    // Trigger global update
+    // Small delay to ensure DB consistency
+    await Future.delayed(const Duration(milliseconds: 1000));
+    ref.read(dashboardStatsProvider.notifier).refresh();
+    ref.read(reportsProvider.notifier).refresh();
+    ref.read(transactionUpdateProvider.notifier).increment();
+
     await refresh();
   }
 }
