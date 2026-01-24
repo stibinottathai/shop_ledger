@@ -49,7 +49,9 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
   }) async {
     var query = supabaseClient
         .from('transactions')
-        .select('*, customers(name), suppliers(name)');
+        .select(
+          '*, customers:customers!fk_transactions_customers(name), suppliers:suppliers!fk_transactions_suppliers(name)',
+        );
 
     // Filter by current user
     final user = supabaseClient.auth.currentUser;
