@@ -149,7 +149,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Today's Cashflow",
+                              "Today's Sales",
                               style: GoogleFonts.inter(
                                 color: AppColors.textMain,
                                 fontSize: 24,
@@ -208,6 +208,80 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 color: Colors.orange[400]!,
                                 percent: stats.todaysSale > 0
                                     ? (pendingAmount / stats.todaysSale)
+                                    : 0,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Today's Purchase Header
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Today's Purchase",
+                              style: GoogleFonts.inter(
+                                color: AppColors.textMain,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Real-time daily purchase tracking",
+                              style: GoogleFonts.inter(
+                                color: AppColors.textMuted,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // Today's Purchase Grid
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildGaugeCard(
+                                context,
+                                amount: stats.todaysPurchase,
+                                label: "Purchase",
+                                icon: Icons.shopping_cart,
+                                color: Colors.blue[600]!,
+                                percent: 1.0,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildGaugeCard(
+                                context,
+                                amount: stats.todaysPaymentOut,
+                                label: "Paid",
+                                icon: Icons.outbox,
+                                color: Colors.orange[500]!,
+                                percent: stats.todaysPurchase > 0
+                                    ? (stats.todaysPaymentOut /
+                                          stats.todaysPurchase)
+                                    : 0,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildGaugeCard(
+                                context,
+                                amount:
+                                    stats.todaysPurchase -
+                                    stats.todaysPaymentOut,
+                                label: "Pending",
+                                icon: Icons.pending_actions,
+                                color: Colors.red[400]!,
+                                percent: stats.todaysPurchase > 0
+                                    ? ((stats.todaysPurchase -
+                                              stats.todaysPaymentOut) /
+                                          stats.todaysPurchase)
                                     : 0,
                               ),
                             ),
