@@ -133,7 +133,7 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
                         ),
                         child: const Icon(
                           Icons.person_add,
-                          color: AppColors.textDark,
+                          color: Colors.white,
                           size: 24,
                         ),
                       ),
@@ -213,12 +213,12 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.textDark,
+                              color: Colors.white,
                             ),
                           )
                         : const Icon(
                             Icons.check_circle,
-                            color: AppColors.textDark,
+                            color: Colors.white,
                             size: 24,
                           ),
                     label: Text(
@@ -228,9 +228,9 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
                                 ? 'Update Customer'
                                 : 'Save Customer'),
                       style: const TextStyle(
-                        color: AppColors.textDark,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontSize: 16,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(

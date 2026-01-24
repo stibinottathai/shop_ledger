@@ -555,13 +555,16 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            _formatCurrency(amount),
-            style: GoogleFonts.inter(
-              color: AppColors.textMain,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              height: 1,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _formatCurrency(amount),
+              style: GoogleFonts.inter(
+                color: AppColors.textMain,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                height: 1,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -638,13 +641,16 @@ class _HomePageState extends ConsumerState<HomePage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _formatCurrency(amount),
-                    style: GoogleFonts.inter(
-                      color: AppColors.textMain,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _formatCurrency(amount),
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMain,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -741,13 +747,16 @@ class _HomePageState extends ConsumerState<HomePage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _formatCurrency(amount),
-                    style: GoogleFonts.inter(
-                      color: AppColors.textMain,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _formatCurrency(amount),
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMain,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),

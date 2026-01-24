@@ -81,6 +81,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: ':id',
                     builder: (context, state) {
+                      if (state.extra is! Customer) {
+                        return const CustomerListPage();
+                      }
                       final customer = state.extra as Customer;
                       return CustomerDetailPage(customer: customer);
                     },
@@ -88,6 +91,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'sale',
                         builder: (context, state) {
+                          if (state.extra is! Customer) {
+                            return const CustomerListPage();
+                          }
                           final customer = state.extra as Customer;
                           return AddSalePage(customer: customer);
                         },
@@ -95,6 +101,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'payment',
                         builder: (context, state) {
+                          if (state.extra is! Customer) {
+                            return const CustomerListPage();
+                          }
                           final customer = state.extra as Customer;
                           return PaymentInPage(customer: customer);
                         },
@@ -121,6 +130,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: ':id',
                     builder: (context, state) {
+                      if (state.extra is! Supplier) {
+                        return const SupplierListPage();
+                      }
                       final supplier = state.extra as Supplier;
                       return SupplierLedgerPage(supplier: supplier);
                     },
@@ -128,6 +140,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'purchase',
                         builder: (context, state) {
+                          if (state.extra is! Supplier) {
+                            return const SupplierListPage();
+                          }
                           final supplier = state.extra as Supplier;
                           return AddPurchasePage(supplier: supplier);
                         },
@@ -135,6 +150,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'payment',
                         builder: (context, state) {
+                          if (state.extra is! Supplier) {
+                            return const SupplierListPage();
+                          }
                           final supplier = state.extra as Supplier;
                           return PaymentOutPage(supplier: supplier);
                         },

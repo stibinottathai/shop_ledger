@@ -138,27 +138,31 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Edit Profile',
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
         ),
-        content: SingleChildScrollView(
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDialogTextField('Shop Name', editShopNameController),
-                const SizedBox(height: 16),
-                _buildDialogTextField('Owner Name', editUsernameController),
-                const SizedBox(height: 16),
-                _buildDialogTextField(
-                  'Phone Number',
-                  editPhoneController,
-                  isPhone: true,
-                ),
-              ],
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDialogTextField('Shop Name', editShopNameController),
+                  const SizedBox(height: 16),
+                  _buildDialogTextField('Owner Name', editUsernameController),
+                  const SizedBox(height: 16),
+                  _buildDialogTextField(
+                    'Phone Number',
+                    editPhoneController,
+                    isPhone: true,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -276,7 +280,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.logout, color: Colors.red),
+            const Icon(Icons.power_settings_new_rounded, color: Colors.red),
             const SizedBox(width: 12),
             Text(
               'Logout',
@@ -346,7 +350,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.red),
+            icon: const Icon(
+              Icons.power_settings_new_rounded,
+              color: Colors.red,
+            ),
             onPressed: _showLogoutConfirmation,
           ),
         ],
@@ -571,7 +578,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       : Text(
                           'Edit Profile',
                           style: GoogleFonts.inter(
-                            fontSize: 17,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

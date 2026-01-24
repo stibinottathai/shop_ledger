@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
@@ -93,6 +94,13 @@ class CustomerDetailPage extends ConsumerWidget {
               shape: BoxShape.circle,
             ),
             child: PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              offset: const Offset(0, 50),
+              elevation: 4,
+              shadowColor: Colors.black.withOpacity(0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               icon: const Icon(
                 Icons.more_vert,
                 color: AppColors.textDark,
@@ -107,13 +115,47 @@ class CustomerDetailPage extends ConsumerWidget {
               },
               itemBuilder: (BuildContext context) {
                 return [
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'edit',
-                    child: Text('Edit Customer'),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.edit,
+                          color: AppColors.textMain,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Edit Customer',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textMain,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'delete',
-                    child: Text('Delete Customer'),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.delete_outline,
+                          color: AppColors.danger,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Delete Customer',
+                          style: GoogleFonts.inter(
+                            color: AppColors.danger,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ];
               },
@@ -239,6 +281,7 @@ class CustomerDetailPage extends ConsumerWidget {
                       icon: const Icon(Icons.add, color: Colors.white),
                       label: const Text('Sale'),
                       style: ElevatedButton.styleFrom(
+                        textStyle: const TextStyle(fontSize: 16),
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -261,6 +304,7 @@ class CustomerDetailPage extends ConsumerWidget {
                       icon: const Icon(Icons.payments, color: Colors.white),
                       label: const Text('Payment In'),
                       style: ElevatedButton.styleFrom(
+                        textStyle: const TextStyle(fontSize: 16),
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
@@ -63,38 +64,81 @@ class SupplierLedgerPage extends ConsumerWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'delete') {
-                _confirmDelete(context, ref);
-              } else if (value == 'edit') {
-                context.push('/suppliers/add', extra: currentSupplier);
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem<String>(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, color: AppColors.textDark, size: 20),
-                      SizedBox(width: 8),
-                      Text('Edit', style: TextStyle(color: AppColors.textDark)),
-                    ],
+          Container(
+            width: 40,
+            height: 40,
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ),
+            child: PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              offset: const Offset(0, 50),
+              elevation: 4,
+              shadowColor: Colors.black.withOpacity(0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(
+                Icons.more_vert,
+                color: AppColors.textDark,
+                size: 20,
+              ),
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _confirmDelete(context, ref);
+                } else if (value == 'edit') {
+                  context.push('/suppliers/add', extra: currentSupplier);
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.edit,
+                          color: AppColors.textMain,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Edit Supplier',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textMain,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red, size: 20),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
+                  PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.delete_outline,
+                          color: AppColors.danger,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Delete Supplier',
+                          style: GoogleFonts.inter(
+                            color: AppColors.danger,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ];
-            },
+                ];
+              },
+            ),
           ),
         ],
         leading: IconButton(
@@ -149,6 +193,7 @@ class SupplierLedgerPage extends ConsumerWidget {
                     ),
                     label: const Text('Purchase'),
                     style: ElevatedButton.styleFrom(
+                      textStyle: const TextStyle(fontSize: 16),
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
