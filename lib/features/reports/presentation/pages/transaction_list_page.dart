@@ -53,12 +53,12 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               color: const Color(0xFFFAFAFA),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     'Transactions',
                     style: GoogleFonts.inter(
-                      fontSize: 30,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF111827), // text-main-light
                       letterSpacing: -0.5,
