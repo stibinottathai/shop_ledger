@@ -6,6 +6,7 @@ import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
 
 class AddSalePage extends ConsumerStatefulWidget {
   final Customer customer;
@@ -59,6 +60,9 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
       await ref
           .read(transactionListProvider(widget.customer.id!).notifier)
           .addTransaction(transaction);
+
+      // Force refresh of global transaction list
+      ref.invalidate(allTransactionsProvider);
 
       if (mounted) {
         context.pop();

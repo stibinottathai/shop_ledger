@@ -13,7 +13,7 @@ import 'package:shop_ledger/features/customer/presentation/pages/customer_list_p
 import 'package:shop_ledger/features/customer/presentation/pages/payment_in_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/home_page.dart';
-import 'package:shop_ledger/features/dashboard/presentation/pages/more_page.dart';
+
 import 'package:shop_ledger/features/reports/presentation/pages/reports_page.dart';
 import 'package:shop_ledger/features/sales/presentation/pages/add_sale_page.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/add_purchase_page.dart';
@@ -22,6 +22,7 @@ import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_ledge
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_list_page.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/payment_out_page.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
+import 'package:shop_ledger/features/reports/presentation/pages/transaction_list_page.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // We do NOT watch authStateProvider here to prevent GoRouter from rebuilding
@@ -147,16 +148,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/reports',
-                builder: (context, state) => const ReportsPage(),
+                path: '/transactions',
+                builder: (context, state) => const TransactionListPage(),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/more',
-                builder: (context, state) => const MorePage(),
+                path: '/reports',
+                builder: (context, state) => const ReportsPage(),
               ),
             ],
           ),

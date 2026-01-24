@@ -11,6 +11,8 @@ class Transaction extends Equatable {
   final DateTime date;
   final String? details;
   final DateTime? createdAt;
+  final String? customerName;
+  final String? supplierName;
 
   const Transaction({
     this.id,
@@ -21,6 +23,8 @@ class Transaction extends Equatable {
     required this.date,
     this.details,
     this.createdAt,
+    this.customerName,
+    this.supplierName,
   });
 
   @override
@@ -33,5 +37,7 @@ class Transaction extends Equatable {
     date,
     details,
     createdAt,
+    customerName,
+    supplierName,
   ];
 }

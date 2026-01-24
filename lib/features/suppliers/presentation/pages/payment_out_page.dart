@@ -10,6 +10,7 @@ import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_p
 import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
 
 class PaymentOutPage extends ConsumerStatefulWidget {
   final Supplier supplier;
@@ -72,6 +73,7 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
 
       // Refresh the list
       ref.invalidate(supplierTransactionListProvider(widget.supplier.id!));
+      ref.invalidate(allTransactionsProvider);
 
       if (mounted) {
         context.pop();
