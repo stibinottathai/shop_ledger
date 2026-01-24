@@ -27,6 +27,9 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch auth state to rebuild when user metadata updates (e.g. from Profile page)
+    ref.watch(authStateProvider);
+
     final statsAsync = ref.watch(dashboardStatsProvider);
     final user = ref.read(authRepositoryProvider).getCurrentUser();
     final shopName =
@@ -64,18 +67,27 @@ class _HomePageState extends ConsumerState<HomePage> {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          height: 40,
-                          width: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.slate100,
-                            border: Border.all(color: AppColors.slate200),
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                "https://lh3.googleusercontent.com/aida-public/AB6AXuAlN4XDfP3iW_dnEZIThQ-iuStOOe5hZ5uUaxCAFed_CF9wfn387q9RR_8FTOB_Q6NiDCn2ucZhI_jjZeFr9QLT28sqkZYmeMXC4VqfpudkBPhQINq5B3FqxNr-PfmWo5Rucrr281lkvk53DF6ZNwfGTKYB2mCkRF75BZmKTQHQxin7QlkHJs-S0RI1AQviZHr088dux-sop_Tl1vzmr-mW4yhB7AXKFZuyroa_vRjMUAYVd-s5CJEmzRitCoLP_0upZGivfeRlRQB-",
+                        GestureDetector(
+                          onTap: () => context.go('/home/profile'),
+                          child: Container(
+                            height: 40,
+                            width: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primary.withOpacity(0.1),
+                              border: Border.all(color: AppColors.slate200),
+                            ),
+                            child: Center(
+                              child: Text(
+                                shopName.isNotEmpty
+                                    ? shopName[0].toUpperCase()
+                                    : 'S',
+                                style: GoogleFonts.inter(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
                               ),
-                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
@@ -120,7 +132,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ],
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.settings, size: 20),
+                        icon: const Icon(Icons.notifications, size: 20),
                         color: AppColors.slate600,
                         onPressed: () {},
                       ),

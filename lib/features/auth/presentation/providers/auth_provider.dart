@@ -86,6 +86,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String password,
     required String username,
     required String shopName,
+    required String phone,
   }) async {
     state = const AsyncValue.loading();
     final result = await _signUpUseCase(
@@ -94,6 +95,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
         password: password,
         username: username,
         shopName: shopName,
+        phone: phone,
       ),
     );
     result.fold(
