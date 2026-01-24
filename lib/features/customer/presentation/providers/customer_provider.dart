@@ -61,6 +61,20 @@ class CustomerListNotifier extends AsyncNotifier<List<Customer>> {
     await repository.addCustomer(customer);
     // Refresh list to include new customer
     await refresh();
+    await refresh();
+  }
+
+  Future<void> updateCustomer(Customer customer) async {
+    final repository = ref.read(customerRepositoryProvider);
+    await repository.updateCustomer(customer);
+
+    // Trigger global update - FORCE REFRESH
+    await Future.delayed(const Duration(milliseconds: 1000));
+    ref.read(dashboardStatsProvider.notifier).refresh();
+    ref.read(reportsProvider.notifier).refresh();
+    ref.read(transactionUpdateProvider.notifier).increment();
+
+    await refresh();
   }
 
   Future<void> deleteCustomer(String id) async {

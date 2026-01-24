@@ -4,6 +4,7 @@ import 'package:shop_ledger/features/customer/data/models/customer_model.dart';
 
 abstract class CustomerRemoteDataSource {
   Future<void> addCustomer(CustomerModel customer);
+  Future<void> updateCustomer(CustomerModel customer);
   Future<void> deleteCustomer(String id);
   Future<List<CustomerModel>> getCustomers({String? query});
   Future<CustomerModel?> getCustomerById(String id);
@@ -34,6 +35,20 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
     // customerData['created_at'] = now; // Column might not exist as per previous error, keeping commented out just in case
 
     await supabaseClient.from('customers').insert(customerData);
+  }
+
+  @override
+  Future<void> updateCustomer(CustomerModel customer) async {
+    final customerData = customer.toJson();
+    final now = DateTime.now().toIso8601String();
+    customerData['updated_at'] = now;
+    // user_id is already set on creation, no need to update
+    // created_at should remain same
+
+    await supabaseClient
+        .from('customers')
+        .update(customerData)
+        .eq('id', customer.id!);
   }
 
   @override

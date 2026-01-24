@@ -14,6 +14,11 @@ class SupplierRepositoryImpl implements SupplierRepository {
   }
 
   @override
+  Future<void> updateSupplier(Supplier supplier) async {
+    return remoteDataSource.updateSupplier(SupplierModel.fromEntity(supplier));
+  }
+
+  @override
   Future<void> deleteSupplier(String id) async {
     return remoteDataSource.deleteSupplier(id);
   }

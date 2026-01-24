@@ -6,7 +6,8 @@ import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 
 class AddCustomerPage extends ConsumerStatefulWidget {
-  const AddCustomerPage({super.key});
+  final Customer? customerToEdit;
+  const AddCustomerPage({super.key, this.customerToEdit});
 
   @override
   ConsumerState<AddCustomerPage> createState() => _AddCustomerPageState();
@@ -18,6 +19,16 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
   final _phoneController = TextEditingController();
   final _gstController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.customerToEdit != null) {
+      _nameController.text = widget.customerToEdit!.name;
+      _phoneController.text = widget.customerToEdit!.phone;
+      _gstController.text = widget.customerToEdit!.gstNumber ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -34,6 +45,7 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
 
     try {
       final customer = Customer(
+        id: widget.customerToEdit?.id,
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         gstNumber: _gstController.text.trim().isEmpty
@@ -41,11 +53,21 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
             : _gstController.text.trim(),
       );
 
-      await ref.read(customerListProvider.notifier).addCustomer(customer);
+      if (widget.customerToEdit != null) {
+        await ref.read(customerListProvider.notifier).updateCustomer(customer);
+      } else {
+        await ref.read(customerListProvider.notifier).addCustomer(customer);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Customer added successfully')),
+          SnackBar(
+            content: Text(
+              widget.customerToEdit != null
+                  ? 'Customer updated successfully'
+                  : 'Customer added successfully',
+            ),
+          ),
         );
         context.pop();
       }
@@ -73,8 +95,8 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Add New Customer',
+        title: Text(
+          widget.customerToEdit != null ? 'Edit Customer' : 'Add New Customer',
           style: TextStyle(
             color: AppColors.textDark,
             fontWeight: FontWeight.bold,
@@ -200,7 +222,11 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
                             size: 24,
                           ),
                     label: Text(
-                      _isLoading ? 'Saving...' : 'Save Customer',
+                      _isLoading
+                          ? 'Saving...'
+                          : (widget.customerToEdit != null
+                                ? 'Update Customer'
+                                : 'Save Customer'),
                       style: const TextStyle(
                         color: AppColors.textDark,
                         fontWeight: FontWeight.bold,

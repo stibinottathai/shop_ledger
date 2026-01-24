@@ -9,6 +9,7 @@ import 'package:shop_ledger/features/customer/presentation/pages/payment_in_page
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/sales/presentation/pages/add_sale_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CustomerDetailPage extends ConsumerWidget {
   final Customer customer;
@@ -19,6 +20,17 @@ class CustomerDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(customerStatsProvider(customer.id!));
     final transactionsAsync = ref.watch(transactionListProvider(customer.id!));
+
+    // Watch for customer updates
+    final currentCustomer = ref
+        .watch(customerListProvider)
+        .maybeWhen(
+          data: (customers) => customers.cast<Customer>().firstWhere(
+            (c) => c.id == customer.id,
+            orElse: () => customer,
+          ),
+          orElse: () => customer,
+        );
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -33,7 +45,7 @@ class CustomerDetailPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              customer.name,
+              currentCustomer.name,
               style: const TextStyle(
                 color: AppColors.textDark,
                 fontWeight: FontWeight.bold,
@@ -41,7 +53,7 @@ class CustomerDetailPage extends ConsumerWidget {
               ),
             ),
             Text(
-              customer.phone,
+              currentCustomer.phone,
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: 12,
@@ -62,7 +74,13 @@ class CustomerDetailPage extends ConsumerWidget {
             child: IconButton(
               icon: const Icon(Icons.call, color: AppColors.textDark, size: 20),
               onPressed: () {
-                // Implement call functionality
+                if (currentCustomer.phone.isNotEmpty) {
+                  _makePhoneCall(context, currentCustomer.phone);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No phone number available')),
+                  );
+                }
               },
             ),
           ),
@@ -83,10 +101,16 @@ class CustomerDetailPage extends ConsumerWidget {
               onSelected: (value) {
                 if (value == 'delete') {
                   _showDeleteConfirmation(context, ref);
+                } else if (value == 'edit') {
+                  context.push('/customers/add', extra: currentCustomer);
                 }
               },
               itemBuilder: (BuildContext context) {
                 return [
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text('Edit Customer'),
+                  ),
                   const PopupMenuItem<String>(
                     value: 'delete',
                     child: Text('Delete Customer'),
@@ -506,5 +530,29 @@ class CustomerDetailPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
+    // Remove any non-digit characters for the actual URL
+    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri launchUri = Uri(scheme: 'tel', path: cleanNumber);
+
+    try {
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not launch dialer')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
 }

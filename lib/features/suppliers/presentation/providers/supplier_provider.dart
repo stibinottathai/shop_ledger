@@ -68,6 +68,19 @@ class SupplierListNotifier extends AsyncNotifier<List<Supplier>> {
     await refresh();
   }
 
+  Future<void> updateSupplier(Supplier supplier) async {
+    final repository = ref.read(supplierRepositoryProvider);
+    await repository.updateSupplier(supplier);
+
+    // Trigger global update with forced refresh
+    await Future.delayed(const Duration(milliseconds: 1000));
+    ref.read(dashboardStatsProvider.notifier).refresh();
+    ref.read(reportsProvider.notifier).refresh();
+    ref.read(transactionUpdateProvider.notifier).increment();
+
+    await refresh();
+  }
+
   Future<void> deleteSupplier(String id) async {
     final repository = ref.read(supplierRepositoryProvider);
     await repository.deleteSupplier(id);

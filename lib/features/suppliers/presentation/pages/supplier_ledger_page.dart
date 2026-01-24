@@ -19,23 +19,39 @@ class SupplierLedgerPage extends ConsumerWidget {
       supplierTransactionListProvider(supplier.id!),
     );
 
+    // Watch for supplier updates
+    final currentSupplier = ref
+        .watch(supplierListProvider)
+        .maybeWhen(
+          data: (suppliers) => suppliers.cast<Supplier>().firstWhere(
+            (s) => s.id == supplier.id,
+            orElse: () => supplier,
+          ),
+          orElse: () => supplier,
+        );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              supplier.name,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  currentSupplier.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ],
             ),
-            if (supplier.phone.isNotEmpty)
+            if (currentSupplier.phone.isNotEmpty)
               Text(
-                supplier.phone,
+                currentSupplier.phone,
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -51,10 +67,22 @@ class SupplierLedgerPage extends ConsumerWidget {
             onSelected: (value) {
               if (value == 'delete') {
                 _confirmDelete(context, ref);
+              } else if (value == 'edit') {
+                context.push('/suppliers/add', extra: currentSupplier);
               }
             },
             itemBuilder: (BuildContext context) {
               return [
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, color: AppColors.textDark, size: 20),
+                      SizedBox(width: 8),
+                      Text('Edit', style: TextStyle(color: AppColors.textDark)),
+                    ],
+                  ),
+                ),
                 const PopupMenuItem<String>(
                   value: 'delete',
                   child: Row(

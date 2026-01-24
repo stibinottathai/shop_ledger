@@ -65,7 +65,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'add',
-                    builder: (context, state) => const AddCustomerPage(),
+                    builder: (context, state) {
+                      final customerToEdit = state.extra as Customer?;
+                      return AddCustomerPage(customerToEdit: customerToEdit);
+                    },
                   ),
                   GoRoute(
                     path: ':id',
@@ -102,7 +105,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'add',
-                    builder: (context, state) => const AddSupplierPage(),
+                    builder: (context, state) {
+                      final supplierToEdit = state.extra as Supplier?;
+                      return AddSupplierPage(supplierToEdit: supplierToEdit);
+                    },
                   ),
                   GoRoute(
                     path: ':id',
