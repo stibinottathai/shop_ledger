@@ -263,6 +263,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   Future<void> _performLogout() async {
     await ref.read(authControllerProvider.notifier).signOut();
+    if (mounted) {
+      // Clear navigation stack and go to login
+      context.go('/login');
+    }
   }
 
   void _showLogoutConfirmation() {
