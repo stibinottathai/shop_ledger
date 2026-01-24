@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
-import 'package:shop_ledger/features/customer/presentation/pages/payment_in_page.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
-import 'package:shop_ledger/features/sales/presentation/pages/add_sale_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shop_ledger/core/services/pdf_service.dart';
 
 class CustomerDetailPage extends ConsumerWidget {
   final Customer customer;
@@ -185,14 +186,38 @@ class CustomerDetailPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'OUTSTANDING BALANCE',
-                      style: TextStyle(
-                        color: AppColors.greyText,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'OUTSTANDING BALANCE',
+                          style: TextStyle(
+                            color: AppColors.greyText,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        if (stats.outstandingBalance > 0)
+                          transactionsAsync.maybeWhen(
+                            data: (transactions) => IconButton(
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                              icon: const FaIcon(
+                                FontAwesomeIcons.whatsapp,
+                                color: Color(0xFF25D366),
+                                size: 24,
+                              ),
+                              onPressed: () => _openWhatsApp(
+                                context,
+                                currentCustomer,
+                                transactions,
+                                stats.outstandingBalance,
+                              ),
+                            ),
+                            orElse: () => const SizedBox.shrink(),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -571,6 +596,54 @@ class CustomerDetailPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openWhatsApp(
+    BuildContext context,
+    Customer customer,
+    List<Transaction> transactions,
+    double amount,
+  ) async {
+    if (customer.phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No phone number available')),
+      );
+      return;
+    }
+
+    try {
+      // Generate PDF
+      final pdfService = PdfService();
+      final file = await pdfService.generateTransactionPdf(
+        customer: customer,
+        transactions: transactions,
+        outstandingBalance: amount,
+      );
+
+      // Share via WhatsApp
+      // Note: We can't directly target WhatsApp with a file via URL scheme.
+      // We use Share Plus which opens the system share sheet.
+      // The user can then select WhatsApp.
+      // This is the standard way to share files in Flutter.
+
+      final cleanNumber = customer.phone.replaceAll(RegExp(r'[^\d]'), '');
+      String finalNumber = cleanNumber;
+      if (cleanNumber.length == 10) {
+        finalNumber = '91$cleanNumber';
+      }
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text:
+            'Hello ${customer.name}, please find your account statement attached. Outstanding Balance: ₹${amount.toStringAsFixed(2)}',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error generating/sharing PDF: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
