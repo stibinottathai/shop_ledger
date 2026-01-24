@@ -84,17 +84,70 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                       ),
                     ],
                   ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.settings, size: 20),
-                    color: AppColors.slate600,
-                    onPressed: () {},
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final notifier = ref.read(customerListProvider.notifier);
+                      final currentSort = notifier.sortOption;
+
+                      return PopupMenuButton<CustomerSortOption>(
+                        padding: EdgeInsets.zero,
+                        offset: const Offset(0, 50),
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color:
+                                currentSort == CustomerSortOption.latestCreated
+                                ? Colors.transparent
+                                : AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.filter_list,
+                            size: 20,
+                            color:
+                                currentSort == CustomerSortOption.latestCreated
+                                ? AppColors.slate600
+                                : AppColors.primary,
+                          ),
+                        ),
+                        onSelected: (option) {
+                          notifier.setSortOption(option);
+                        },
+                        itemBuilder: (context) => [
+                          _buildFilterItem(
+                            CustomerSortOption.mostDue,
+                            'Most Due',
+                            currentSort,
+                          ),
+                          _buildFilterItem(
+                            CustomerSortOption.lowestDue,
+                            'Lowest Due',
+                            currentSort,
+                          ),
+                          const PopupMenuDivider(),
+                          _buildFilterItem(
+                            CustomerSortOption.latestUpdated,
+                            'Latest Updated',
+                            currentSort,
+                          ),
+                          _buildFilterItem(
+                            CustomerSortOption.latestCreated,
+                            'Latest Created',
+                            currentSort,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
-
           // Search and List
           Expanded(
             child: Padding(
@@ -152,10 +205,16 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color: AppColors.primary.withOpacity(0.2),
-                              width: 2,
+                              width: 2.5,
                             ),
                           ),
-                          enabledBorder: InputBorder.none,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.slate200,
+                              width: 1.5,
+                            ),
+                          ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 14,
@@ -307,6 +366,35 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  PopupMenuItem<CustomerSortOption> _buildFilterItem(
+    CustomerSortOption option,
+    String label,
+    CustomerSortOption currentSort,
+  ) {
+    final isSelected = option == currentSort;
+    return PopupMenuItem(
+      value: option,
+      child: Row(
+        children: [
+          Icon(
+            isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+            size: 18,
+            color: isSelected ? AppColors.primary : AppColors.slate400,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: isSelected ? AppColors.primary : AppColors.textMain,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }

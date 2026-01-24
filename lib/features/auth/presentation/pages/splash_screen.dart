@@ -81,10 +81,12 @@ class _SplashScreenState extends State<SplashScreen>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF22C55E).withOpacity(0.05), // Green-50ish
+                color: AppColors.primary.withOpacity(
+                  0.05,
+                ), // Updated Teal-50ish
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF22C55E).withOpacity(0.1),
+                    color: AppColors.primary.withOpacity(0.1),
                     blurRadius: 100,
                     spreadRadius: 50,
                   ),
@@ -125,7 +127,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 shape: BoxShape.circle,
                                 gradient: RadialGradient(
                                   colors: [
-                                    const Color(0xFF22C55E).withOpacity(0.25),
+                                    AppColors.primary.withOpacity(0.25),
                                     Colors.transparent,
                                   ],
                                   stops: const [0.0, 0.7],
@@ -139,12 +141,16 @@ class _SplashScreenState extends State<SplashScreen>
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? const Color(0xFF1E293B).withOpacity(0.5)
-                                    : const Color(0xFFF0FDF4), // Green-50
+                                    : AppColors.primary.withOpacity(
+                                        0.05,
+                                      ), // Teal-50
                                 borderRadius: BorderRadius.circular(32),
                                 border: Border.all(
                                   color: isDark
                                       ? const Color(0xFF334155)
-                                      : const Color(0xFFDCFCE7), // Green-100
+                                      : AppColors.primary.withOpacity(
+                                          0.2,
+                                        ), // Teal-100
                                 ),
                                 boxShadow: const [
                                   BoxShadow(
@@ -157,7 +163,7 @@ class _SplashScreenState extends State<SplashScreen>
                               child: const Icon(
                                 Icons.menu_book_rounded, // Ledger icon style
                                 size: 48,
-                                color: Color(0xFF22C55E), // Primary Green
+                                color: AppColors.primary, // Primary Teal
                               ),
                             ),
                           ],
@@ -242,9 +248,9 @@ class _GradientSpinnerPainter extends CustomPainter {
 
     final sweepGradient = const SweepGradient(
       colors: [
-        Color(0xFF22C55E), // Green
+        AppColors.primary, // Teal
         Color(0xFFF59E0B), // Amber
-        Color(0xFF22C55E), // Green
+        AppColors.primary, // Teal
       ],
       stops: [0.0, 0.5, 1.0],
       transform: GradientRotation(-math.pi / 2),

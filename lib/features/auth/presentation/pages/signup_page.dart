@@ -267,6 +267,10 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
                     const SizedBox(height: 40),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
                       onPressed: isLoading ? null : _submit,
                       child: isLoading
                           ? const CircularProgressIndicator(color: Colors.white)

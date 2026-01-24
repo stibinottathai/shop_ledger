@@ -145,12 +145,12 @@ class SupplierLedgerPage extends ConsumerWidget {
                     },
                     icon: const Icon(
                       Icons.add_shopping_cart,
-                      color: AppColors.textDark,
+                      color: Colors.white,
                     ),
                     label: const Text('Purchase'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.textDark,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),

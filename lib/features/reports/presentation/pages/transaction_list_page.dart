@@ -36,13 +36,6 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(allTransactionsProvider);
 
-    // Custom Gradient for Selected Filter (Amber-Green roughly based on request)
-    final gradient = const LinearGradient(
-      colors: [Color(0xFF84CC16), Color(0xFF22C55E)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA), // background-light
       body: SafeArea(
@@ -121,15 +114,11 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                   if (isSelected) {
                     return Container(
                       decoration: BoxDecoration(
-                        gradient: gradient,
+                        color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(999),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF22C55E).withOpacity(0.2),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.2),
+                        ),
                       ),
                       child: Material(
                         color: Colors.transparent,
@@ -145,7 +134,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                               children: [
                                 const Icon(
                                   Icons.check,
-                                  color: Colors.white,
+                                  color: AppColors.primary,
                                   size: 16,
                                 ),
                                 const SizedBox(width: 4),
@@ -153,7 +142,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                                   filter,
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                                    color: AppColors.primary,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -380,65 +369,73 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Left Side
-          Row(
-            children: [
-              Container(
-                height: 48,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    typeLabel,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF111827),
-                    ),
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                  child: Icon(icon, color: iconColor, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        name,
+                        typeLabel,
                         style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF6B7280),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF111827),
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          "•",
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: const Color(0xFF6B7280),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              name,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF6B7280),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ),
-                      Text(
-                        dateStr,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF6B7280),
-                        ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              "•",
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: const Color(0xFF6B7280),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            dateStr,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-
+          const SizedBox(width: 8),
           // Right Side
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -458,8 +455,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color:
-                      statusColor, // Using specific status color or default grey
+                  color: statusColor,
                   letterSpacing: 0.5,
                 ),
               ),

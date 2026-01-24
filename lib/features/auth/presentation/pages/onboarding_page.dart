@@ -128,6 +128,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: _nextPage,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,

@@ -61,7 +61,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Design Colors mapped from HTML request
-    final Color primaryColor = const Color(0xFF3BB549);
+    final Color primaryColor = AppColors.primary;
     final Color bgLight = const Color(0xFFF6F8F6);
     final Color bgDark = const Color(0xFF141E15);
     final Color cardLight = const Color(0xFFFFFFFF);

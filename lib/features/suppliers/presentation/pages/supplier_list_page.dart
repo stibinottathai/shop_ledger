@@ -83,11 +83,65 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                       ),
                     ],
                   ),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.settings, size: 20),
-                    color: AppColors.slate600,
-                    onPressed: () {},
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final notifier = ref.read(supplierListProvider.notifier);
+                      final currentSort = notifier.sortOption;
+
+                      return PopupMenuButton<SupplierSortOption>(
+                        padding: EdgeInsets.zero,
+                        offset: const Offset(0, 50),
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color:
+                                currentSort == SupplierSortOption.latestCreated
+                                ? Colors.transparent
+                                : AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.filter_list,
+                            size: 20,
+                            color:
+                                currentSort == SupplierSortOption.latestCreated
+                                ? AppColors.slate600
+                                : AppColors.primary,
+                          ),
+                        ),
+                        onSelected: (option) {
+                          notifier.setSortOption(option);
+                        },
+                        itemBuilder: (context) => [
+                          _buildFilterItem(
+                            SupplierSortOption.mostToPay,
+                            'Most to Pay',
+                            currentSort,
+                          ),
+                          _buildFilterItem(
+                            SupplierSortOption.lowestToPay,
+                            'Lowest to Pay',
+                            currentSort,
+                          ),
+                          const PopupMenuDivider(),
+                          _buildFilterItem(
+                            SupplierSortOption.latestUpdated,
+                            'Latest Updated',
+                            currentSort,
+                          ),
+                          _buildFilterItem(
+                            SupplierSortOption.latestCreated,
+                            'Latest Created',
+                            currentSort,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
@@ -151,10 +205,16 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color: AppColors.primary.withOpacity(0.2),
-                              width: 2,
+                              width: 2.5,
                             ),
                           ),
-                          enabledBorder: InputBorder.none,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.slate200,
+                              width: 1.5,
+                            ),
+                          ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 14,
@@ -301,6 +361,35 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  PopupMenuItem<SupplierSortOption> _buildFilterItem(
+    SupplierSortOption option,
+    String label,
+    SupplierSortOption currentSort,
+  ) {
+    final isSelected = option == currentSort;
+    return PopupMenuItem(
+      value: option,
+      child: Row(
+        children: [
+          Icon(
+            isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+            size: 18,
+            color: isSelected ? AppColors.primary : AppColors.slate400,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: isSelected ? AppColors.primary : AppColors.textMain,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }

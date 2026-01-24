@@ -236,11 +236,11 @@ class CustomerDetailPage extends ConsumerWidget {
                           extra: customer,
                         );
                       },
-                      icon: const Icon(Icons.add, color: AppColors.textDark),
+                      icon: const Icon(Icons.add, color: Colors.white),
                       label: const Text('Sale'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textDark,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -258,14 +258,11 @@ class CustomerDetailPage extends ConsumerWidget {
                           extra: customer,
                         );
                       },
-                      icon: const Icon(
-                        Icons.payments,
-                        color: AppColors.textDark,
-                      ),
+                      icon: const Icon(Icons.payments, color: Colors.white),
                       label: const Text('Payment In'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textDark,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
