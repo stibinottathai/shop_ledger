@@ -8,6 +8,7 @@ abstract class TransactionRemoteDataSource {
     String? customerId,
     String? supplierId,
   });
+  Future<void> deleteTransaction(String id);
 }
 
 class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
@@ -72,5 +73,10 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
               (data as List).map((e) => TransactionModel.fromJson(e)).toList(),
         );
     return response;
+  }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    await supabaseClient.from('transactions').delete().eq('id', id);
   }
 }

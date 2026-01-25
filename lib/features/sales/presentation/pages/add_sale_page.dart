@@ -7,6 +7,21 @@ import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
+import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
+import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
+
+class SelectedSaleItem {
+  final Item item;
+  final double quantity;
+  final int count;
+  final double totalPrice;
+
+  SelectedSaleItem({
+    required this.item,
+    required this.quantity,
+    required this.count,
+  }) : totalPrice = item.pricePerKg * quantity;
+}
 
 class AddSalePage extends ConsumerStatefulWidget {
   final Customer customer;
@@ -17,6 +32,7 @@ class AddSalePage extends ConsumerStatefulWidget {
 }
 
 class _AddSalePageState extends ConsumerState<AddSalePage> {
+  // Common
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _dateController = TextEditingController(
@@ -25,20 +41,121 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
 
+  // Itemized Mode
+  bool _isManualMode = true;
+  final List<SelectedSaleItem> _selectedItems = [];
+
+  // Item Form
+  Item? _selectedInventoryItem;
+  final TextEditingController _itemQtyController = TextEditingController();
+  final TextEditingController _itemCountController = TextEditingController(
+    text: '1',
+  );
+
   @override
   void dispose() {
     _amountController.dispose();
     _detailsController.dispose();
     _dateController.dispose();
+    _itemQtyController.dispose();
+    _itemCountController.dispose();
     super.dispose();
+  }
+
+  void _calculateTotal() {
+    if (_isManualMode) return;
+
+    double total = 0;
+    for (var i in _selectedItems) {
+      total += i.totalPrice;
+    }
+    _amountController.text = total.toStringAsFixed(2);
+  }
+
+  void _incrementCount() {
+    int current = int.tryParse(_itemCountController.text) ?? 1;
+    setState(() {
+      _itemCountController.text = (current + 1).toString();
+    });
+  }
+
+  void _decrementCount() {
+    int current = int.tryParse(_itemCountController.text) ?? 1;
+    if (current > 1) {
+      setState(() {
+        _itemCountController.text = (current - 1).toString();
+      });
+    }
+  }
+
+  void _addItemToList() {
+    if (_selectedInventoryItem == null) return;
+
+    final qtyText = _itemQtyController.text;
+    if (qtyText.isEmpty) return;
+
+    final qty = double.tryParse(qtyText);
+    if (qty == null || qty <= 0) return;
+
+    final count = int.tryParse(_itemCountController.text) ?? 1;
+
+    setState(() {
+      _selectedItems.add(
+        SelectedSaleItem(
+          item: _selectedInventoryItem!,
+          quantity: qty,
+          count: count,
+        ),
+      );
+
+      // Reset item form
+      _selectedInventoryItem = null;
+      _itemQtyController.clear();
+      _itemCountController.text = '1';
+
+      _calculateTotal();
+    });
+  }
+
+  void _deleteItemFromList(int index) {
+    setState(() {
+      _selectedItems.removeAt(index);
+      _calculateTotal();
+    });
+  }
+
+  String _constructItemizedDetails() {
+    final buffer = StringBuffer();
+    // Manual note first if any
+    if (_detailsController.text.isNotEmpty) {
+      buffer.write('${_detailsController.text}\n');
+    }
+
+    // Items
+    final itemsList = _selectedItems
+        .map((e) {
+          // Format: etha (30/kg) 10kg [5 qty] = 300
+          return '${e.item.name} (${e.item.pricePerKg.toStringAsFixed(0)}/kg) ${e.quantity}kg [${e.count} Nos] = ${e.totalPrice.toStringAsFixed(0)}';
+        })
+        .join('\n');
+
+    buffer.write(itemsList);
+    return buffer.toString();
   }
 
   Future<void> _saveSale() async {
     final amountText = _amountController.text;
-    if (amountText.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter an amount')));
+    if (amountText.isEmpty || double.tryParse(amountText) == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid amount')),
+      );
+      return;
+    }
+
+    if (!_isManualMode && _selectedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one item')),
+      );
       return;
     }
 
@@ -47,14 +164,19 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
     });
 
     try {
+      // Construct details
+      String finalDetails = _isManualMode
+          ? (_detailsController.text.isNotEmpty
+                ? _detailsController.text
+                : 'Sale')
+          : _constructItemizedDetails();
+
       final transaction = Transaction(
         customerId: widget.customer.id!,
         amount: double.parse(amountText),
         type: TransactionType.sale,
         date: _selectedDate,
-        details: _detailsController.text.isNotEmpty
-            ? _detailsController.text
-            : 'Sale',
+        details: finalDetails,
       );
 
       await ref
@@ -110,10 +232,93 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // Mode Toggle
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _isManualMode = true;
+                        if (_amountController.text.isNotEmpty) {
+                          // Keep existing value or clear? Keep.
+                        }
+                      }),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _isManualMode
+                              ? Colors.white
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: _isManualMode
+                              ? [
+                                  const BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Manual Entry',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _isManualMode
+                                ? AppColors.textDark
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _isManualMode = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !_isManualMode
+                              ? Colors.white
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: !_isManualMode
+                              ? [
+                                  const BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Select Items',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: !_isManualMode
+                                ? AppColors.textDark
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             // Customer Display
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: AppColors.primary.withOpacity(0.05),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +336,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                     widget.customer.name,
                     style: const TextStyle(
                       color: AppColors.textDark,
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -140,6 +345,200 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
             ),
 
             const SizedBox(height: 24),
+
+            if (!_isManualMode) ...[
+              // Item Selection UI
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final inventoryAsync = ref.watch(inventoryProvider);
+                    return inventoryAsync.when(
+                      data: (items) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            DropdownButtonFormField<Item>(
+                              value: _selectedInventoryItem,
+                              decoration: InputDecoration(
+                                labelText: 'Select Item',
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              items: items.map((item) {
+                                return DropdownMenuItem(
+                                  value: item,
+                                  child: Text(
+                                    '${item.name} (₹${item.pricePerKg}/kg)',
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedInventoryItem = val;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _itemQtyController,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    decoration: InputDecoration(
+                                      labelText: 'Quantity (Kg)',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Count Stepper
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.grey),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.remove,
+                                          size: 20,
+                                        ),
+                                        onPressed: _decrementCount,
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(8),
+                                      ),
+                                      SizedBox(
+                                        width: 40,
+                                        child: TextField(
+                                          controller: _itemCountController,
+                                          textAlign: TextAlign.center,
+                                          keyboardType: TextInputType.number,
+                                          decoration: const InputDecoration(
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.add, size: 20),
+                                        onPressed: _incrementCount,
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(8),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _addItemToList,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.textDark,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Add Item',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, s) => Text('Error loading items: $e'),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Selected Items List
+              if (_selectedItems.isNotEmpty)
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _selectedItems.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    final sItem = _selectedItems[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      elevation: 0,
+                      color: Colors.grey[50],
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(color: Colors.grey[200]!),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          sItem.item.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          '${sItem.quantity} kg (${sItem.count} Nos) x ₹${sItem.item.pricePerKg}',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '₹${sItem.totalPrice.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete,
+                                size: 20,
+                                color: Colors.red,
+                              ),
+                              onPressed: () => _deleteItemFromList(index),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+              const SizedBox(height: 24),
+            ],
 
             // Total Amount Input
             Padding(
@@ -151,7 +550,9 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                 isBold: true,
                 fontSize: 24,
                 prefixText: '₹ ',
+                // Disable editing if in item mode
                 controller: _amountController,
+                readOnly: !_isManualMode,
               ),
             ),
 
@@ -228,7 +629,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: _buildTextField(
                 label: 'Details (Optional)',
-                hint: 'Enter items or notes...',
+                hint: 'Enter notes...',
                 maxLines: 4,
                 controller: _detailsController,
               ),
@@ -292,6 +693,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
     bool isBold = false,
     double fontSize = 16,
     String? prefixText,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,6 +708,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
         ),
         const SizedBox(height: 8),
         TextField(
+          readOnly: readOnly,
           keyboardType: keyboardType,
           maxLines: maxLines,
           controller: controller,

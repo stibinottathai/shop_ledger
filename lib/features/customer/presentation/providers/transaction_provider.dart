@@ -79,6 +79,27 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
       rethrow;
     }
   }
+
+  Future<void> deleteTransaction(String transactionId) async {
+    state = const AsyncLoading();
+    try {
+      final repository = ref.read(transactionRepositoryProvider);
+      await repository.deleteTransaction(transactionId);
+
+      // Small delay for DB
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Force refresh
+      ref.read(dashboardStatsProvider.notifier).refresh();
+      ref.read(reportsProvider.notifier).refresh();
+      ref.read(transactionUpdateProvider.notifier).increment();
+
+      state = await AsyncValue.guard(() => _fetchTransactions());
+    } catch (e, stack) {
+      state = AsyncError(e, stack);
+      rethrow;
+    }
+  }
 }
 
 // Stats Provider (Dependent on Transaction List)

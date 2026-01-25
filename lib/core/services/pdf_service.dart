@@ -13,6 +13,7 @@ class PdfService {
     required List<Transaction> transactions,
     required double outstandingBalance,
     String? shopName,
+    bool isSingleReceipt = false,
   }) async {
     final pdf = pw.Document();
 
@@ -43,6 +44,7 @@ class PdfService {
               customer,
               dateFormatter.format(DateTime.now()),
               shopName,
+              isSingleReceipt: isSingleReceipt,
             ),
             pw.SizedBox(height: 20),
             _buildSummary(customer, outstandingBalance, currencyFormatter),
@@ -67,7 +69,12 @@ class PdfService {
     return file;
   }
 
-  pw.Widget _buildHeader(Customer customer, String date, String? shopName) {
+  pw.Widget _buildHeader(
+    Customer customer,
+    String date,
+    String? shopName, {
+    bool isSingleReceipt = false,
+  }) {
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
@@ -79,7 +86,7 @@ class PdfService {
               style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
             ),
             pw.Text(
-              'Statement of Accounts',
+              isSingleReceipt ? 'Transaction Receipt' : 'Statement of Accounts',
               style: const pw.TextStyle(fontSize: 16, color: PdfColors.grey700),
             ),
           ],

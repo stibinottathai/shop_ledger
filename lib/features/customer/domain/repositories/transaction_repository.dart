@@ -7,4 +7,5 @@ abstract class TransactionRepository {
     String? supplierId,
   });
   Future<List<Transaction>> getAllTransactions();
+  Future<void> deleteTransaction(String id);
 }

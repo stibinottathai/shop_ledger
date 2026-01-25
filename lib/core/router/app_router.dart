@@ -7,12 +7,14 @@ import 'package:shop_ledger/features/auth/presentation/pages/splash_screen.dart'
 import 'package:shop_ledger/features/profile/presentation/pages/profile_page.dart';
 
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
+import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/add_customer_page.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/customer_detail_page.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/customer_list_page.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/payment_in_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/home_page.dart';
+import 'package:shop_ledger/features/customer/presentation/pages/transaction_detail_page.dart';
 
 import 'package:shop_ledger/features/reports/presentation/pages/reports_page.dart';
 import 'package:shop_ledger/features/sales/presentation/pages/add_sale_page.dart';
@@ -106,6 +108,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           }
                           final customer = state.extra as Customer;
                           return PaymentInPage(customer: customer);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'transaction',
+                        builder: (context, state) {
+                          final extras = state.extra as Map<String, dynamic>?;
+                          if (extras == null) return const CustomerListPage();
+
+                          final customer = extras['customer'] as Customer;
+                          final transaction =
+                              extras['transaction'] as Transaction;
+                          return TransactionDetailPage(
+                            customer: customer,
+                            transaction: transaction,
+                          );
                         },
                       ),
                     ],
