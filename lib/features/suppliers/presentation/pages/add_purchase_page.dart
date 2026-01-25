@@ -73,15 +73,17 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
     super.dispose();
   }
 
+  // Calculate total for Select Items mode
+  double _calculatedTotal = 0;
+
   void _calculateTotal() {
     double total = 0;
     for (var item in _addedItems) {
       total += item.total;
     }
-    // Only update controller if we are in Select Items mode
-    if (_entryMode == 1) {
-      _amountController.text = total.toStringAsFixed(2);
-    }
+    setState(() {
+      _calculatedTotal = total;
+    });
   }
 
   void _addItem() {
@@ -141,11 +143,27 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
   }
 
   Future<void> _savePurchase() async {
-    final amountText = _amountController.text;
-    if (amountText.isEmpty || double.tryParse(amountText) == 0) {
+    double amount = 0;
+
+    if (_entryMode == 0) {
+      // Manual Mode
+      final amountText = _amountController.text;
+      if (amountText.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please enter an amount')));
+        return;
+      }
+      amount = double.tryParse(amountText) ?? 0;
+    } else {
+      // Select Items Mode
+      amount = _calculatedTotal;
+    }
+
+    if (amount == 0) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter an amount')));
+      ).showSnackBar(const SnackBar(content: Text('Amount cannot be zero')));
       return;
     }
 
@@ -165,7 +183,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
 
       final transaction = Transaction(
         supplierId: widget.supplier.id,
-        amount: double.parse(amountText),
+        amount: amount,
         type: TransactionType.purchase,
         date: _selectedDate,
         details: details,
@@ -296,43 +314,59 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: _amountController,
-                    readOnly: _entryMode == 1, // ReadOnly in Select Items mode
-                    onChanged: (val) {
-                      if (_entryMode == 0) {
-                        _manualAmount = val;
-                      }
-                    },
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    style: GoogleFonts.inter(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[800], // Darker text for readability
-                    ),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: _entryMode == 1
-                          ? Colors.grey[100]
-                          : Colors.white,
-                      hintText: '0.00',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+
+                  if (_entryMode == 0)
+                    TextField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      style: GoogleFonts.inter(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[800],
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        hintText: '0.00',
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 16,
                       ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Text(
+                        "₹${_calculatedTotal.toStringAsFixed(2)}",
+                        style: GoogleFonts.inter(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
                     ),
-                  ),
+
                   const SizedBox(height: 16),
 
                   Text(
@@ -462,8 +496,8 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
               _amountController.text = _manualAmount;
             } else {
               // Switched to Select Items Mode
-              // Save manual amount first? No, we update _manualAmount on change.
-              // Just calculate total from items
+              // Clear controller to ensure strict separation
+              _amountController.clear();
               _calculateTotal();
             }
           }
