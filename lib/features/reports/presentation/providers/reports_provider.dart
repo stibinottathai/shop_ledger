@@ -173,4 +173,9 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
       buckets[5 - monthDiff] += amount;
     }
   }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _calculateReports());
+  }
 }

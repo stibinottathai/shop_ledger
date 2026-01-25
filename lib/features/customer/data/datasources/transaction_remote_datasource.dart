@@ -8,6 +8,7 @@ abstract class TransactionRemoteDataSource {
     String? customerId,
     String? supplierId,
   });
+  Future<void> deleteTransaction(String id);
 }
 
 class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
@@ -47,7 +48,11 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
     String? customerId,
     String? supplierId,
   }) async {
-    var query = supabaseClient.from('transactions').select();
+    var query = supabaseClient
+        .from('transactions')
+        .select(
+          '*, customers:customers!fk_transactions_customers(name), suppliers:suppliers!fk_transactions_suppliers(name)',
+        );
 
     // Filter by current user
     final user = supabaseClient.auth.currentUser;
@@ -68,5 +73,10 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
               (data as List).map((e) => TransactionModel.fromJson(e)).toList(),
         );
     return response;
+  }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    await supabaseClient.from('transactions').delete().eq('id', id);
   }
 }

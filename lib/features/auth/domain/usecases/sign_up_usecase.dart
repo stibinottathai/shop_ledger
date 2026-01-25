@@ -17,6 +17,7 @@ class SignUpUseCase implements UseCase<AuthResponse, SignUpParams> {
       password: params.password,
       username: params.username,
       shopName: params.shopName,
+      phone: params.phone,
     );
   }
 }
@@ -26,12 +27,14 @@ class SignUpParams extends Equatable {
   final String password;
   final String username;
   final String shopName;
+  final String phone;
 
   const SignUpParams({
     required this.email,
     required this.password,
     required this.username,
     required this.shopName,
+    required this.phone,
   });
 
   @override

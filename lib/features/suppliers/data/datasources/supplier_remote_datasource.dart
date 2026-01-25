@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 abstract class SupplierRemoteDataSource {
   Future<void> addSupplier(SupplierModel supplier);
+  Future<void> updateSupplier(SupplierModel supplier);
   Future<void> deleteSupplier(String id);
   Future<List<SupplierModel>> getSuppliers({String? query});
   Future<SupplierModel?> getSupplierById(String id);
@@ -32,6 +33,18 @@ class SupplierRemoteDataSourceImpl implements SupplierRemoteDataSource {
     supplierData['updated_at'] = now;
 
     await supabaseClient.from('suppliers').insert(supplierData);
+  }
+
+  @override
+  Future<void> updateSupplier(SupplierModel supplier) async {
+    final supplierData = supplier.toJson();
+    final now = DateTime.now().toIso8601String();
+    supplierData['updated_at'] = now;
+
+    await supabaseClient
+        .from('suppliers')
+        .update(supplierData)
+        .eq('id', supplier.id!);
   }
 
   @override

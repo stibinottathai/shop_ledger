@@ -50,6 +50,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
             password: _passwordController.text.trim(),
             username: _ownerNameController.text.trim(),
             shopName: _shopNameController.text.trim(),
+            phone: _phoneController.text.trim(),
           );
     }
   }
@@ -115,7 +116,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Start managing your wholesale banana inventory',
+                      'Start managing your Business More Efficiently',
                       style: TextStyle(color: AppColors.greyText, fontSize: 13),
                     ),
                   ],
@@ -158,7 +159,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     _buildLabel('Phone Number'),
                     _buildTextField(
                       controller: _phoneController,
-                      hint: '+1 (555) 000-0000',
+                      hint: '+91 9495622667',
                       inputType: TextInputType.phone,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -266,6 +267,10 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
                     const SizedBox(height: 40),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
                       onPressed: isLoading ? null : _submit,
                       child: isLoading
                           ? const CircularProgressIndicator(color: Colors.white)

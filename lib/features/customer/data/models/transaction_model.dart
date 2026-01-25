@@ -10,6 +10,8 @@ class TransactionModel extends Transaction {
     required super.date,
     super.details,
     super.createdAt,
+    super.customerName,
+    super.supplierName,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,12 @@ class TransactionModel extends Transaction {
       details: json['details'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
+          : null,
+      customerName: json['customers'] != null
+          ? json['customers']['name']
+          : null,
+      supplierName: json['suppliers'] != null
+          ? json['suppliers']['name']
           : null,
     );
   }
@@ -80,6 +88,8 @@ class TransactionModel extends Transaction {
       date: transaction.date,
       details: transaction.details,
       createdAt: transaction.createdAt,
+      customerName: transaction.customerName,
+      supplierName: transaction.supplierName,
     );
   }
 }

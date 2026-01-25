@@ -15,6 +15,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
+  Future<void> updateCustomer(Customer customer) async {
+    final customerModel = CustomerModel.fromEntity(customer);
+    await remoteDataSource.updateCustomer(customerModel);
+  }
+
+  @override
   Future<void> deleteCustomer(String id) async {
     await remoteDataSource.deleteCustomer(id);
   }

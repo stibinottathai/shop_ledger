@@ -33,6 +33,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
     required String username,
     required String shopName,
+    required String phone,
   }) async {
     try {
       final response = await remoteDataSource.signUp(
@@ -40,6 +41,7 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
         username: username,
         shopName: shopName,
+        phone: phone,
       );
       return Right(response);
     } on AuthException catch (e) {

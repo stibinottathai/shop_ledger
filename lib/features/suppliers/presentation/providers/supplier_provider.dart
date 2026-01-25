@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/suppliers/data/datasources/supplier_remote_datasource.dart';
 import 'package:shop_ledger/features/suppliers/data/repositories/supplier_repository_impl.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/suppliers/domain/repositories/supplier_repository.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Data Source Provider
@@ -27,40 +30,170 @@ final supplierListProvider =
       return SupplierListNotifier();
     });
 
+enum SupplierSortOption { mostToPay, lowestToPay, latestUpdated, latestCreated }
+
 class SupplierListNotifier extends AsyncNotifier<List<Supplier>> {
+  SupplierSortOption _sortOption = SupplierSortOption.latestCreated;
+  SupplierSortOption get sortOption => _sortOption;
+
   @override
   Future<List<Supplier>> build() async {
     // Watch auth state to force refresh on user change
     ref.watch(authStateProvider);
-    return _fetchSuppliers();
+    ref.watch(transactionUpdateProvider);
+
+    // Load saved sort option
+    final prefs = await SharedPreferences.getInstance();
+    final savedSort = prefs.getString('supplier_sort_option');
+    if (savedSort != null) {
+      _sortOption = SupplierSortOption.values.firstWhere(
+        (e) => e.name == savedSort,
+        orElse: () => SupplierSortOption.latestCreated,
+      );
+    }
+
+    return _fetchAndSortSuppliers();
   }
 
-  Future<List<Supplier>> _fetchSuppliers({String? query}) async {
+  Future<List<Supplier>> _fetchAndSortSuppliers({String? query}) async {
     final repository = ref.read(supplierRepositoryProvider);
-    return await repository
+    var suppliers = await repository
         .getSuppliers(query: query)
         .timeout(const Duration(seconds: 10));
+
+    // Apply Sorting
+    if (_sortOption == SupplierSortOption.latestCreated) {
+      suppliers.sort((a, b) {
+        final aDate = a.createdAt ?? DateTime(0);
+        final bDate = b.createdAt ?? DateTime(0);
+        return bDate.compareTo(aDate); // Descending
+      });
+      return suppliers;
+    }
+
+    // For other sorts, we need transaction data
+    final transactionRepo = ref.read(transactionRepositoryProvider);
+    final transactions = await transactionRepo.getAllTransactions();
+
+    // Group transactions by supplier
+    final Map<String, List<Transaction>> supplierTransactions = {};
+    for (var tx in transactions) {
+      if (tx.supplierId != null) {
+        supplierTransactions.putIfAbsent(tx.supplierId!, () => []).add(tx);
+      }
+    }
+
+    suppliers.sort((a, b) {
+      final aTx = supplierTransactions[a.id] ?? [];
+      final bTx = supplierTransactions[b.id] ?? [];
+
+      switch (_sortOption) {
+        case SupplierSortOption.mostToPay:
+        case SupplierSortOption.lowestToPay:
+          final aBalance = _calculateBalance(aTx);
+          final bBalance = _calculateBalance(bTx);
+          if (_sortOption == SupplierSortOption.mostToPay) {
+            return bBalance.compareTo(aBalance); // Descending
+          } else {
+            return aBalance.compareTo(bBalance); // Ascending
+          }
+
+        case SupplierSortOption.latestUpdated:
+          final aLast = _getLastTransactionDate(aTx, a.createdAt);
+          final bLast = _getLastTransactionDate(bTx, b.createdAt);
+          return bLast.compareTo(aLast); // Descending
+
+        case SupplierSortOption.latestCreated:
+          return 0;
+      }
+    });
+
+    return suppliers;
+  }
+
+  double _calculateBalance(List<Transaction> transactions) {
+    double purchased = 0;
+    double paid = 0;
+    for (var t in transactions) {
+      if (t.type == TransactionType.purchase) {
+        purchased += t.amount;
+      } else if (t.type == TransactionType.paymentOut) {
+        paid += t.amount;
+      }
+    }
+    return purchased - paid;
+  }
+
+  DateTime _getLastTransactionDate(
+    List<Transaction> transactions,
+    DateTime? created,
+  ) {
+    if (transactions.isEmpty) return created ?? DateTime(0);
+    return transactions
+        .map((e) => e.date)
+        .reduce((curr, next) => curr.isAfter(next) ? curr : next);
+  }
+
+  Future<void> setSortOption(SupplierSortOption option) async {
+    if (_sortOption == option) return;
+    _sortOption = option;
+
+    // Save preference
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('supplier_sort_option', option.name);
+
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _fetchAndSortSuppliers());
   }
 
   Future<void> searchSuppliers(String query) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _fetchSuppliers(query: query));
+    state = await AsyncValue.guard(() => _fetchAndSortSuppliers(query: query));
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _fetchSuppliers());
+    state = await AsyncValue.guard(() => _fetchAndSortSuppliers());
   }
 
   Future<void> addSupplier(Supplier supplier) async {
     final repository = ref.read(supplierRepositoryProvider);
     await repository.addSupplier(supplier);
+
+    // Trigger global update (good practice for consistency, though less critical than delete)
+    // Small delay to ensure DB consistency
+    await Future.delayed(const Duration(milliseconds: 1000));
+    ref.read(dashboardStatsProvider.notifier).refresh();
+    ref.read(reportsProvider.notifier).refresh();
+    ref.read(transactionUpdateProvider.notifier).increment();
+
+    await refresh();
+  }
+
+  Future<void> updateSupplier(Supplier supplier) async {
+    final repository = ref.read(supplierRepositoryProvider);
+    await repository.updateSupplier(supplier);
+
+    // Trigger global update with forced refresh
+    await Future.delayed(const Duration(milliseconds: 1000));
+    ref.read(dashboardStatsProvider.notifier).refresh();
+    ref.read(reportsProvider.notifier).refresh();
+    ref.read(transactionUpdateProvider.notifier).increment();
+
     await refresh();
   }
 
   Future<void> deleteSupplier(String id) async {
     final repository = ref.read(supplierRepositoryProvider);
     await repository.deleteSupplier(id);
+
+    // Trigger global update
+    // Small delay to ensure DB consistency
+    await Future.delayed(const Duration(milliseconds: 1000));
+    ref.read(dashboardStatsProvider.notifier).refresh();
+    ref.read(reportsProvider.notifier).refresh();
+    ref.read(transactionUpdateProvider.notifier).increment();
+
     await refresh();
   }
 }

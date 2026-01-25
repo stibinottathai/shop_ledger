@@ -5,6 +5,8 @@ import 'package:shop_ledger/features/customer/presentation/providers/transaction
 class DashboardStats {
   final double todaysSale;
   final double todaysCollection;
+  final double todaysPurchase;
+  final double todaysPaymentOut;
   final double totalSales;
   final double totalPurchases;
   final double toGet;
@@ -14,6 +16,8 @@ class DashboardStats {
   const DashboardStats({
     required this.todaysSale,
     required this.todaysCollection,
+    required this.todaysPurchase,
+    required this.todaysPaymentOut,
     required this.totalSales,
     required this.totalPurchases,
     required this.toGet,
@@ -42,6 +46,8 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
 
     double todaysSale = 0;
     double todaysCollection = 0;
+    double todaysPurchase = 0;
+    double todaysPaymentOut = 0;
     double totalSales = 0;
     double totalPurchases = 0;
     double totalPaymentIn = 0;
@@ -63,6 +69,10 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
           todaysSale += t.amount;
         } else if (t.type == TransactionType.paymentIn) {
           todaysCollection += t.amount;
+        } else if (t.type == TransactionType.purchase) {
+          todaysPurchase += t.amount;
+        } else if (t.type == TransactionType.paymentOut) {
+          todaysPaymentOut += t.amount;
         }
       }
 
@@ -104,6 +114,8 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
     return DashboardStats(
       todaysSale: todaysSale,
       todaysCollection: todaysCollection,
+      todaysPurchase: todaysPurchase,
+      todaysPaymentOut: todaysPaymentOut,
       totalSales: totalSales,
       totalPurchases: totalPurchases,
       toGet: totalSales - totalPaymentIn,

@@ -6,7 +6,8 @@ import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
 
 class AddSupplierPage extends ConsumerStatefulWidget {
-  const AddSupplierPage({super.key});
+  final Supplier? supplierToEdit;
+  const AddSupplierPage({super.key, this.supplierToEdit});
 
   @override
   ConsumerState<AddSupplierPage> createState() => _AddSupplierPageState();
@@ -18,6 +19,16 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
   final _phoneController = TextEditingController();
   final _gstController = TextEditingController();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.supplierToEdit != null) {
+      _nameController.text = widget.supplierToEdit!.name;
+      _phoneController.text = widget.supplierToEdit!.phone;
+      _gstController.text = widget.supplierToEdit!.gstNumber ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -34,6 +45,7 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
 
     try {
       final supplier = Supplier(
+        id: widget.supplierToEdit?.id,
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         gstNumber: _gstController.text.trim().isEmpty
@@ -41,11 +53,21 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
             : _gstController.text.trim(),
       );
 
-      await ref.read(supplierListProvider.notifier).addSupplier(supplier);
+      if (widget.supplierToEdit != null) {
+        await ref.read(supplierListProvider.notifier).updateSupplier(supplier);
+      } else {
+        await ref.read(supplierListProvider.notifier).addSupplier(supplier);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Supplier added successfully')),
+          SnackBar(
+            content: Text(
+              widget.supplierToEdit != null
+                  ? 'Supplier updated successfully'
+                  : 'Supplier added successfully',
+            ),
+          ),
         );
         context.pop();
       }
@@ -73,8 +95,8 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Add New Supplier',
+        title: Text(
+          widget.supplierToEdit != null ? 'Edit Supplier' : 'Add New Supplier',
           style: TextStyle(
             color: AppColors.textDark,
             fontWeight: FontWeight.bold,
@@ -111,7 +133,7 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
                         ),
                         child: const Icon(
                           Icons.local_shipping,
-                          color: AppColors.textDark,
+                          color: Colors.white,
                           size: 24,
                         ),
                       ),
@@ -191,20 +213,24 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.textDark,
+                              color: Colors.white,
                             ),
                           )
                         : const Icon(
                             Icons.check_circle,
-                            color: AppColors.textDark,
+                            color: Colors.white,
                             size: 24,
                           ),
                     label: Text(
-                      _isLoading ? 'Saving...' : 'Save Supplier',
+                      _isLoading
+                          ? 'Saving...'
+                          : (widget.supplierToEdit != null
+                                ? 'Update Supplier'
+                                : 'Save Supplier'),
                       style: const TextStyle(
-                        color: AppColors.textDark,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontSize: 16,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(

@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/customer/data/datasources/transaction_remote_datasource.dart';
 import 'package:shop_ledger/features/customer/data/repositories/transaction_repository_impl.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
@@ -63,7 +65,33 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
 
-      // Trigger global update
+      // Small delay to ensure DB consistency before reading back for dashboard
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      // Trigger global update - FORCE REFRESH
+      ref.read(dashboardStatsProvider.notifier).refresh();
+      ref.read(reportsProvider.notifier).refresh();
+      ref.read(transactionUpdateProvider.notifier).increment();
+
+      state = await AsyncValue.guard(() => _fetchTransactions());
+    } catch (e, stack) {
+      state = AsyncError(e, stack);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteTransaction(String transactionId) async {
+    state = const AsyncLoading();
+    try {
+      final repository = ref.read(transactionRepositoryProvider);
+      await repository.deleteTransaction(transactionId);
+
+      // Small delay for DB
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Force refresh
+      ref.read(dashboardStatsProvider.notifier).refresh();
+      ref.read(reportsProvider.notifier).refresh();
       ref.read(transactionUpdateProvider.notifier).increment();
 
       state = await AsyncValue.guard(() => _fetchTransactions());

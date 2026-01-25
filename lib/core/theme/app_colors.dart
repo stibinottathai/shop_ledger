@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFF10b981);
+  static const Color primary = Color(0xFF016B61); // Updated Teal
   static const Color primarySubtle = Color(0xFFecfdf5);
   static const Color danger = Color(0xFFef4444);
   static const Color dangerSubtle = Color(0xFFfef2f2);
   static const Color surface = Color(0xFFffffff);
   static const Color background = Color(0xFFffffff);
   static const Color subtleBorder = Color(0xFFf1f5f9);
-  static const Color textMain = Color(0xFF0f172a);
+  static const Color textMain = Color(0xFF0f172A);
   static const Color textMuted = Color(0xFF64748b);
 
   static const Color orange400 = Color(0xFFfb923c);
@@ -32,8 +32,12 @@ class AppColors {
   static const Color teal600 = Color(0xFF0d9488);
   static const Color indigo500 = Color(0xFF6366f1);
 
-  // Legacy mappings (can be deprecated later)
-  static const Color primaryDark = Color(0xFF16A34A);
+  // Legacy mappings (Restored & Updated)
+  // static const Color primary = Color(0xFF3BB44A); // Handled above
+  static const Color primaryDark = Color(0xFF2E8F3A);
+  static const Color primaryLight = Color(0xFFECFDF5);
+  static const Color accent = Color(0xFFEF4444);
+
   static const Color backgroundLight = Color(0xFFF6F8F6);
   static const Color backgroundDark = Color(0xFF102215);
   static const Color textDark = Color(0xFF111813);

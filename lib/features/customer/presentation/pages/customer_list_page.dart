@@ -7,6 +7,7 @@ import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
+import 'package:shop_ledger/features/inventory/presentation/widgets/manage_items_sheet.dart';
 
 class CustomerListPage extends ConsumerStatefulWidget {
   const CustomerListPage({super.key});
@@ -84,17 +85,108 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                       ),
                     ],
                   ),
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final notifier = ref.read(customerListProvider.notifier);
+                      final currentSort = notifier.sortOption;
+
+                      return PopupMenuButton<CustomerSortOption>(
+                        padding: EdgeInsets.zero,
+                        offset: const Offset(0, 50),
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color:
+                                currentSort == CustomerSortOption.latestCreated
+                                ? Colors.transparent
+                                : AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.filter_list,
+                            size: 20,
+                            color:
+                                currentSort == CustomerSortOption.latestCreated
+                                ? AppColors.slate600
+                                : AppColors.primary,
+                          ),
+                        ),
+                        onSelected: (option) {
+                          notifier.setSortOption(option);
+                        },
+                        itemBuilder: (context) => [
+                          _buildFilterItem(
+                            CustomerSortOption.mostDue,
+                            'Most Due',
+                            currentSort,
+                          ),
+                          _buildFilterItem(
+                            CustomerSortOption.lowestDue,
+                            'Lowest Due',
+                            currentSort,
+                          ),
+                          const PopupMenuDivider(),
+                          _buildFilterItem(
+                            CustomerSortOption.latestUpdated,
+                            'Latest Updated',
+                            currentSort,
+                          ),
+                          _buildFilterItem(
+                            CustomerSortOption.latestCreated,
+                            'Latest Created',
+                            currentSort,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12), // Spacing
+                Container(
+                  height: 36,
+                  width: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.slate50,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.slate100),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color.fromRGBO(0, 0, 0, 0.05),
+                        offset: Offset(0, 1),
+                        blurRadius: 3,
+                      ),
+                    ],
+                  ),
                   child: IconButton(
+                    icon: const Icon(
+                      Icons.add,
+                      size: 20,
+                      color: AppColors.slate600,
+                    ),
                     padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.settings, size: 20),
-                    color: AppColors.slate600,
-                    onPressed: () {},
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.white,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        builder: (context) => const ManageItemsSheet(),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
-
           // Search and List
           Expanded(
             child: Padding(
@@ -152,10 +244,16 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color: AppColors.primary.withOpacity(0.2),
-                              width: 2,
+                              width: 2.5,
                             ),
                           ),
-                          enabledBorder: InputBorder.none,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.slate200,
+                              width: 1.5,
+                            ),
+                          ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 14,
@@ -307,6 +405,35 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  PopupMenuItem<CustomerSortOption> _buildFilterItem(
+    CustomerSortOption option,
+    String label,
+    CustomerSortOption currentSort,
+  ) {
+    final isSelected = option == currentSort;
+    return PopupMenuItem(
+      value: option,
+      child: Row(
+        children: [
+          Icon(
+            isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+            size: 18,
+            color: isSelected ? AppColors.primary : AppColors.slate400,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: isSelected ? AppColors.primary : AppColors.textMain,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }

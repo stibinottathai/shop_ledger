@@ -59,16 +59,16 @@ class DashboardPage extends StatelessWidget {
           ),
           Expanded(
             child: _buildNavItem(
-              Icons.history,
-              'Reports',
+              Icons.receipt_long,
+              'Transactions',
               navigationShell.currentIndex == 3,
               () => _goBranch(3),
             ),
           ),
           Expanded(
             child: _buildNavItem(
-              Icons.person,
-              'More',
+              Icons.history,
+              'Reports',
               navigationShell.currentIndex == 4,
               () => _goBranch(4),
             ),

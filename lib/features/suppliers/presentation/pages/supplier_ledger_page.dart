@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
@@ -19,23 +20,39 @@ class SupplierLedgerPage extends ConsumerWidget {
       supplierTransactionListProvider(supplier.id!),
     );
 
+    // Watch for supplier updates
+    final currentSupplier = ref
+        .watch(supplierListProvider)
+        .maybeWhen(
+          data: (suppliers) => suppliers.cast<Supplier>().firstWhere(
+            (s) => s.id == supplier.id,
+            orElse: () => supplier,
+          ),
+          orElse: () => supplier,
+        );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              supplier.name,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  currentSupplier.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
+              ],
             ),
-            if (supplier.phone.isNotEmpty)
+            if (currentSupplier.phone.isNotEmpty)
               Text(
-                supplier.phone,
+                currentSupplier.phone,
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -47,26 +64,81 @@ class SupplierLedgerPage extends ConsumerWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'delete') {
-                _confirmDelete(context, ref);
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red, size: 20),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
+          Container(
+            width: 40,
+            height: 40,
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ),
+            child: PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              offset: const Offset(0, 50),
+              elevation: 4,
+              shadowColor: Colors.black.withOpacity(0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(
+                Icons.more_vert,
+                color: AppColors.textDark,
+                size: 20,
+              ),
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _confirmDelete(context, ref);
+                } else if (value == 'edit') {
+                  context.push('/suppliers/add', extra: currentSupplier);
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.edit,
+                          color: AppColors.textMain,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Edit Supplier',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textMain,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ];
-            },
+                  PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.delete_outline,
+                          color: AppColors.danger,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Delete Supplier',
+                          style: GoogleFonts.inter(
+                            color: AppColors.danger,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ];
+              },
+            ),
           ),
         ],
         leading: IconButton(
@@ -117,12 +189,13 @@ class SupplierLedgerPage extends ConsumerWidget {
                     },
                     icon: const Icon(
                       Icons.add_shopping_cart,
-                      color: AppColors.textDark,
+                      color: Colors.white,
                     ),
                     label: const Text('Purchase'),
                     style: ElevatedButton.styleFrom(
+                      textStyle: const TextStyle(fontSize: 16),
                       backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.textDark,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),

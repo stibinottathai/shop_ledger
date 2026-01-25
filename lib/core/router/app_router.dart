@@ -4,15 +4,19 @@ import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/signup_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/splash_screen.dart';
+import 'package:shop_ledger/features/profile/presentation/pages/profile_page.dart';
+import 'package:shop_ledger/features/settings/presentation/pages/settings_page.dart';
 
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
+import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/add_customer_page.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/customer_detail_page.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/customer_list_page.dart';
 import 'package:shop_ledger/features/customer/presentation/pages/payment_in_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:shop_ledger/features/dashboard/presentation/pages/home_page.dart';
-import 'package:shop_ledger/features/dashboard/presentation/pages/more_page.dart';
+import 'package:shop_ledger/features/customer/presentation/pages/transaction_detail_page.dart';
+
 import 'package:shop_ledger/features/reports/presentation/pages/reports_page.dart';
 import 'package:shop_ledger/features/sales/presentation/pages/add_sale_page.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/add_purchase_page.dart';
@@ -21,6 +25,7 @@ import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_ledge
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_list_page.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/payment_out_page.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
+import 'package:shop_ledger/features/reports/presentation/pages/transaction_list_page.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // We do NOT watch authStateProvider here to prevent GoRouter from rebuilding
@@ -54,6 +59,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home',
                 builder: (context, state) => const HomePage(),
+                routes: [
+                  GoRoute(
+                    path: 'profile',
+                    builder: (context, state) => const ProfilePage(),
+                  ),
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => const SettingsPage(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -65,11 +80,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'add',
-                    builder: (context, state) => const AddCustomerPage(),
+                    builder: (context, state) {
+                      final customerToEdit = state.extra as Customer?;
+                      return AddCustomerPage(customerToEdit: customerToEdit);
+                    },
                   ),
                   GoRoute(
                     path: ':id',
                     builder: (context, state) {
+                      if (state.extra is! Customer) {
+                        return const CustomerListPage();
+                      }
                       final customer = state.extra as Customer;
                       return CustomerDetailPage(customer: customer);
                     },
@@ -77,6 +98,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'sale',
                         builder: (context, state) {
+                          if (state.extra is! Customer) {
+                            return const CustomerListPage();
+                          }
                           final customer = state.extra as Customer;
                           return AddSalePage(customer: customer);
                         },
@@ -84,8 +108,26 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'payment',
                         builder: (context, state) {
+                          if (state.extra is! Customer) {
+                            return const CustomerListPage();
+                          }
                           final customer = state.extra as Customer;
                           return PaymentInPage(customer: customer);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'transaction',
+                        builder: (context, state) {
+                          final extras = state.extra as Map<String, dynamic>?;
+                          if (extras == null) return const CustomerListPage();
+
+                          final customer = extras['customer'] as Customer;
+                          final transaction =
+                              extras['transaction'] as Transaction;
+                          return TransactionDetailPage(
+                            customer: customer,
+                            transaction: transaction,
+                          );
                         },
                       ),
                     ],
@@ -102,11 +144,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'add',
-                    builder: (context, state) => const AddSupplierPage(),
+                    builder: (context, state) {
+                      final supplierToEdit = state.extra as Supplier?;
+                      return AddSupplierPage(supplierToEdit: supplierToEdit);
+                    },
                   ),
                   GoRoute(
                     path: ':id',
                     builder: (context, state) {
+                      if (state.extra is! Supplier) {
+                        return const SupplierListPage();
+                      }
                       final supplier = state.extra as Supplier;
                       return SupplierLedgerPage(supplier: supplier);
                     },
@@ -114,6 +162,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'purchase',
                         builder: (context, state) {
+                          if (state.extra is! Supplier) {
+                            return const SupplierListPage();
+                          }
                           final supplier = state.extra as Supplier;
                           return AddPurchasePage(supplier: supplier);
                         },
@@ -121,6 +172,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'payment',
                         builder: (context, state) {
+                          if (state.extra is! Supplier) {
+                            return const SupplierListPage();
+                          }
                           final supplier = state.extra as Supplier;
                           return PaymentOutPage(supplier: supplier);
                         },
@@ -134,16 +188,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/reports',
-                builder: (context, state) => const ReportsPage(),
+                path: '/transactions',
+                builder: (context, state) => const TransactionListPage(),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/more',
-                builder: (context, state) => const MorePage(),
+                path: '/reports',
+                builder: (context, state) => const ReportsPage(),
               ),
             ],
           ),

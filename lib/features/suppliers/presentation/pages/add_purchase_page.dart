@@ -7,7 +7,10 @@ import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
+import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
+import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
 
 class AddPurchasePage extends ConsumerStatefulWidget {
   final Supplier supplier;
@@ -67,10 +70,15 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
       await repository.addTransaction(transaction);
 
       // Trigger global update for dashboard
+      // Small delay to ensure DB consistency
+      await Future.delayed(const Duration(milliseconds: 1000));
+      ref.read(dashboardStatsProvider.notifier).refresh();
+      ref.read(reportsProvider.notifier).refresh();
       ref.read(transactionUpdateProvider.notifier).increment();
 
       // Refresh the list
       ref.invalidate(supplierTransactionListProvider(widget.supplier.id!));
+      ref.invalidate(allTransactionsProvider);
 
       if (mounted) {
         context.pop();

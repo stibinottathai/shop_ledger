@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,205 +15,259 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late AnimationController _spinnerController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _spinnerController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
-    );
+      duration: const Duration(seconds: 2), // Slow spin
+    )..repeat();
 
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+    _navigateToNext();
+  }
 
-    _controller.addStatusListener((status) async {
-      if (status == AnimationStatus.completed) {
-        if (mounted) {
-          final session = Supabase.instance.client.auth.currentSession;
-          if (session != null) {
-            context.go('/home');
-          } else {
-            // Check if onboarding seen
-            final prefs = await SharedPreferences.getInstance();
-            final seenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+  Future<void> _navigateToNext() async {
+    // Artificial delay to show splash
+    await Future.delayed(const Duration(seconds: 3));
 
-            if (mounted) {
-              if (seenOnboarding) {
-                context.go('/login');
-              } else {
-                context.go('/onboarding');
-              }
-            }
-          }
+    if (!mounted) return;
+
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      context.go('/home');
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      final seenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
+      if (mounted) {
+        if (seenOnboarding) {
+          context.go('/login');
+        } else {
+          context.go('/onboarding');
         }
       }
-    });
-
-    _controller.forward();
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _spinnerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Theme aware colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgLight = Colors.white; // background-light
+    final bgDark = const Color(0xFF0F172A); // background-dark
+    final textMain = isDark ? Colors.white : const Color(0xFF111827);
+    final textMuted = isDark
+        ? const Color(0xFF9CA3AF)
+        : const Color(0xFF6B7280);
+
     return Scaffold(
+      backgroundColor: isDark ? bgDark : bgLight,
       body: Stack(
         children: [
-          // Background Blurs (Approximated)
+          // Background Gradient Blur (Top Right)
           Positioned(
-            top: -80,
-            right: -80,
+            top: -100,
+            right: -100,
             child: Container(
-              width: 256,
-              height: 256,
+              width: 300,
+              height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            left: -80,
-            child: Container(
-              width: 256,
-              height: 256,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(0.05),
+                color: AppColors.primary.withOpacity(
+                  0.05,
+                ), // Updated Teal-50ish
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.1),
+                    blurRadius: 100,
+                    spreadRadius: 50,
+                  ),
+                ],
               ),
             ),
           ),
 
           SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Logo
-                      Container(
-                        width: 96,
-                        height: 96,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
-                            width: 2,
+            child: SizedBox(
+              width: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Top Bar (Time & Status Icons mockup)
+                    // In a real app we typically don't draw the status bar content manually
+                    // unless it's a fullscreen game or specialized UI.
+                    // The design requested shows it, but usually we let the OS handle it.
+                    // I'll skip drawing fake status bar icons to avoid overlap with real OS status bar.
+                    const SizedBox(height: 1), // Spacer
+                    // Center Content
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Logo with Glow
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 256,
+                              height: 256,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    AppColors.primary.withOpacity(0.25),
+                                    Colors.transparent,
+                                  ],
+                                  stops: const [0.0, 0.7],
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 100,
+                              height: 100,
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF1E293B).withOpacity(0.5)
+                                    : AppColors.primary.withOpacity(
+                                        0.05,
+                                      ), // Teal-50
+                                borderRadius: BorderRadius.circular(32),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF334155)
+                                      : AppColors.primary.withOpacity(
+                                          0.2,
+                                        ), // Teal-100
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color.fromRGBO(0, 0, 0, 0.05),
+                                    blurRadius: 10,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.menu_book_rounded, // Ledger icon style
+                                size: 48,
+                                color: AppColors.primary, // Primary Teal
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Shop Ledger',
+                          style: GoogleFonts.inter(
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                            color: textMain,
+                            letterSpacing: -1.0,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.inventory_2,
-                          size: 64,
-                          color: AppColors.primary,
+                      ],
+                    ),
+
+                    // Bottom Content
+                    Column(
+                      children: [
+                        // Gradient Spinner
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: AnimatedBuilder(
+                            animation: _spinnerController,
+                            builder: (context, child) {
+                              return Transform.rotate(
+                                angle: _spinnerController.value * 2 * math.pi,
+                                child: CustomPaint(
+                                  painter: _GradientSpinnerPainter(),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      // Title
-                      Text(
-                        'Banana Ledger',
-                        style: Theme.of(context).textTheme.headlineLarge
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? AppColors.textLight
-                                  : AppColors.textDark,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Tagline
-                      Text(
-                        'Smart Wholesale Management',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: AppColors.greyText,
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Efficient. Simple. Professional.',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: textMuted,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Text(
+                          'VERSION 2.4.0 • ENTERPRISE EDITION',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: textMuted.withOpacity(0.6),
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ],
                 ),
-
-                // Footer
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 48,
-                  ),
-                  child: Column(
-                    children: [
-                      // Loading Text
-                      AnimatedBuilder(
-                        animation: _animation,
-                        builder: (context, child) {
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'LOADING LEDGER',
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: AppColors.greyText,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.5,
-                                    ),
-                              ),
-                              Text(
-                                '${(_animation.value * 100).toInt()}%',
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Progress Bar
-                      // Progress Bar
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: AnimatedBuilder(
-                          animation: _animation,
-                          builder: (context, child) {
-                            return LinearProgressIndicator(
-                              value: _animation.value,
-                              backgroundColor: AppColors.inputBorder,
-                              color: AppColors.primary,
-                              minHeight: 4,
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-
-                      // Version
-                      Text(
-                        'Version 2.4.0 • Enterprise Edition',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.greyText.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _GradientSpinnerPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 2;
+    const strokeWidth = 3.0;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final sweepGradient = const SweepGradient(
+      colors: [
+        AppColors.primary, // Teal
+        Color(0xFFF59E0B), // Amber
+        AppColors.primary, // Teal
+      ],
+      stops: [0.0, 0.5, 1.0],
+      transform: GradientRotation(-math.pi / 2),
+    ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    paint.shader = sweepGradient;
+
+    // Draw arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      0,
+      2 * math.pi,
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -30,4 +30,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<List<Transaction>> getAllTransactions() async {
     return await remoteDataSource.getTransactions();
   }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    await remoteDataSource.deleteTransaction(id);
+  }
 }
