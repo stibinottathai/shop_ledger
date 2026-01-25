@@ -33,7 +33,9 @@ class AddSalePage extends ConsumerStatefulWidget {
 
 class _AddSalePageState extends ConsumerState<AddSalePage> {
   // Common
-  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _manualAmountController = TextEditingController();
+  final TextEditingController _itemizedAmountController =
+      TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _dateController = TextEditingController(
     text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
@@ -54,7 +56,8 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
 
   @override
   void dispose() {
-    _amountController.dispose();
+    _manualAmountController.dispose();
+    _itemizedAmountController.dispose();
     _detailsController.dispose();
     _dateController.dispose();
     _itemQtyController.dispose();
@@ -63,13 +66,12 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
   }
 
   void _calculateTotal() {
-    if (_isManualMode) return;
-
+    // Only calculate for itemized mode
     double total = 0;
     for (var i in _selectedItems) {
       total += i.totalPrice;
     }
-    _amountController.text = total.toStringAsFixed(2);
+    _itemizedAmountController.text = total.toStringAsFixed(2);
   }
 
   void _incrementCount() {
@@ -144,7 +146,11 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
   }
 
   Future<void> _saveSale() async {
-    final amountText = _amountController.text;
+    // Use the controller corresponding to the current mode
+    final amountText = _isManualMode
+        ? _manualAmountController.text
+        : _itemizedAmountController.text;
+
     if (amountText.isEmpty || double.tryParse(amountText) == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid amount')),
@@ -246,9 +252,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                     child: GestureDetector(
                       onTap: () => setState(() {
                         _isManualMode = true;
-                        if (_amountController.text.isNotEmpty) {
-                          // Keep existing value or clear? Keep.
-                        }
+                        // No need to copy values, keep states independent
                       }),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -262,6 +266,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                   const BoxShadow(
                                     color: Colors.black12,
                                     blurRadius: 4,
+                                    offset: Offset(0, 2),
                                   ),
                                 ]
                               : [],
@@ -294,6 +299,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                   const BoxShadow(
                                     color: Colors.black12,
                                     blurRadius: 4,
+                                    offset: Offset(0, 2),
                                   ),
                                 ]
                               : [],
@@ -551,7 +557,9 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                 fontSize: 24,
                 prefixText: '₹ ',
                 // Disable editing if in item mode
-                controller: _amountController,
+                controller: _isManualMode
+                    ? _manualAmountController
+                    : _itemizedAmountController,
                 readOnly: !_isManualMode,
               ),
             ),
