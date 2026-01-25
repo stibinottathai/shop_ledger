@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
 
 import 'package:shop_ledger/core/theme/app_colors.dart';
 
@@ -29,6 +30,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     // Watch auth state to rebuild when user metadata updates (e.g. from Profile page)
     ref.watch(authStateProvider);
+    final hideSensitive = ref.watch(settingsProvider).hideSensitiveData;
 
     final statsAsync = ref.watch(dashboardStatsProvider);
     final user = ref.read(authRepositoryProvider).getCurrentUser();
@@ -116,26 +118,52 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ),
                       ],
                     ),
-                    Container(
-                      height: 40,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            offset: const Offset(0, 1),
-                            blurRadius: 2,
+                    Row(
+                      children: [
+                        Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                offset: const Offset(0, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.notifications, size: 20),
-                        color: AppColors.slate600,
-                        onPressed: () {},
-                      ),
+                          child: IconButton(
+                            icon: const Icon(Icons.settings, size: 20),
+                            color: AppColors.slate600,
+                            onPressed: () => context.go('/home/settings'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          height: 40,
+                          width: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                offset: const Offset(0, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.notifications, size: 20),
+                            color: AppColors.slate600,
+                            onPressed: () {},
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -194,6 +222,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 icon: Icons.storefront,
                                 color: AppColors.primary,
                                 percent: 1.0,
+                                hide: hideSensitive,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -208,6 +237,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     ? (stats.todaysCollection /
                                           stats.todaysSale)
                                     : 0,
+                                hide: hideSensitive,
                               ),
                             ),
                           ],
@@ -251,6 +281,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 icon: Icons.shopping_cart,
                                 color: Colors.blue[600]!,
                                 percent: 1.0,
+                                hide: hideSensitive,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -265,6 +296,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     ? (stats.todaysPaymentOut /
                                           stats.todaysPurchase)
                                     : 0,
+                                hide: hideSensitive,
                               ),
                             ),
                           ],
@@ -307,6 +339,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                       ), // Emerald 50
                                       iconColor: const Color(0xFF059669),
                                       gradientColor: const Color(0xFFECFDF5),
+                                      hide: hideSensitive,
                                     ),
                                     const SizedBox(width: 12),
                                     _buildLedgerCard(
@@ -321,6 +354,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                         0xFFEF4444,
                                       ), // Red 500
                                       gradientColor: const Color(0xFFFEF2F2),
+                                      hide: hideSensitive,
                                     ),
                                   ],
                                 ),
@@ -342,6 +376,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                       ), // Emerald 200
                                       isRotateNegative: true,
                                       onTap: () => context.push('/customers'),
+                                      hide: hideSensitive,
                                     ),
                                     const SizedBox(width: 12),
                                     _buildActionLedgerCard(
@@ -358,6 +393,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                       ), // Red 200
                                       isRotateNegative: false,
                                       onTap: () => context.push('/suppliers'),
+                                      hide: hideSensitive,
                                     ),
                                   ],
                                 ),
@@ -479,6 +515,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     required IconData icon,
     required Color color,
     required double percent,
+    bool hide = false,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -528,7 +565,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              _formatCurrency(amount),
+              _formatCurrency(amount, hide: hide),
               style: GoogleFonts.inter(
                 color: AppColors.textMain,
                 fontSize: 14,
@@ -562,6 +599,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     required Color iconBg,
     required Color iconColor,
     required Color gradientColor,
+    bool hide = false,
   }) {
     return Container(
       width: width,
@@ -614,7 +652,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      _formatCurrency(amount),
+                      _formatCurrency(amount, hide: hide),
                       style: GoogleFonts.inter(
                         color: AppColors.textMain,
                         fontSize: 20,
@@ -670,6 +708,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     hoverBorderColor, // Note: Hover effects in mobile are limited to InkWell ripples usually
     required bool isRotateNegative,
     required VoidCallback onTap,
+    bool hide = false,
   }) {
     return Material(
       color: Colors.transparent,
@@ -720,7 +759,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      _formatCurrency(amount),
+                      _formatCurrency(amount, hide: hide),
                       style: GoogleFonts.inter(
                         color: AppColors.textMain,
                         fontSize: 20,
@@ -747,7 +786,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  String _formatCurrency(double amount) {
+  String _formatCurrency(double amount, {bool hide = false}) {
+    if (hide) return '****';
     return NumberFormat.currency(
       locale: 'en_IN',
       symbol: '₹',

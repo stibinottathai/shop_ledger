@@ -5,6 +5,7 @@ import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dar
 import 'package:shop_ledger/features/auth/presentation/pages/signup_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/splash_screen.dart';
 import 'package:shop_ledger/features/profile/presentation/pages/profile_page.dart';
+import 'package:shop_ledger/features/settings/presentation/pages/settings_page.dart';
 
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
@@ -62,6 +63,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'profile',
                     builder: (context, state) => const ProfilePage(),
+                  ),
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => const SettingsPage(),
                   ),
                 ],
               ),
