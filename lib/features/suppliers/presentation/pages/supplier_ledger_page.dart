@@ -31,223 +31,280 @@ class SupplierLedgerPage extends ConsumerWidget {
           orElse: () => supplier,
         );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3F4F6),
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(
+                    currentSupplier.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+              if (currentSupplier.phone.isNotEmpty)
                 Text(
-                  currentSupplier.name,
+                  currentSupplier.phone,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.greyText,
                   ),
                 ),
-              ],
-            ),
-            if (currentSupplier.phone.isNotEmpty)
-              Text(
-                currentSupplier.phone,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.greyText,
-                ),
+            ],
+          ),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            Container(
+              width: 40,
+              height: 40,
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
               ),
+              child: PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
+                offset: const Offset(0, 50),
+                elevation: 4,
+                shadowColor: Colors.black.withOpacity(0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                icon: const Icon(
+                  Icons.more_vert,
+                  color: AppColors.textDark,
+                  size: 20,
+                ),
+                onSelected: (value) {
+                  if (value == 'delete') {
+                    _confirmDelete(context, ref);
+                  } else if (value == 'edit') {
+                    context.push('/suppliers/add', extra: currentSupplier);
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return [
+                    PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.edit,
+                            color: AppColors.textMain,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Edit Supplier',
+                            style: GoogleFonts.inter(
+                              color: AppColors.textMain,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.delete_outline,
+                            color: AppColors.danger,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Delete Supplier',
+                            style: GoogleFonts.inter(
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ];
+                },
+              ),
+            ),
+          ],
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+            onPressed: () => context.pop(),
+          ),
+        ),
+
+        body: Column(
+          children: [
+            // Summary Card
+            _buildSummaryCard(supplier, ref),
+
+            // Action Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        context.push(
+                          '/suppliers/${supplier.id}/payment',
+                          extra: supplier,
+                        );
+                      },
+                      icon: const Icon(Icons.payments, color: Colors.red),
+                      label: const Text('Pay Out'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.push(
+                          '/suppliers/${supplier.id}/purchase',
+                          extra: supplier,
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.add_shopping_cart,
+                        color: Colors.white,
+                      ),
+                      label: const Text('Purchase'),
+                      style: ElevatedButton.styleFrom(
+                        textStyle: const TextStyle(fontSize: 16),
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Tabs
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: TabBar(
+                labelColor: AppColors.primary,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: AppColors.primary,
+                labelStyle: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                unselectedLabelStyle: GoogleFonts.inter(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+                tabs: const [
+                  Tab(text: "Purchases"),
+                  Tab(text: "Payments"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Tab View
+            Expanded(
+              child: transactionsAsync.when(
+                data: (transactions) {
+                  final purchases = transactions
+                      .where((t) => t.type == TransactionType.purchase)
+                      .toList();
+                  final payments = transactions
+                      .where((t) => t.type == TransactionType.paymentOut)
+                      .toList();
+
+                  return TabBarView(
+                    children: [
+                      _buildTransactionList(
+                        context,
+                        purchases,
+                        "No purchases yet",
+                      ),
+                      _buildTransactionList(
+                        context,
+                        payments,
+                        "No payments yet",
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, s) => Center(child: Text('Error: $e')),
+              ),
+            ),
           ],
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          Container(
-            width: 40,
-            height: 40,
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: PopupMenuButton<String>(
-              padding: EdgeInsets.zero,
-              offset: const Offset(0, 50),
-              elevation: 4,
-              shadowColor: Colors.black.withOpacity(0.1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              icon: const Icon(
-                Icons.more_vert,
-                color: AppColors.textDark,
-                size: 20,
-              ),
-              onSelected: (value) {
-                if (value == 'delete') {
-                  _confirmDelete(context, ref);
-                } else if (value == 'edit') {
-                  context.push('/suppliers/add', extra: currentSupplier);
-                }
-              },
-              itemBuilder: (BuildContext context) {
-                return [
-                  PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.edit,
-                          color: AppColors.textMain,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Edit Supplier',
-                          style: GoogleFonts.inter(
-                            color: AppColors.textMain,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.delete_outline,
-                          color: AppColors.danger,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Delete Supplier',
-                          style: GoogleFonts.inter(
-                            color: AppColors.danger,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ];
-              },
-            ),
-          ),
-        ],
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
-          onPressed: () => context.pop(),
+      ),
+    );
+  }
+
+  Widget _buildTransactionList(
+    BuildContext context,
+    List<Transaction> transactions,
+    String emptyMsg,
+  ) {
+    if (transactions.isEmpty) {
+      return Center(
+        child: Text(
+          emptyMsg,
+          style: GoogleFonts.inter(color: Colors.grey[500]),
         ),
-      ),
-
-      body: Column(
-        children: [
-          // Summary Card
-          _buildSummaryCard(supplier, ref),
-
-          // Action Buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      context.push(
-                        '/suppliers/${supplier.id}/payment',
-                        extra: supplier,
-                      );
-                    },
-                    icon: const Icon(Icons.payments, color: Colors.red),
-                    label: const Text('Pay Out'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      context.push(
-                        '/suppliers/${supplier.id}/purchase',
-                        extra: supplier,
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.add_shopping_cart,
-                      color: Colors.white,
-                    ),
-                    label: const Text('Purchase'),
-                    style: ElevatedButton.styleFrom(
-                      textStyle: const TextStyle(fontSize: 16),
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Transaction History',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Expanded(
-            child: transactionsAsync.when(
-              data: (transactions) {
-                if (transactions.isEmpty) {
-                  return const Center(child: Text('No transactions found'));
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  itemCount: transactions.length,
-                  itemBuilder: (context, index) {
-                    final transaction = transactions[index];
-                    return _buildLedgerItem(
-                      transaction: transaction,
-                      index: index,
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, s) => Center(child: Text('Error: $e')),
-            ),
-          ),
-        ],
-      ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      itemCount: transactions.length,
+      itemBuilder: (context, index) {
+        final transaction = transactions[index];
+        return _buildLedgerItem(
+          context,
+          transaction: transaction,
+          index: index,
+        );
+      },
     );
   }
 
@@ -255,13 +312,13 @@ class SupplierLedgerPage extends ConsumerWidget {
     return const SizedBox.shrink(); // Removing bottom action
   }
 
-  Widget _buildLedgerItem({
+  Widget _buildLedgerItem(
+    BuildContext context, {
     required Transaction transaction,
     required int index,
   }) {
     final isCredit = transaction.type == TransactionType.purchase;
     final amountColor = isCredit ? AppColors.textDark : Colors.red;
-    final amountPrefix = isCredit ? '+' : '-';
 
     String title;
     if (transaction.type == TransactionType.purchase) {
@@ -270,93 +327,107 @@ class SupplierLedgerPage extends ConsumerWidget {
       title = 'Payment Out';
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                DateFormat('dd MMM').format(transaction.date),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
-              ),
-              Text(
-                DateFormat('hh:mm a').format(transaction.date),
-                style: const TextStyle(fontSize: 10, color: AppColors.greyText),
-              ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isCredit
-                  ? AppColors.primary.withOpacity(0.1)
-                  : Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: () {
+        context.push(
+          '/suppliers/${supplier.id}/transaction',
+          extra: transaction,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            child: Icon(
-              isCredit ? Icons.shopping_cart : Icons.payments,
-              size: 16,
-              color: isCredit ? AppColors.primary : Colors.red,
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Details
-          Expanded(
-            child: Column(
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Date
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  DateFormat('dd MMM').format(transaction.date),
                   style: const TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
                   ),
                 ),
-                if (transaction.details != null &&
-                    transaction.details!.isNotEmpty)
-                  Text(
-                    transaction.details!,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.greyText,
-                    ),
+                Text(
+                  DateFormat('hh:mm a').format(transaction.date),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.greyText,
                   ),
+                ),
               ],
             ),
-          ),
-          // Amount
-          Text(
-            '$amountPrefix ₹${transaction.amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: amountColor,
+            const SizedBox(width: 16),
+            // Icon
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isCredit
+                    ? AppColors.primary.withOpacity(0.1)
+                    : Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                isCredit ? Icons.shopping_cart : Icons.payments,
+                size: 16,
+                color: isCredit ? AppColors.primary : Colors.red,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            // Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  if (transaction.details != null &&
+                      transaction.details!.isNotEmpty)
+                    Text(
+                      transaction.details!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.greyText,
+                      ),
+                      maxLines: 1, // Limited to 1 line
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Amount (Right aligned)
+            Text(
+              '₹${transaction.amount.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: amountColor,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

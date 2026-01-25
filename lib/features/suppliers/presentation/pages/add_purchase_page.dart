@@ -11,6 +11,24 @@ import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
+import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
+import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
+
+class PurchaseItem {
+  final Item item;
+  final int count; // Number of items
+  final double quantity; // Kg
+  final double pricePerKg;
+
+  PurchaseItem({
+    required this.item,
+    required this.count,
+    required this.quantity,
+    required this.pricePerKg,
+  });
+
+  double get total => quantity * pricePerKg;
+}
 
 class AddPurchasePage extends ConsumerStatefulWidget {
   final Supplier supplier;
@@ -21,25 +39,110 @@ class AddPurchasePage extends ConsumerStatefulWidget {
 }
 
 class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
+  // Mode: 0 = Manual, 1 = Select Items
+  int _entryMode = 1;
+
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _detailsController = TextEditingController();
+  final TextEditingController _manualDetailsController =
+      TextEditingController();
+
+  // Store manual amount separately
+  String _manualAmount = '';
+
   final TextEditingController _dateController = TextEditingController(
     text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
   );
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
 
+  // Select Items Logic
+  Item? _selectedItem;
+  final TextEditingController _countController = TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  final List<PurchaseItem> _addedItems = [];
+
   @override
   void dispose() {
     _amountController.dispose();
-    _detailsController.dispose();
+    _manualDetailsController.dispose();
     _dateController.dispose();
+    _countController.dispose();
+    _quantityController.dispose();
+    _priceController.dispose();
     super.dispose();
+  }
+
+  void _calculateTotal() {
+    double total = 0;
+    for (var item in _addedItems) {
+      total += item.total;
+    }
+    // Only update controller if we are in Select Items mode
+    if (_entryMode == 1) {
+      _amountController.text = total.toStringAsFixed(2);
+    }
+  }
+
+  void _addItem() {
+    if (_selectedItem == null) return;
+    final count = int.tryParse(_countController.text) ?? 0;
+    final qty = double.tryParse(_quantityController.text) ?? 0;
+    final pricePerKg = double.tryParse(_priceController.text) ?? 0;
+
+    if (qty <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter valid quantity')),
+      );
+      return;
+    }
+
+    setState(() {
+      _addedItems.add(
+        PurchaseItem(
+          item: _selectedItem!,
+          count: count,
+          quantity: qty,
+          pricePerKg: pricePerKg,
+        ),
+      );
+
+      // Reset fields
+      _selectedItem = null;
+      _countController.clear();
+      _quantityController.clear();
+      _priceController.clear();
+
+      // Update totals
+      _calculateTotal();
+    });
+  }
+
+  void _removeItem(int index) {
+    setState(() {
+      _addedItems.removeAt(index);
+      _calculateTotal();
+    });
+  }
+
+  String _generateDetailsFromItems() {
+    if (_addedItems.isEmpty) return 'Purchase';
+    return _addedItems
+        .map((e) {
+          final qty = e.quantity
+              .toStringAsFixed(1)
+              .replaceAll(RegExp(r'\.0$'), '');
+          // Format: "2 Items, 5.0 Kg Rubber @ 150.0 = 750.0" (using a distinct separator pattern helps)
+          // We'll use a specific format that our regex can easily find, or continue using the loose text and parse it out.
+          // Let's use: "{count} Items, {qty} Kg {name} (Rate: {rate}, Total: {total})"
+          return "${e.count} Items, $qty Kg ${e.item.name} (Rate: ${e.pricePerKg.toStringAsFixed(2)}, Total: ${e.total.toStringAsFixed(2)})";
+        })
+        .join(", ");
   }
 
   Future<void> _savePurchase() async {
     final amountText = _amountController.text;
-    if (amountText.isEmpty) {
+    if (amountText.isEmpty || double.tryParse(amountText) == 0) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Please enter an amount')));
@@ -51,32 +154,32 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
     });
 
     try {
+      String details = '';
+      if (_entryMode == 0) {
+        details = _manualDetailsController.text.isNotEmpty
+            ? _manualDetailsController.text
+            : 'Purchase via Manual Entry';
+      } else {
+        details = _generateDetailsFromItems();
+      }
+
       final transaction = Transaction(
         supplierId: widget.supplier.id,
         amount: double.parse(amountText),
         type: TransactionType.purchase,
         date: _selectedDate,
-        details: _detailsController.text.isNotEmpty
-            ? _detailsController.text
-            : 'Purchase',
+        details: details,
       );
-
-      // Using transactionRepositoryProvider directly via transactionListProvider logic?
-      // No, we should use our new supplierTransactionListProvider if it supports 'add'.
-      // But we didn't add 'addTransaction' to SupplierTransactionListNotifier.
-      // We should use transactionRepositoryProvider directly.
 
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
 
       // Trigger global update for dashboard
-      // Small delay to ensure DB consistency
       await Future.delayed(const Duration(milliseconds: 1000));
       ref.read(dashboardStatsProvider.notifier).refresh();
       ref.read(reportsProvider.notifier).refresh();
       ref.read(transactionUpdateProvider.notifier).increment();
 
-      // Refresh the list
       ref.invalidate(supplierTransactionListProvider(widget.supplier.id!));
       ref.invalidate(allTransactionsProvider);
 
@@ -100,227 +203,646 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
 
   @override
   Widget build(BuildContext context) {
+    final inventoryAsync = ref.watch(inventoryProvider);
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Add Purchase'),
+        title: Text(
+          'Add Purchase',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: Colors.black,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
           onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Supplier Info
+            // Tabs
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildTabButton('Manual Entry', 0)),
+                    Expanded(child: _buildTabButton('Select Items', 1)),
+                  ],
+                ),
+              ),
+            ),
+
+            // Supplier Header
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: const Color(0xFFE8F5E9),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Purchase From',
-                    style: TextStyle(
+                  Text(
+                    'Supplier',
+                    style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: AppColors.greyText,
-                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF2E7D32),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     widget.supplier.name,
-                    style: const TextStyle(
-                      fontSize: 18,
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: Colors.black87,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Amount
-            _buildTextField(
-              label: 'Amount',
-              hint: '0.00',
-              controller: _amountController,
-              isBold: true,
-              fontSize: 24,
-              prefixText: '₹ ',
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-            ),
             const SizedBox(height: 16),
 
-            // Date
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Date',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: AppColors.textDark,
+            // Mode Content
+            if (_entryMode == 0)
+              _buildManualEntry(context)
+            else
+              _buildSelectItems(context, inventoryAsync),
+
+            // Total Amount & Date
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Amount',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _dateController,
-                  readOnly: true,
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _selectedDate = picked;
-                        _dateController.text = DateFormat(
-                          'yyyy-MM-dd',
-                        ).format(picked);
-                      });
-                    }
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Select Date',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.inputBorder,
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _amountController,
+                    readOnly: _entryMode == 1, // ReadOnly in Select Items mode
+                    onChanged: (val) {
+                      if (_entryMode == 0) {
+                        _manualAmount = val;
+                      }
+                    },
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    style: GoogleFonts.inter(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[800], // Darker text for readability
+                    ),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: _entryMode == 1
+                          ? Colors.grey[100]
+                          : Colors.white,
+                      hintText: '0.00',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
                       ),
                     ),
-                    suffixIcon: const Icon(Icons.calendar_today),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-            // Details
-            _buildTextField(
-              label: 'Details',
-              hint: 'e.g. 50 Crates Robusta',
-              controller: _detailsController,
-              maxLines: 3,
-            ),
-
-            const SizedBox(height: 32),
-
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _savePurchase,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.primary.withOpacity(0.7),
-                  elevation: 4,
-                  shadowColor: AppColors.primary.withOpacity(0.4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  Text(
+                    'Transaction Date',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        'Save Purchase',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _dateController,
+                    readOnly: true,
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _selectedDate = picked;
+                          _dateController.text = DateFormat(
+                            'yyyy-MM-dd',
+                          ).format(picked);
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      suffixIcon: const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 20,
+                        color: Colors.grey,
                       ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
+            const SizedBox(height: 80),
           ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: SizedBox(
+          width: double.infinity,
+          height: 110, // Increased height for summary + button
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Optional: Show count summary?
+              // SizedBox(
+              //   height: 56,
+              //   child: ElevatedButton.icon(...)
+              // ),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  key: const Key('save_purchase_fab'),
+                  onPressed: _isLoading ? null : _savePurchase,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00695C),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 4,
+                  ),
+                  icon: const Icon(Icons.save_outlined, color: Colors.white),
+                  label: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Save Purchase',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    bool isBold = false,
-    double fontSize = 16,
-    String? prefixText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
+  Widget _buildTabButton(String label, int index) {
+    final isSelected = _entryMode == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          // Logic for switching tabs
+          if (_entryMode != index) {
+            _entryMode = index;
+
+            if (_entryMode == 0) {
+              // Switched to Manual Mode
+              // Restore manual amount
+              _amountController.text = _manualAmount;
+            } else {
+              // Switched to Select Items Mode
+              // Save manual amount first? No, we update _manualAmount on change.
+              // Just calculate total from items
+              _calculateTotal();
+            }
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : [],
+        ),
+        alignment: Alignment.center,
+        child: Text(
           label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
+          style: GoogleFonts.inter(
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? Colors.black87 : Colors.grey[600],
             fontSize: 14,
-            color: AppColors.textDark,
           ),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+
+  Widget _buildManualEntry(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Details',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixText: prefixText,
-            prefixStyle: TextStyle(
-              fontSize: fontSize,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: AppColors.textDark,
+          const SizedBox(height: 8),
+          TextField(
+            controller: _manualDetailsController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              hintText: 'Enter purchase details...',
+              hintStyle: TextStyle(color: Colors.grey[400]),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
             ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.all(16),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectItems(
+    BuildContext context,
+    AsyncValue<List<Item>> inventoryAsync,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Select Item Dropdown
+          inventoryAsync.when(
+            data: (items) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<Item>(
+                  value: _selectedItem,
+                  isExpanded: true,
+                  hint: Text(
+                    'Select Item',
+                    style: GoogleFonts.inter(color: Colors.grey[600]),
+                  ),
+                  items: items.map((item) {
+                    return DropdownMenuItem(
+                      value: item,
+                      child: Text(
+                        item.name,
+                        style: GoogleFonts.inter(color: Colors.black87),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedItem = val;
+                    });
+                  },
+                ),
+              ),
+            ),
+            loading: () => const LinearProgressIndicator(),
+            error: (_, __) => const Text('Failed to load items'),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Number of Items and Quantity Row
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _countController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    labelText: 'No. Items',
+                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _quantityController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    labelText: 'Quantity (Kg)',
+                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Price Row
+          TextField(
+            controller: _priceController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              labelText: 'Price / Kg',
+              labelStyle: TextStyle(color: Colors.grey[600]),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Add Item Button
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _selectedItem == null ? null : _addItem,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1a1a1a),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Add Item',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+
+          // Added Items List Preview
+          if (_addedItems.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            "Item",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Text(
+                            "Detail",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            "Total",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                        const SizedBox(width: 32), // Action copy space
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _addedItems.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = _addedItems[index];
+                      final qty = item.quantity
+                          .toStringAsFixed(1)
+                          .replaceAll(RegExp(r'\.0$'), '');
+                      final rate = item.pricePerKg.toStringAsFixed(0);
+                      final total = item.total.toStringAsFixed(0);
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.item.name,
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  if (item.count > 0)
+                                    Text(
+                                      "${item.count} Items",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: Text(
+                                "$qty Kg x ₹$rate",
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: Colors.grey[700],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                "₹$total",
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: const Color(0xFF00695C),
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => _removeItem(index),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

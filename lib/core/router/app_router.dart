@@ -25,6 +25,7 @@ import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_ledge
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_list_page.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/payment_out_page.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
+import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_transaction_details_page.dart';
 import 'package:shop_ledger/features/reports/presentation/pages/transaction_list_page.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -177,6 +178,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                           }
                           final supplier = state.extra as Supplier;
                           return PaymentOutPage(supplier: supplier);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'transaction',
+                        builder: (context, state) {
+                          final transaction = state.extra as Transaction;
+                          return SupplierTransactionDetailsPage(
+                            transaction: transaction,
+                          );
                         },
                       ),
                     ],
