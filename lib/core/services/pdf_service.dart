@@ -12,6 +12,7 @@ class PdfService {
     required Customer customer,
     required List<Transaction> transactions,
     required double outstandingBalance,
+    String? shopName,
   }) async {
     final pdf = pw.Document();
 
@@ -26,8 +27,9 @@ class PdfService {
     // However, pdf package has built-in fonts, let's use them to avoid asset issues for now.
 
     final DateFormat dateFormatter = DateFormat('dd MMM yyyy');
-    final currencyFormatter = NumberFormat.simpleCurrency(
+    final currencyFormatter = NumberFormat.currency(
       locale: 'en_IN',
+      symbol: 'Rs. ',
       decimalDigits: 2,
     );
 
@@ -37,7 +39,11 @@ class PdfService {
         margin: const pw.EdgeInsets.all(32),
         build: (pw.Context context) {
           return [
-            _buildHeader(customer, dateFormatter.format(DateTime.now())),
+            _buildHeader(
+              customer,
+              dateFormatter.format(DateTime.now()),
+              shopName,
+            ),
             pw.SizedBox(height: 20),
             _buildSummary(customer, outstandingBalance, currencyFormatter),
             pw.SizedBox(height: 20),
@@ -61,7 +67,7 @@ class PdfService {
     return file;
   }
 
-  pw.Widget _buildHeader(Customer customer, String date) {
+  pw.Widget _buildHeader(Customer customer, String date, String? shopName) {
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
@@ -69,7 +75,7 @@ class PdfService {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              'Shop Ledger',
+              shopName ?? 'Shop Ledger',
               style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
             ),
             pw.Text(

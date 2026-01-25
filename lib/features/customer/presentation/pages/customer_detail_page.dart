@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
@@ -210,6 +211,7 @@ class CustomerDetailPage extends ConsumerWidget {
                               ),
                               onPressed: () => _openWhatsApp(
                                 context,
+                                ref, // Pass ref
                                 currentCustomer,
                                 transactions,
                                 stats.outstandingBalance,
@@ -600,6 +602,7 @@ class CustomerDetailPage extends ConsumerWidget {
 
   Future<void> _openWhatsApp(
     BuildContext context,
+    WidgetRef ref,
     Customer customer,
     List<Transaction> transactions,
     double amount,
@@ -612,12 +615,17 @@ class CustomerDetailPage extends ConsumerWidget {
     }
 
     try {
+      // Get shop name from user metadata
+      final user = ref.read(authRepositoryProvider).getCurrentUser();
+      final shopName = user?.userMetadata?['shop_name'] as String?;
+
       // Generate PDF
       final pdfService = PdfService();
       final file = await pdfService.generateTransactionPdf(
         customer: customer,
         transactions: transactions,
         outstandingBalance: amount,
+        shopName: shopName,
       );
 
       // Share via WhatsApp
