@@ -444,13 +444,10 @@ class CustomerDetailPage extends ConsumerWidget {
     final details =
         transaction.details ??
         (transaction.type == TransactionType.sale ? 'Sale' : 'Payment');
-    final debit = transaction.type == TransactionType.sale
-        ? '₹${transaction.amount.toStringAsFixed(2)}'
-        : '--';
-    final credit = transaction.type == TransactionType.paymentIn
-        ? '₹${transaction.amount.toStringAsFixed(2)}'
-        : '--';
+
     final isPayment = transaction.type == TransactionType.paymentIn;
+    final amount = '₹${transaction.amount.toStringAsFixed(2)}';
+    final amountColor = isPayment ? AppColors.primary : AppColors.textDark;
 
     return InkWell(
       onTap: onTap,
@@ -463,7 +460,6 @@ class CustomerDetailPage extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -489,6 +485,8 @@ class CustomerDetailPage extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 details,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: AppColors.primary,
                                   fontSize: 12,
@@ -500,6 +498,8 @@ class CustomerDetailPage extends ConsumerWidget {
                         )
                       : Text(
                           details,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: Colors.grey[500],
                             fontSize: 12,
@@ -508,26 +508,14 @@ class CustomerDetailPage extends ConsumerWidget {
                 ],
               ),
             ),
-            Expanded(
-              child: Text(
-                debit,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: debit == '--' ? Colors.grey[300] : AppColors.textDark,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                credit,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: credit == '--' ? Colors.grey[300] : AppColors.primary,
-                ),
+            const SizedBox(width: 16),
+            Text(
+              amount,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: amountColor,
               ),
             ),
           ],
