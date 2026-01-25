@@ -340,7 +340,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.primary.withOpacity(0.05),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -257,13 +257,17 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                       strokeWidth: 2,
                     ),
                   )
-                : const Icon(Icons.save, color: AppColors.textDark, size: 24),
+                : const Icon(
+                    Icons.save,
+                    color: AppColors.backgroundLight,
+                    size: 24,
+                  ),
             label: Text(
               _isLoading ? 'Saving...' : 'Save Sale',
               style: const TextStyle(
-                color: AppColors.textDark,
+                color: AppColors.backgroundLight,
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: 16,
               ),
             ),
             style: ElevatedButton.styleFrom(

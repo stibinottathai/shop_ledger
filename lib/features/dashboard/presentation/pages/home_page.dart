@@ -44,7 +44,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (stats) {
-          final pendingAmount = stats.todaysSale - stats.todaysCollection;
+          // final pendingAmount = stats.todaysSale - stats.todaysCollection;
 
           return Column(
             children: [
@@ -210,19 +210,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     : 0,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildGaugeCard(
-                                context,
-                                amount: pendingAmount, // Calculated pending
-                                label: "Pending",
-                                icon: Icons.pending_actions,
-                                color: Colors.orange[400]!,
-                                percent: stats.todaysSale > 0
-                                    ? (pendingAmount / stats.todaysSale)
-                                    : 0,
-                              ),
-                            ),
                           ],
                         ),
 
@@ -276,23 +263,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 color: Colors.orange[500]!,
                                 percent: stats.todaysPurchase > 0
                                     ? (stats.todaysPaymentOut /
-                                          stats.todaysPurchase)
-                                    : 0,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildGaugeCard(
-                                context,
-                                amount:
-                                    stats.todaysPurchase -
-                                    stats.todaysPaymentOut,
-                                label: "Pending",
-                                icon: Icons.pending_actions,
-                                color: Colors.red[400]!,
-                                percent: stats.todaysPurchase > 0
-                                    ? ((stats.todaysPurchase -
-                                              stats.todaysPaymentOut) /
                                           stats.todaysPurchase)
                                     : 0,
                               ),
