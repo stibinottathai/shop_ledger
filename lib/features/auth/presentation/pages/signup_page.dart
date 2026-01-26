@@ -13,7 +13,6 @@ class SignupPage extends ConsumerStatefulWidget {
 
 class _SignupPageState extends ConsumerState<SignupPage> {
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   final _formKey = GlobalKey<FormState>();
 
   final _shopNameController = TextEditingController();
@@ -21,7 +20,6 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
@@ -30,18 +28,11 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
-        return;
-      }
       // Using Owner Name as username for now.
       ref
           .read(authControllerProvider.notifier)
@@ -60,10 +51,11 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
       next.when(
         data: (_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Signup Successful! Please Login.')),
-          );
-          context.pop();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Signup Successful!')));
+          // Navigate to dashboard instead of popping
+          context.go('/home');
         },
         error: (e, stack) {
           String errorMessage = e.toString();
@@ -221,44 +213,6 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                           onPressed: () {
                             setState(() {
                               _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-                    _buildLabel('Confirm Password'),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      // Changed to TextFormField
-                      obscureText: _obscureConfirmPassword,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
-                        }
-                        // Need access to password field? Better to just check if not empty for now or logic in button?
-                        // NOTE: To compare passwords, we can save the password value or find the other field.
-                        // Simpler: Just validate not empty here, and logic in button? Or Find ancestor?
-                        // Standard way: no access to other field value easily in validator unless stored in state.
-                        // For now, simple length check. Proper comparison usually done in button or using controller.
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Repeat password',
-                        hintStyle: TextStyle(
-                          color: AppColors.greyText.withOpacity(0.7),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword =
-                                  !_obscureConfirmPassword;
                             });
                           },
                         ),
