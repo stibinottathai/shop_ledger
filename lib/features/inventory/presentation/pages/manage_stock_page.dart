@@ -41,17 +41,24 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   }
 
   Future<void> _scanBarcode(StateSetter setSheetState) async {
+    final controller = MobileScannerController();
+    bool hasScanned = false;
+
     final result = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (context) => Scaffold(
           appBar: AppBar(title: const Text('Scan Barcode')),
           body: MobileScanner(
+            controller: controller,
             onDetect: (capture) {
+              if (hasScanned) return; // Prevent multiple scans
+
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
-                if (barcode.rawValue != null) {
-                  // Pop with the barcode value
+                if (barcode.rawValue != null && !hasScanned) {
+                  hasScanned = true;
+                  controller.stop();
                   Navigator.pop(context, barcode.rawValue);
                   return;
                 }
@@ -62,7 +69,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
       ),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       setSheetState(() {
         _barcodeController.text = result;
       });
