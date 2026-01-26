@@ -201,7 +201,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      ownerName,
+                                      'Proprietor : $ownerName',
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
