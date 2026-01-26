@@ -101,8 +101,14 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
   ];
 
   Future<void> _captureAndShare() async {
+    if (!mounted) return;
+
     setState(() => _isSharing = true);
+
     try {
+      // Small delay to ensure UI is rendered
+      await Future.delayed(const Duration(milliseconds: 100));
+
       final boundary =
           _globalKey.currentContext?.findRenderObject()
               as RenderRepaintBoundary?;
@@ -112,26 +118,42 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
       }
 
       if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 20));
+        await Future.delayed(const Duration(milliseconds: 50));
       }
 
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      final pngBytes = byteData!.buffer.asUint8List();
+
+      if (byteData == null) {
+        throw Exception("Failed to convert image to bytes");
+      }
+
+      final pngBytes = byteData.buffer.asUint8List();
 
       final directory = await getTemporaryDirectory();
       final imagePath = '${directory.path}/business_card.png';
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(pngBytes);
 
-      await Share.shareXFiles([
+      // Share without expecting a result (avoid late initialization error)
+      final result = await Share.shareXFiles([
         XFile(imagePath),
-      ], text: 'Check out my business!');
+      ], text: 'Check out my business card!');
+
+      // Optionally handle the result
+      if (mounted && result.status == ShareResultStatus.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Card shared successfully!')),
+        );
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error sharing card: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sharing card: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isSharing = false);
