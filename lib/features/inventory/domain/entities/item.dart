@@ -5,6 +5,7 @@ class Item {
   final double? totalQuantity;
   final String unit; // 'kg' or 'pcs'
   final DateTime? createdAt;
+  final String? barcode;
 
   Item({
     this.id,
@@ -13,6 +14,7 @@ class Item {
     this.totalQuantity,
     this.unit = 'kg',
     this.createdAt,
+    this.barcode,
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class Item {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
+      barcode: json['barcode'] as String?,
     );
   }
 
@@ -37,6 +40,7 @@ class Item {
       'price_per_kg': pricePerKg,
       if (totalQuantity != null) 'total_quantity': totalQuantity,
       'unit': unit,
+      if (barcode != null) 'barcode': barcode,
     };
   }
 
@@ -47,6 +51,7 @@ class Item {
     double? totalQuantity,
     String? unit,
     DateTime? createdAt,
+    String? barcode,
   }) {
     return Item(
       id: id ?? this.id,
@@ -55,6 +60,7 @@ class Item {
       totalQuantity: totalQuantity ?? this.totalQuantity,
       unit: unit ?? this.unit,
       createdAt: createdAt ?? this.createdAt,
+      barcode: barcode ?? this.barcode,
     );
   }
 }

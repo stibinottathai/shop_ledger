@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ManageStockPage extends ConsumerStatefulWidget {
   const ManageStockPage({super.key});
@@ -18,6 +19,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _qtyController = TextEditingController();
+  final _barcodeController = TextEditingController();
   bool _isSaving = false;
 
   // Search
@@ -34,13 +36,43 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     _nameController.dispose();
     _priceController.dispose();
     _qtyController.dispose();
+    _barcodeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _scanBarcode(StateSetter setSheetState) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: const Text('Scan Barcode')),
+          body: MobileScanner(
+            onDetect: (capture) {
+              final List<Barcode> barcodes = capture.barcodes;
+              for (final barcode in barcodes) {
+                if (barcode.rawValue != null) {
+                  Navigator.pop(context, barcode.rawValue);
+                  break;
+                }
+              }
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (result != null && result is String) {
+      setSheetState(() {
+        _barcodeController.text = result;
+      });
+    }
   }
 
   void _showItemForm([Item? item]) {
     _nameController.text = item?.name ?? '';
     _priceController.text = item?.pricePerKg.toString() ?? '';
     _qtyController.text = item?.totalQuantity?.toString() ?? '';
+    _barcodeController.text = item?.barcode ?? '';
     _selectedUnit = item?.unit ?? 'kg';
 
     showModalBottomSheet(
@@ -148,6 +180,17 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                               val == null || val.isEmpty ? 'Required' : null,
                         ),
                         const SizedBox(height: 20),
+                        _buildInputField(
+                          controller: _barcodeController,
+                          label: 'Barcode (Optional)',
+                          hint: 'Scan or enter barcode',
+                          icon: Icons.qr_code_scanner,
+                          suffix: IconButton(
+                            icon: const Icon(Icons.center_focus_weak),
+                            onPressed: () => _scanBarcode(setSheetState),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                         Row(
                           children: [
                             Expanded(
@@ -199,6 +242,10 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                     ); // Use local setState
 
                                     final name = _nameController.text.trim();
+                                    final barcode =
+                                        _barcodeController.text.trim().isEmpty
+                                        ? null
+                                        : _barcodeController.text.trim();
                                     final price =
                                         double.tryParse(
                                           _priceController.text.trim(),
@@ -218,6 +265,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                           pricePerKg: price,
                                           totalQuantity: qty,
                                           unit: _selectedUnit,
+                                          barcode: barcode,
                                         );
                                         await ref
                                             .read(inventoryProvider.notifier)
@@ -230,6 +278,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                               price,
                                               qty,
                                               unit: _selectedUnit,
+                                              barcode: barcode,
                                             );
                                       }
                                       if (mounted) {
@@ -354,6 +403,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     required IconData icon,
     TextInputType inputType = TextInputType.text,
     String? Function(String?)? validator,
+    Widget? suffix,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,32 +428,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.inter(color: AppColors.slate400),
-            prefixIcon: Icon(icon, color: AppColors.slate400, size: 20),
-            filled: true,
-            fillColor: AppColors.slate50,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.slate200),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
+            suffixIcon: suffix,
           ),
         ),
       ],

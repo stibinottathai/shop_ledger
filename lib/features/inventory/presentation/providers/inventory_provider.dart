@@ -24,6 +24,7 @@ class InventoryNotifier extends AsyncNotifier<List<Item>> {
     double pricePerKg,
     double? totalQuantity, {
     String unit = 'kg',
+    String? barcode,
   }) async {
     // Optimistic update could be complex with ID generation, so standard async for now
     await ref
@@ -34,6 +35,7 @@ class InventoryNotifier extends AsyncNotifier<List<Item>> {
             pricePerKg: pricePerKg,
             totalQuantity: totalQuantity,
             unit: unit,
+            barcode: barcode,
           ),
         );
     // Refresh to get new item with ID
