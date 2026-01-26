@@ -108,6 +108,16 @@ class SettingsPage extends ConsumerWidget {
 
           _buildSettingsTile(
             context,
+            icon: Icons.analytics_outlined,
+            title: 'Reports & Analytics',
+            subtitle: 'View sales and purchase reports',
+            onTap: () => context.push('/home/settings/reports'),
+          ),
+
+          const SizedBox(height: 12),
+
+          _buildSettingsTile(
+            context,
             icon: Icons.person_outline,
             title: 'Profile',
             subtitle: 'Manage your account details',

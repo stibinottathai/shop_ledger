@@ -27,6 +27,9 @@ import 'package:shop_ledger/features/suppliers/presentation/pages/payment_out_pa
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_transaction_details_page.dart';
 import 'package:shop_ledger/features/inventory/presentation/pages/manage_stock_page.dart';
+import 'package:shop_ledger/features/expenses/presentation/pages/expenses_page.dart';
+import 'package:shop_ledger/features/expenses/presentation/pages/add_expense_page.dart';
+import 'package:shop_ledger/features/expenses/presentation/pages/all_expenses_page.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // We do NOT watch authStateProvider here to prevent GoRouter from rebuilding
@@ -68,6 +71,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'settings',
                     builder: (context, state) => const SettingsPage(),
+                    routes: [
+                      GoRoute(
+                        path: 'reports',
+                        builder: (context, state) => const ReportsPage(),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -207,7 +216,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/reports',
-                builder: (context, state) => const ReportsPage(),
+                builder: (context, state) => const ExpensesPage(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (context, state) => const AddExpensePage(),
+                  ),
+                  GoRoute(
+                    path: 'all',
+                    builder: (context, state) => const AllExpensesPage(),
+                  ),
+                ],
               ),
             ],
           ),
