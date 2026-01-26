@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class SupplierLedgerPage extends ConsumerWidget {
   final Supplier supplier;
@@ -272,7 +273,17 @@ class SupplierLedgerPage extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, s) => Center(child: Text('Error: $e')),
+                error: (e, s) => Center(
+                  child: CommonErrorWidget(
+                    error: e,
+                    onRetry: () {
+                      ref.refresh(
+                        supplierTransactionListProvider(supplier.id!),
+                      );
+                    },
+                    fullScreen: false,
+                  ),
+                ),
               ),
             ),
           ],

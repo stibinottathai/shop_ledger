@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
@@ -42,7 +43,12 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
 
   Future<DashboardStats> _calculateStats() async {
     final repository = ref.read(transactionRepositoryProvider);
-    final transactions = await repository.getTransactions();
+    final transactions = await repository.getTransactions().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        throw const SocketException('Connection timed out');
+      },
+    );
 
     double todaysSale = 0;
     double todaysCollection = 0;

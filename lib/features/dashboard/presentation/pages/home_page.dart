@@ -9,6 +9,7 @@ import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_
 import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
 
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -44,7 +45,15 @@ class _HomePageState extends ConsumerState<HomePage> {
       backgroundColor: AppColors.background,
       body: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        error: (err, stack) {
+          return CommonErrorWidget(
+            error: err,
+            onRetry: () {
+              ref.read(dashboardStatsProvider.notifier).refresh();
+            },
+            fullScreen: false,
+          );
+        },
         data: (stats) {
           // final pendingAmount = stats.todaysSale - stats.todaysCollection;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 
 class ReportsPage extends ConsumerStatefulWidget {
@@ -33,7 +34,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             Expanded(
               child: reportsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Center(child: Text('Error: $err')),
+                error: (err, stack) => CommonErrorWidget(
+                  error: err,
+                  onRetry: () {
+                    ref.refresh(reportsProvider);
+                  },
+                ),
                 data: (state) => SingleChildScrollView(
                   padding: const EdgeInsets.only(bottom: 24),
                   child: Column(

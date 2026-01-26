@@ -169,6 +169,8 @@ class _ManageItemsSheetState extends ConsumerState<ManageItemsSheet> {
                   onPressed: _saveItem,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
                   ),
                   child: Text(
                     _itemToEdit != null ? 'Update Item' : 'Save Item',
@@ -220,7 +222,10 @@ class _ManageItemsSheetState extends ConsumerState<ManageItemsSheet> {
                     onPressed: _startAdd,
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text('Add Item'),
+
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,

@@ -8,6 +8,7 @@ import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/inventory/presentation/widgets/manage_items_sheet.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class CustomerListPage extends ConsumerStatefulWidget {
   const CustomerListPage({super.key});
@@ -356,8 +357,15 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     loading: () => const Expanded(
                       child: Center(child: CircularProgressIndicator()),
                     ),
-                    error: (error, stackTrace) =>
-                        Expanded(child: Center(child: Text('Error: $error'))),
+                    error: (error, stackTrace) => Expanded(
+                      child: CommonErrorWidget(
+                        error: error,
+                        onRetry: () {
+                          ref.refresh(customerListProvider);
+                        },
+                        fullScreen: false,
+                      ),
+                    ),
                   ),
                 ],
               ),

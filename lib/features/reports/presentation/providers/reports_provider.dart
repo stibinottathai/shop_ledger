@@ -70,7 +70,9 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
     final customerRepo = ref.read(customerRepositoryProvider);
     final supplierRepo = ref.read(supplierRepositoryProvider);
 
-    final transactions = await transactionRepo.getAllTransactions();
+    final transactions = await transactionRepo.getAllTransactions().timeout(
+      const Duration(seconds: 10),
+    );
 
     double totalSales = 0;
     double totalPurchases = 0;

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class SupplierListPage extends ConsumerStatefulWidget {
   const SupplierListPage({super.key});
@@ -315,8 +316,15 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                     loading: () => const Expanded(
                       child: Center(child: CircularProgressIndicator()),
                     ),
-                    error: (error, stackTrace) =>
-                        Expanded(child: Center(child: Text('Error: $error'))),
+                    error: (error, stackTrace) => Expanded(
+                      child: CommonErrorWidget(
+                        error: error,
+                        onRetry: () {
+                          ref.refresh(supplierListProvider);
+                        },
+                        fullScreen: false,
+                      ),
+                    ),
                   ),
                 ],
               ),

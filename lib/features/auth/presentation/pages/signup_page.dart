@@ -75,191 +75,204 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-              // Header
-              Center(
-                child: Column(
-                  children: [
-                    Container(
-                      height: 56,
-                      width: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.inventory_2,
-                          size: 32,
-                          color: AppColors.primary,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 24),
+                      // Header
+                      Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              height: 56,
+                              width: 56,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.inventory_2,
+                                  size: 32,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Create Account',
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Start managing your Business More Efficiently',
+                              style: TextStyle(
+                                color: AppColors.greyText,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Create Account',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Start managing your Business More Efficiently',
-                      style: TextStyle(color: AppColors.greyText, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-              // Form Fields
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildLabel('Shop Name'),
-                    _buildTextField(
-                      controller: _shopNameController,
-                      hint: 'Enter your shop\'s trade name',
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Shop Name is required';
-                        }
-                        return null;
-                      },
-                    ),
+                      // Form Fields
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildLabel('Shop Name'),
+                            _buildTextField(
+                              controller: _shopNameController,
+                              hint: 'Enter your shop\'s trade name',
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Shop Name is required';
+                                }
+                                return null;
+                              },
+                            ),
 
-                    const SizedBox(height: 20),
-                    _buildLabel('Owner Name'),
-                    _buildTextField(
-                      controller: _ownerNameController,
-                      hint: 'Full name of the owner',
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Owner Name is required';
-                        }
-                        return null;
-                      },
-                    ),
+                            const SizedBox(height: 20),
+                            _buildLabel('Owner Name'),
+                            _buildTextField(
+                              controller: _ownerNameController,
+                              hint: 'Full name of the owner',
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Owner Name is required';
+                                }
+                                return null;
+                              },
+                            ),
 
-                    const SizedBox(height: 20),
-                    _buildLabel('Phone Number'),
-                    _buildTextField(
-                      controller: _phoneController,
-                      hint: '+91 9495622667',
-                      inputType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Phone number is required';
-                        }
-                        // Basic phone regex or length check
-                        if (value.length < 10) {
-                          return 'Please enter a valid phone number';
-                        }
-                        return null;
-                      },
-                    ),
+                            const SizedBox(height: 20),
+                            _buildLabel('Phone Number'),
+                            _buildTextField(
+                              controller: _phoneController,
+                              hint: '+91 9495622667',
+                              inputType: TextInputType.phone,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Phone number is required';
+                                }
+                                // Basic phone regex or length check
+                                if (value.length < 10) {
+                                  return 'Please enter a valid phone number';
+                                }
+                                return null;
+                              },
+                            ),
 
-                    const SizedBox(height: 20),
-                    _buildLabel('Email Address'),
-                    _buildTextField(
-                      controller: _emailController,
-                      hint: 'name@shop.com',
-                      inputType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Email is required';
-                        }
-                        final emailRegex = RegExp(
-                          r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
-                        );
-                        if (!emailRegex.hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
+                            const SizedBox(height: 20),
+                            _buildLabel('Email Address'),
+                            _buildTextField(
+                              controller: _emailController,
+                              hint: 'name@shop.com',
+                              inputType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Email is required';
+                                }
+                                final emailRegex = RegExp(
+                                  r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                                );
+                                if (!emailRegex.hasMatch(value)) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
+                            ),
 
-                    const SizedBox(height: 20),
-                    _buildLabel('Password'),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password is required';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Create password',
-                        hintStyle: TextStyle(
-                          color: AppColors.greyText.withOpacity(0.7),
+                            const SizedBox(height: 20),
+                            _buildLabel('Password'),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Password is required';
+                                }
+                                if (value.length < 6) {
+                                  return 'Password must be at least 6 characters';
+                                }
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Create password',
+                                hintStyle: TextStyle(
+                                  color: AppColors.greyText.withOpacity(0.7),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 40),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: isLoading ? null : _submit,
+                              child: isLoading
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : const Text('Sign Up'),
+                            ),
+                          ],
                         ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Already have an account? ',
+                            style: TextStyle(color: AppColors.greyText),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
+                          GestureDetector(
+                            onTap: () {
+                              context.pop();
+                            },
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-
-                    const SizedBox(height: 40),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: isLoading ? null : _submit,
-                      child: isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Sign Up'),
-                    ),
-                    // Close Form and Column
-                  ],
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Already have an account? ',
-                    style: TextStyle(color: AppColors.greyText),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      context.pop();
-                    },
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

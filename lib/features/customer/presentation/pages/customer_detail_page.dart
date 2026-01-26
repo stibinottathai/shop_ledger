@@ -13,6 +13,7 @@ import 'package:shop_ledger/features/customer/presentation/providers/customer_pr
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class CustomerDetailPage extends ConsumerWidget {
   final Customer customer;
@@ -396,7 +397,15 @@ class CustomerDetailPage extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Center(child: Text('Error: $e')),
+            error: (e, s) => Center(
+              child: CommonErrorWidget(
+                error: e,
+                onRetry: () {
+                  ref.refresh(transactionListProvider(customer.id!));
+                },
+                fullScreen: false,
+              ),
+            ),
           ),
         ),
       ),
