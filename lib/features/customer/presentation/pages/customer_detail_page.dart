@@ -37,12 +37,15 @@ class CustomerDetailPage extends ConsumerWidget {
         );
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Theme.of(context).iconTheme.color,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Column(
@@ -50,8 +53,8 @@ class CustomerDetailPage extends ConsumerWidget {
           children: [
             Text(
               currentCustomer.name,
-              style: const TextStyle(
-                color: AppColors.textDark,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
@@ -59,7 +62,9 @@ class CustomerDetailPage extends ConsumerWidget {
             Text(
               currentCustomer.phone,
               style: TextStyle(
-                color: Colors.grey[500],
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -76,7 +81,11 @@ class CustomerDetailPage extends ConsumerWidget {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.call, color: AppColors.textDark, size: 20),
+              icon: Icon(
+                Icons.call,
+                color: Theme.of(context).iconTheme.color,
+                size: 20,
+              ),
               onPressed: () {
                 if (currentCustomer.phone.isNotEmpty) {
                   _makePhoneCall(context, currentCustomer.phone);
@@ -93,7 +102,7 @@ class CustomerDetailPage extends ConsumerWidget {
             height: 40,
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: Theme.of(context).scaffoldBackgroundColor, // Was grey[100]
               shape: BoxShape.circle,
             ),
             child: PopupMenuButton<String>(
@@ -101,12 +110,13 @@ class CustomerDetailPage extends ConsumerWidget {
               offset: const Offset(0, 50),
               elevation: 4,
               shadowColor: Colors.black.withOpacity(0.1),
+              color: Theme.of(context).cardColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              icon: const Icon(
+              icon: Icon(
                 Icons.more_vert,
-                color: AppColors.textDark,
+                color: Theme.of(context).iconTheme.color,
                 size: 20,
               ),
               onSelected: (value) {
@@ -122,16 +132,16 @@ class CustomerDetailPage extends ConsumerWidget {
                     value: 'edit',
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.edit,
-                          color: AppColors.textMain,
+                          color: Theme.of(context).iconTheme.color,
                           size: 18,
                         ),
                         const SizedBox(width: 12),
                         Text(
                           'Edit Customer',
                           style: GoogleFonts.inter(
-                            color: AppColors.textMain,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
                           ),
@@ -180,7 +190,7 @@ class CustomerDetailPage extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -196,10 +206,14 @@ class CustomerDetailPage extends ConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
+                                Text(
                                   'OUTSTANDING BALANCE',
                                   style: TextStyle(
-                                    color: AppColors.greyText,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.5),
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.0,
@@ -232,14 +246,16 @@ class CustomerDetailPage extends ConsumerWidget {
                               '₹${stats.outstandingBalance.toStringAsFixed(2)}',
                               style: TextStyle(
                                 color: stats.outstandingBalance > 0
-                                    ? AppColors.accentRed
-                                    : AppColors.textDark,
+                                    ? AppColors.danger
+                                    : Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge?.color,
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 16),
-                            Divider(color: Colors.grey[100]),
+                            Divider(color: Theme.of(context).dividerColor),
                             const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -250,15 +266,21 @@ class CustomerDetailPage extends ConsumerWidget {
                                     Text(
                                       'Total Sales',
                                       style: TextStyle(
-                                        color: Colors.grey[400],
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color
+                                            ?.withOpacity(0.5),
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     Text(
                                       '₹${stats.totalSales.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        color: AppColors.textDark,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.color,
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -268,7 +290,7 @@ class CustomerDetailPage extends ConsumerWidget {
                                 Container(
                                   width: 1,
                                   height: 32,
-                                  color: Colors.grey[200],
+                                  color: Theme.of(context).dividerColor,
                                 ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -276,7 +298,11 @@ class CustomerDetailPage extends ConsumerWidget {
                                     Text(
                                       'Total Paid',
                                       style: TextStyle(
-                                        color: Colors.grey[400],
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color
+                                            ?.withOpacity(0.5),
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -368,13 +394,16 @@ class CustomerDetailPage extends ConsumerWidget {
                 delegate: _PersistentHeaderDelegate(
                   TabBar(
                     labelColor: AppColors.primary,
-                    unselectedLabelColor: Colors.grey,
+                    unselectedLabelColor: Theme.of(
+                      context,
+                    ).disabledColor, // Grey in theme
                     indicatorColor: AppColors.primary,
                     tabs: const [
                       Tab(text: 'Sales'),
                       Tab(text: 'Payments'),
                     ],
                   ),
+                  Theme.of(context).scaffoldBackgroundColor, // Pass color
                 ),
                 pinned: true,
               ),
@@ -391,8 +420,8 @@ class CustomerDetailPage extends ConsumerWidget {
 
               return TabBarView(
                 children: [
-                  _buildTransactionList(sales, isSale: true),
-                  _buildTransactionList(payments, isSale: false),
+                  _buildTransactionList(context, sales, isSale: true),
+                  _buildTransactionList(context, payments, isSale: false),
                 ],
               );
             },
@@ -413,6 +442,7 @@ class CustomerDetailPage extends ConsumerWidget {
   }
 
   Widget _buildTransactionList(
+    BuildContext context,
     List<Transaction> transactions, {
     required bool isSale,
   }) {
@@ -420,7 +450,7 @@ class CustomerDetailPage extends ConsumerWidget {
       return Center(
         child: Text(
           isSale ? 'No sales recorded' : 'No payments recorded',
-          style: const TextStyle(color: Colors.grey),
+          style: TextStyle(color: Theme.of(context).disabledColor),
         ),
       );
     }
@@ -431,6 +461,7 @@ class CustomerDetailPage extends ConsumerWidget {
       itemBuilder: (context, index) {
         final transaction = transactions[index];
         return _buildTransactionRow(
+          context,
           transaction,
           isShaded: index % 2 == 1,
           onTap: () {
@@ -445,6 +476,7 @@ class CustomerDetailPage extends ConsumerWidget {
   }
 
   Widget _buildTransactionRow(
+    BuildContext context,
     Transaction transaction, {
     required VoidCallback onTap,
     bool isShaded = false,
@@ -456,15 +488,21 @@ class CustomerDetailPage extends ConsumerWidget {
 
     final isPayment = transaction.type == TransactionType.paymentIn;
     final amount = '₹${transaction.amount.toStringAsFixed(2)}';
-    final amountColor = isPayment ? AppColors.primary : AppColors.textDark;
+    final amountColor = isPayment
+        ? AppColors.primary
+        : Theme.of(context).textTheme.bodyLarge?.color;
 
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isShaded ? AppColors.primary.withOpacity(0.05) : Colors.white,
-          border: Border(bottom: BorderSide(color: Colors.grey[50]!)),
+          color: isShaded
+              ? AppColors.primary.withOpacity(0.05)
+              : Theme.of(context).cardColor,
+          border: Border(
+            bottom: BorderSide(color: Theme.of(context).dividerColor),
+          ),
         ),
         child: Row(
           children: [
@@ -474,10 +512,10 @@ class CustomerDetailPage extends ConsumerWidget {
                 children: [
                   Text(
                     date,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -510,7 +548,9 @@ class CustomerDetailPage extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Colors.grey[500],
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                             fontSize: 12,
                           ),
                         ),
@@ -533,18 +573,34 @@ class CustomerDetailPage extends ConsumerWidget {
     );
   }
 
+  // ... (Keep existing _showDeleteConfirmation and other methods but they are inside the class)
+
   void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Customer'),
-        content: const Text(
+        backgroundColor: Theme.of(context).cardColor,
+        title: Text(
+          'Delete Customer',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge?.color,
+          ),
+        ),
+        content: Text(
           'Are you sure you want to delete this customer? This action cannot be undone and will delete all associated transactions.',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => context.pop(),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -572,7 +628,6 @@ class CustomerDetailPage extends ConsumerWidget {
     );
   }
 
-  // ... (Keep existing _openWhatsApp and _makePhoneCall methods if not shown, inserting helper methods here)
   Future<void> _openWhatsApp(
     BuildContext context,
     WidgetRef ref,
@@ -648,8 +703,9 @@ class CustomerDetailPage extends ConsumerWidget {
 
 class _PersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
+  final Color backgroundColor; // Add this
 
-  _PersistentHeaderDelegate(this.tabBar);
+  _PersistentHeaderDelegate(this.tabBar, this.backgroundColor);
 
   @override
   Widget build(
@@ -657,7 +713,7 @@ class _PersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(color: AppColors.backgroundLight, child: tabBar);
+    return Container(color: backgroundColor, child: tabBar);
   }
 
   @override
@@ -668,6 +724,6 @@ class _PersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _PersistentHeaderDelegate oldDelegate) {
-    return false;
+    return backgroundColor != oldDelegate.backgroundColor;
   }
 }

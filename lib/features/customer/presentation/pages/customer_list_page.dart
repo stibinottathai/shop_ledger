@@ -31,7 +31,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final customerListAsync = ref.watch(customerListProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           // Header
@@ -42,9 +42,11 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               20,
               16,
             ),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFFFFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              border: Border(
+                bottom: BorderSide(color: Theme.of(context).dividerColor),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -60,7 +62,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         child: Text(
                           'Customers',
                           style: GoogleFonts.inter(
-                            color: AppColors.textMain,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.color,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             height: 1.25,
@@ -75,9 +79,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   height: 36,
                   width: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -96,6 +100,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         offset: const Offset(0, 50),
                         elevation: 4,
                         shadowColor: Colors.black.withOpacity(0.1),
+                        color: Theme.of(context).cardColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -113,7 +118,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             size: 20,
                             color:
                                 currentSort == CustomerSortOption.latestCreated
-                                ? AppColors.slate600
+                                ? Theme.of(context).iconTheme.color
                                 : AppColors.primary,
                           ),
                         ),
@@ -122,22 +127,26 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         },
                         itemBuilder: (context) => [
                           _buildFilterItem(
+                            context,
                             CustomerSortOption.mostDue,
                             'Most Due',
                             currentSort,
                           ),
                           _buildFilterItem(
+                            context,
                             CustomerSortOption.lowestDue,
                             'Lowest Due',
                             currentSort,
                           ),
                           const PopupMenuDivider(),
                           _buildFilterItem(
+                            context,
                             CustomerSortOption.latestUpdated,
                             'Latest Updated',
                             currentSort,
                           ),
                           _buildFilterItem(
+                            context,
                             CustomerSortOption.latestCreated,
                             'Latest Created',
                             currentSort,
@@ -152,9 +161,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   height: 36,
                   width: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -164,17 +173,17 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     ],
                   ),
                   child: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.add,
                       size: 20,
-                      color: AppColors.slate600,
+                      color: Theme.of(context).iconTheme.color,
                     ),
                     padding: EdgeInsets.zero,
                     onPressed: () {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
-                        backgroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).cardColor,
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(20),
@@ -201,7 +210,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                       Container(
                         height: 48, // Consistent height for search bars usually
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
@@ -226,19 +235,19 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                               .searchCustomers(value);
                         },
                         style: GoogleFonts.inter(
-                          color: AppColors.textMain,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: AppColors.slate400,
+                            color: Theme.of(context).hintColor,
                             size: 20,
                           ),
                           hintText: 'Search customers...',
                           hintStyle: GoogleFonts.inter(
-                            color: AppColors.slate400,
+                            color: Theme.of(context).hintColor,
                           ),
                           border: InputBorder.none,
                           focusedBorder: OutlineInputBorder(
@@ -250,8 +259,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.slate200,
+                            borderSide: BorderSide(
+                              color: Theme.of(context).dividerColor,
                               width: 1.5,
                             ),
                           ),
@@ -278,7 +287,11 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                 Text(
                                   'ALL CUSTOMERS (${customers.length})',
                                   style: GoogleFonts.inter(
-                                    color: AppColors.slate400,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.7),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.5,
@@ -295,16 +308,20 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                       child: Text(
                                         'No customers found',
                                         style: GoogleFonts.inter(
-                                          color: AppColors.slate400,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withOpacity(0.5),
                                         ),
                                       ),
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
-                                        color: AppColors.surface,
+                                        color: Theme.of(context).cardColor,
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                          color: AppColors.slate100,
+                                          color: Theme.of(context).dividerColor,
                                         ),
                                         boxShadow: const [
                                           BoxShadow(
@@ -335,10 +352,12 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                         padding: EdgeInsets.zero,
                                         itemCount: customers.length,
                                         separatorBuilder: (context, index) =>
-                                            const Divider(
+                                            Divider(
                                               height: 1,
                                               thickness: 1,
-                                              color: AppColors.slate50,
+                                              color: Theme.of(
+                                                context,
+                                              ).dividerColor,
                                             ),
                                         itemBuilder: (context, index) {
                                           final customer = customers[index];
@@ -418,6 +437,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   }
 
   PopupMenuItem<CustomerSortOption> _buildFilterItem(
+    BuildContext context,
     CustomerSortOption option,
     String label,
     CustomerSortOption currentSort,
@@ -430,13 +450,17 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
           Icon(
             isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
             size: 18,
-            color: isSelected ? AppColors.primary : AppColors.slate400,
+            color: isSelected
+                ? AppColors.primary
+                : Theme.of(context).iconTheme.color?.withOpacity(0.5),
           ),
           const SizedBox(width: 12),
           Text(
             label,
             style: GoogleFonts.inter(
-              color: isSelected ? AppColors.primary : AppColors.textMain,
+              color: isSelected
+                  ? AppColors.primary
+                  : Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               fontSize: 14,
             ),
@@ -472,12 +496,12 @@ class CustomerListItem extends ConsumerWidget {
     final avatarColor = colors[colorIndex];
 
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: InkWell(
         onTap: () {
           context.go('/customers/${customer.id}', extra: customer);
         },
-        hoverColor: AppColors.slate50,
+        hoverColor: Theme.of(context).hoverColor,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -521,7 +545,7 @@ class CustomerListItem extends ConsumerWidget {
                     Text(
                       customer.name,
                       style: GoogleFonts.inter(
-                        color: AppColors.textMain,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -529,7 +553,9 @@ class CustomerListItem extends ConsumerWidget {
                     Text(
                       customer.phone,
                       style: GoogleFonts.inter(
-                        color: AppColors.slate500,
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -554,7 +580,7 @@ class CustomerListItem extends ConsumerWidget {
                               : stats.outstandingBalance < 0
                               ? AppColors
                                     .emerald500 // Or textMain if 0? Design shows Paid as green/textMain structure
-                              : AppColors.textMain,
+                              : Theme.of(context).textTheme.bodyLarge?.color,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -579,9 +605,9 @@ class CustomerListItem extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(width: 12),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
-                    color: AppColors.slate300,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.3),
                     size: 20,
                   ),
                 ],

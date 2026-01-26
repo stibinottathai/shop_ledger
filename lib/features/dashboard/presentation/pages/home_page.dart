@@ -42,7 +42,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final dateStr = DateFormat('EEE, d MMM').format(DateTime.now());
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) {
@@ -67,11 +67,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                   20,
                   16,
                 ),
-                decoration: const BoxDecoration(
-                  color: Color(
-                    0xFFFFFFFC,
-                  ), // Slightly off-white/blur simulation
-                  border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  border: Border(
+                    bottom: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -86,7 +86,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.primary.withOpacity(0.1),
-                              border: Border.all(color: AppColors.slate200),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                              ),
                             ),
                             child: Center(
                               child: Text(
@@ -109,7 +111,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             Text(
                               shopName,
                               style: GoogleFonts.inter(
-                                color: AppColors.textMain,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyLarge?.color,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 height: 1.25,
@@ -118,7 +122,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             Text(
                               dateStr,
                               style: GoogleFonts.inter(
-                                color: AppColors.textMuted,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -133,9 +139,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                           height: 40,
                           width: 40,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                            border: Border.all(
+                              color: Theme.of(context).dividerColor,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.05),
@@ -145,8 +153,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                             ],
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.settings, size: 20),
-                            color: AppColors.slate600,
+                            icon: Icon(
+                              Icons.settings,
+                              size: 20,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
                             onPressed: () => context.go('/home/settings'),
                           ),
                         ),
@@ -155,9 +166,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                           height: 40,
                           width: 40,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                            border: Border.all(
+                              color: Theme.of(context).dividerColor,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.05),
@@ -167,8 +180,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                             ],
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.notifications, size: 20),
-                            color: AppColors.slate600,
+                            icon: Icon(
+                              Icons.notifications,
+                              size: 20,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
                             onPressed: () {},
                           ),
                         ),
@@ -200,7 +216,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             Text(
                               "Today's Sales",
                               style: GoogleFonts.inter(
-                                color: AppColors.textMain,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyLarge?.color,
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: -0.5,
@@ -210,7 +228,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             Text(
                               "Real-time daily transaction tracking",
                               style: GoogleFonts.inter(
-                                color: AppColors.textMuted,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -261,7 +281,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             Text(
                               "Today's Purchase",
                               style: GoogleFonts.inter(
-                                color: AppColors.textMain,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyLarge?.color,
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: -0.5,
@@ -271,7 +293,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             Text(
                               "Real-time daily purchase tracking",
                               style: GoogleFonts.inter(
-                                color: AppColors.textMuted,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -317,7 +341,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         Text(
                           "Ledger",
                           style: GoogleFonts.inter(
-                            color: AppColors.textMain,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5,
@@ -356,7 +380,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                                       title: "Total Purchase",
                                       amount: stats.totalPurchases,
                                       subtitle: "Current period",
-                                      subtitleColor: AppColors.textMain,
+                                      subtitleColor:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.color ??
+                                          AppColors.textMain,
                                       icon: Icons.shopping_bag,
                                       iconBg: const Color(0xFFFEF2F2), // Red 50
                                       iconColor: const Color(
@@ -417,10 +445,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC), // Slate 50
+                            color: Theme.of(
+                              context,
+                            ).cardColor, // Slate 50 -> Card Color
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: const Color(0xFFE2E8F0),
+                              color: Theme.of(context).dividerColor,
                             ), // Slate 200
                             boxShadow: const [
                               BoxShadow(
@@ -441,10 +471,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Theme.of(
+                                    context,
+                                  ).scaffoldBackgroundColor,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFFF1F5F9),
+                                    color: Theme.of(context).dividerColor,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
@@ -468,7 +500,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     Text(
                                       "Business Insight",
                                       style: GoogleFonts.inter(
-                                        color: AppColors.textMain,
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.color,
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -477,7 +511,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     RichText(
                                       text: TextSpan(
                                         style: GoogleFonts.inter(
-                                          color: AppColors.slate600,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withOpacity(0.7),
                                           fontSize: 12,
                                           height: 1.5,
                                         ),
@@ -487,7 +525,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                                             text:
                                                 "${stats.highDueCustomerCount} customers",
                                             style: GoogleFonts.inter(
-                                              color: AppColors.textMain,
+                                              color: Theme.of(
+                                                context,
+                                              ).textTheme.bodyLarge?.color,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -529,9 +569,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.slate100),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: const [
           BoxShadow(
             color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -559,7 +599,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   painter: GaugePainter(
                     color: color,
                     percent: percent.clamp(0.0, 1.0),
-                    backgroundColor: AppColors.slate100,
+                    backgroundColor: Theme.of(context).dividerColor,
                   ),
                 ),
                 Icon(
@@ -576,7 +616,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: Text(
               _formatCurrency(amount, hide: hide),
               style: GoogleFonts.inter(
-                color: AppColors.textMain,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 height: 1,
@@ -587,7 +627,9 @@ class _HomePageState extends ConsumerState<HomePage> {
           Text(
             label.toUpperCase(),
             style: GoogleFonts.inter(
-              color: const Color(0xFF94a3b8), // Slate 400
+              color: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.color?.withOpacity(0.5), // Slate 400
               fontSize: 10,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
@@ -610,14 +652,22 @@ class _HomePageState extends ConsumerState<HomePage> {
     required Color gradientColor,
     bool hide = false,
   }) {
+    // Dynamic background for icon in Ledger Card?
+    // The previous implementation used fixed colors `iconBg`.
+    // We can keep them if they are soft pastels (usually fine in dark mode if opacity is handled or specific color),
+    // but better to use withOpacity if possible or leave them if they are specific semantic colors (like Emerald 50).
+    // Emerald 50 is very light. In Dark Mode, it might be too bright or look like "white" box.
+    // Let's use withOpacity logic for dark mode or keep as is if it looks okay.
+    // For now, let's keep the `iconBg` passed in, but wrap the main container in cardColor.
+
     return Container(
       width: width,
       height: 112, // 28 * 4 = 112
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.slate100),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: const [
           BoxShadow(
             color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -638,7 +688,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Text(
                     title.toUpperCase(),
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF94a3b8), // Slate 400
+                      color: Theme.of(context).textTheme.bodyMedium?.color
+                          ?.withOpacity(0.5), // Slate 400
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -648,7 +699,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: iconBg,
+                      color:
+                          iconBg, // We might need to adjust this for dark mode?
                       shape: BoxShape.circle,
                     ),
                     child: Icon(icon, color: iconColor, size: 14),
@@ -663,7 +715,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Text(
                       _formatCurrency(amount, hide: hide),
                       style: GoogleFonts.inter(
-                        color: AppColors.textMain,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
@@ -729,9 +781,9 @@ class _HomePageState extends ConsumerState<HomePage> {
           height: 112,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.slate100),
+            border: Border.all(color: Theme.of(context).dividerColor),
             boxShadow: const [
               BoxShadow(
                 color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -750,7 +802,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Text(
                     title.toUpperCase(),
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF94a3b8), // Slate 400
+                      color: Theme.of(context).textTheme.bodyMedium?.color
+                          ?.withOpacity(0.5), // Slate 400
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -770,7 +823,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Text(
                       _formatCurrency(amount, hide: hide),
                       style: GoogleFonts.inter(
-                        color: AppColors.textMain,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
@@ -781,7 +834,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Text(
                     subtitle,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF94a3b8), // Slate 400
+                      color: Theme.of(context).textTheme.bodyMedium?.color
+                          ?.withOpacity(0.5), // Slate 400
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),

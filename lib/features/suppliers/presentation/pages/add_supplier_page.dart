@@ -87,18 +87,21 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Theme.of(context).iconTheme.color,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           widget.supplierToEdit != null ? 'Edit Supplier' : 'Add New Supplier',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: Theme.of(context).textTheme.titleLarge?.color,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -106,7 +109,7 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: Colors.grey[100], height: 1.0),
+          child: Container(color: Theme.of(context).dividerColor, height: 1.0),
         ),
       ),
       body: SingleChildScrollView(
@@ -141,18 +144,22 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'New Supplier',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
-                              color: AppColors.textDark,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
                             ),
                           ),
                           Text(
                             'Enter details for the supplier',
                             style: TextStyle(
-                              color: Colors.grey[500],
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                               fontSize: 12,
                             ),
                           ),
@@ -266,10 +273,10 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              color: AppColors.textDark,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -280,14 +287,14 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
             validator: validator,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Colors.grey),
+              hintStyle: TextStyle(color: Theme.of(context).hintColor),
               prefixIcon: prefixText != null
                   ? Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
                         prefixText,
-                        style: const TextStyle(
-                          color: Colors.grey,
+                        style: TextStyle(
+                          color: Theme.of(context).hintColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -295,14 +302,14 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
                     )
                   : null,
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).cardColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.inputBorder),
+                borderSide: BorderSide(color: Theme.of(context).dividerColor),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.inputBorder),
+                borderSide: BorderSide(color: Theme.of(context).dividerColor),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

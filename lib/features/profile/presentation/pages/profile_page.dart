@@ -391,12 +391,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: _textMain, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Theme.of(context).iconTheme.color,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -432,7 +436,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   shape: BoxShape.circle,
                                   color: AppColors.primary.withOpacity(0.1),
                                   border: Border.all(
-                                    color: Colors.white,
+                                    color: Theme.of(context).cardColor,
                                     width: 4,
                                   ),
                                   boxShadow: [
@@ -460,9 +464,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Theme.of(context).cardColor,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.slate100),
+                                  border: Border.all(
+                                    color: Theme.of(context).canvasColor,
+                                  ),
                                   boxShadow: const [
                                     BoxShadow(
                                       color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -487,7 +493,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             style: GoogleFonts.inter(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: _textMain,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.titleLarge?.color,
                               letterSpacing: -0.5,
                             ),
                           ),
@@ -495,10 +503,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.store,
                                 size: 18,
-                                color: Color(0xFF94A3B8),
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -508,7 +518,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: _textMuted,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withOpacity(0.7),
                                 ),
                               ),
                             ],
@@ -522,13 +536,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       const SizedBox(height: 12),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _borderColor),
-                          boxShadow: const [
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                          boxShadow: [
                             BoxShadow(
-                              color: Color.fromRGBO(0, 0, 0, 0.05),
-                              offset: Offset(0, 1),
+                              color: Colors.black.withOpacity(0.05),
+                              offset: const Offset(0, 1),
                               blurRadius: 3,
                             ),
                           ],
@@ -541,14 +557,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               controller: _usernameController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
+                            Divider(
+                              height: 1,
+                              color: Theme.of(context).dividerColor,
+                            ),
                             _buildInfoItem(
                               icon: Icons.mail,
                               label: 'Email Address',
                               controller: _emailController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
+                            Divider(
+                              height: 1,
+                              color: Theme.of(context).dividerColor,
+                            ),
                             _buildInfoItem(
                               icon: Icons.call,
                               label: 'Phone Number',
@@ -565,13 +587,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       const SizedBox(height: 12),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _borderColor),
-                          boxShadow: const [
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                          boxShadow: [
                             BoxShadow(
-                              color: Color.fromRGBO(0, 0, 0, 0.05),
-                              offset: Offset(0, 1),
+                              color: Colors.black.withOpacity(0.05),
+                              offset: const Offset(0, 1),
                               blurRadius: 3,
                             ),
                           ],
@@ -584,7 +608,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               controller: _shopNameController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
+                            Divider(
+                              height: 1,
+                              color: Theme.of(context).dividerColor,
+                            ),
                             // Static GST for now as per design request, passing a controller with dummy data
                             _buildInfoItem(
                               icon: Icons.receipt_long,
@@ -606,9 +633,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             // Bottom Action Button
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFF8FAFC))),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                border: Border(
+                  top: BorderSide(color: Theme.of(context).dividerColor),
+                ),
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -652,7 +681,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: _textMuted,
+            color: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.color?.withOpacity(0.7),
             letterSpacing: 1.2,
           ),
         ),
@@ -674,11 +705,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: Theme.of(context).scaffoldBackgroundColor,
               shape: BoxShape.circle,
-              border: Border.all(color: _borderColor),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
-            child: Icon(icon, color: const Color(0xFF64748B), size: 20),
+            child: Icon(
+              icon,
+              color: Theme.of(context).iconTheme.color?.withOpacity(0.7),
+              size: 20,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -690,7 +725,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: _textMuted,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -701,8 +738,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: controller.text.isNotEmpty
-                        ? _textMain
-                        : _textMuted.withOpacity(0.5),
+                        ? Theme.of(context).textTheme.bodyLarge?.color
+                        : Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                     fontStyle: controller.text.isNotEmpty
                         ? FontStyle.normal
                         : FontStyle.italic,

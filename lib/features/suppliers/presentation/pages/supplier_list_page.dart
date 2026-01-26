@@ -29,7 +29,7 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
     final supplierListAsync = ref.watch(supplierListProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           // Header
@@ -40,9 +40,11 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
               20,
               16,
             ),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFFFFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              border: Border(
+                bottom: BorderSide(color: Theme.of(context).dividerColor),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -58,7 +60,9 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                         child: Text(
                           'Suppliers',
                           style: GoogleFonts.inter(
-                            color: AppColors.textMain,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.color,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             height: 1.25,
@@ -73,9 +77,9 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                   height: 36,
                   width: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                     boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -94,6 +98,7 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                         offset: const Offset(0, 50),
                         elevation: 4,
                         shadowColor: Colors.black.withOpacity(0.1),
+                        color: Theme.of(context).cardColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -111,7 +116,7 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                             size: 20,
                             color:
                                 currentSort == SupplierSortOption.latestCreated
-                                ? AppColors.slate600
+                                ? Theme.of(context).iconTheme.color
                                 : AppColors.primary,
                           ),
                         ),
@@ -120,22 +125,26 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                         },
                         itemBuilder: (context) => [
                           _buildFilterItem(
+                            context,
                             SupplierSortOption.mostToPay,
                             'Most to Pay',
                             currentSort,
                           ),
                           _buildFilterItem(
+                            context,
                             SupplierSortOption.lowestToPay,
                             'Lowest to Pay',
                             currentSort,
                           ),
                           const PopupMenuDivider(),
                           _buildFilterItem(
+                            context,
                             SupplierSortOption.latestUpdated,
                             'Latest Updated',
                             currentSort,
                           ),
                           _buildFilterItem(
+                            context,
                             SupplierSortOption.latestCreated,
                             'Latest Created',
                             currentSort,
@@ -162,7 +171,7 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                       Container(
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
@@ -187,19 +196,19 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                               .searchSuppliers(value);
                         },
                         style: GoogleFonts.inter(
-                          color: AppColors.textMain,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: AppColors.slate400,
+                            color: Theme.of(context).hintColor,
                             size: 20,
                           ),
                           hintText: 'Search suppliers...',
                           hintStyle: GoogleFonts.inter(
-                            color: AppColors.slate400,
+                            color: Theme.of(context).hintColor,
                           ),
                           border: InputBorder.none,
                           focusedBorder: OutlineInputBorder(
@@ -211,8 +220,8 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.slate200,
+                            borderSide: BorderSide(
+                              color: Theme.of(context).dividerColor,
                               width: 1.5,
                             ),
                           ),
@@ -239,7 +248,11 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                                 Text(
                                   'ALL SUPPLIERS (${suppliers.length})',
                                   style: GoogleFonts.inter(
-                                    color: AppColors.slate400,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.7),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.5,
@@ -256,16 +269,20 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                                       child: Text(
                                         'No suppliers found',
                                         style: GoogleFonts.inter(
-                                          color: AppColors.slate400,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color
+                                              ?.withOpacity(0.5),
                                         ),
                                       ),
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
-                                        color: AppColors.surface,
+                                        color: Theme.of(context).cardColor,
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                          color: AppColors.slate100,
+                                          color: Theme.of(context).dividerColor,
                                         ),
                                         boxShadow: const [
                                           BoxShadow(
@@ -296,10 +313,12 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                                         padding: EdgeInsets.zero,
                                         itemCount: suppliers.length,
                                         separatorBuilder: (context, index) =>
-                                            const Divider(
+                                            Divider(
                                               height: 1,
                                               thickness: 1,
-                                              color: AppColors.slate50,
+                                              color: Theme.of(
+                                                context,
+                                              ).dividerColor,
                                             ),
                                         itemBuilder: (context, index) {
                                           final supplier = suppliers[index];
@@ -374,6 +393,7 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
   }
 
   PopupMenuItem<SupplierSortOption> _buildFilterItem(
+    BuildContext context,
     SupplierSortOption option,
     String label,
     SupplierSortOption currentSort,
@@ -386,13 +406,17 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
           Icon(
             isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
             size: 18,
-            color: isSelected ? AppColors.primary : AppColors.slate400,
+            color: isSelected
+                ? AppColors.primary
+                : Theme.of(context).iconTheme.color?.withOpacity(0.5),
           ),
           const SizedBox(width: 12),
           Text(
             label,
             style: GoogleFonts.inter(
-              color: isSelected ? AppColors.primary : AppColors.textMain,
+              color: isSelected
+                  ? AppColors.primary
+                  : Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               fontSize: 14,
             ),
@@ -428,12 +452,12 @@ class SupplierListItem extends ConsumerWidget {
     final avatarColor = colors[colorIndex];
 
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: InkWell(
         onTap: () {
           context.go('/suppliers/${supplier.id}', extra: supplier);
         },
-        hoverColor: AppColors.slate50,
+        hoverColor: Theme.of(context).hoverColor,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -477,7 +501,7 @@ class SupplierListItem extends ConsumerWidget {
                     Text(
                       supplier.name,
                       style: GoogleFonts.inter(
-                        color: AppColors.textMain,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -485,7 +509,7 @@ class SupplierListItem extends ConsumerWidget {
                     Text(
                       supplier.phone,
                       style: GoogleFonts.inter(
-                        color: AppColors.slate500,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -509,7 +533,7 @@ class SupplierListItem extends ConsumerWidget {
                               ? AppColors.danger
                               : stats.outstandingBalance < 0
                               ? AppColors.emerald500
-                              : AppColors.textMain,
+                              : Theme.of(context).textTheme.bodyLarge?.color,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -534,9 +558,9 @@ class SupplierListItem extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(width: 12),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
-                    color: AppColors.slate300,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
                     size: 20,
                   ),
                 ],

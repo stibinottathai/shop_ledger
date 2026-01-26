@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MorePage extends ConsumerWidget {
@@ -20,14 +21,14 @@ class MorePage extends ConsumerWidget {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('More'),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
-        titleTextStyle: const TextStyle(
-          color: AppColors.textDark,
+        titleTextStyle: GoogleFonts.inter(
+          color: Theme.of(context).textTheme.titleLarge?.color,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
@@ -37,9 +38,9 @@ class MorePage extends ConsumerWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: Theme.of(context).dividerColor),
             ),
             child: ListTile(
               leading: Container(
@@ -57,17 +58,38 @@ class MorePage extends ConsumerWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              trailing: Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).iconTheme.color,
+              ),
               onTap: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Are you sure you want to logout?'),
+                    backgroundColor: Theme.of(context).cardColor,
+                    title: Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.titleLarge?.color,
+                      ),
+                    ),
+                    content: Text(
+                      'Are you sure you want to logout?',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => context.pop(),
-                        child: const Text('Cancel'),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color,
+                          ),
+                        ),
                       ),
                       TextButton(
                         onPressed: () {

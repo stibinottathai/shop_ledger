@@ -159,21 +159,25 @@ class _SupplierTransactionDetailsPageState
     final hasParsedItems = parsedItems.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Transaction Details',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: Colors.black,
+            color: Theme.of(context).textTheme.titleLarge?.color,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Theme.of(context).iconTheme.color,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -229,7 +233,7 @@ class _SupplierTransactionDetailsPageState
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -244,7 +248,9 @@ class _SupplierTransactionDetailsPageState
                         Text(
                           typeLabel,
                           style: GoogleFonts.inter(
-                            color: Colors.grey[400],
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.0,
@@ -256,7 +262,7 @@ class _SupplierTransactionDetailsPageState
                             'dd MMMM yyyy, hh:mm a',
                           ).format(widget.transaction.date),
                           style: GoogleFonts.inter(
-                            color: Colors.black87,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -299,8 +305,10 @@ class _SupplierTransactionDetailsPageState
                       physics: const NeverScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(vertical: 0),
                       itemCount: parsedItems.length,
-                      separatorBuilder: (context, index) =>
-                          Divider(height: 1, color: Colors.grey[100]),
+                      separatorBuilder: (context, index) => Divider(
+                        height: 1,
+                        color: Theme.of(context).dividerColor,
+                      ),
                       itemBuilder: (context, index) {
                         final item = parsedItems[index];
                         return Padding(
@@ -319,7 +327,9 @@ class _SupplierTransactionDetailsPageState
                                       item['name']!,
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.color,
                                         fontSize: 14,
                                       ),
                                     ),
@@ -339,7 +349,9 @@ class _SupplierTransactionDetailsPageState
                                 child: Text(
                                   item['weight']!,
                                   style: GoogleFonts.inter(
-                                    color: Colors.black87,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -349,7 +361,9 @@ class _SupplierTransactionDetailsPageState
                                 child: Text(
                                   item['rate']!,
                                   style: GoogleFonts.inter(
-                                    color: Colors.black87,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -363,7 +377,9 @@ class _SupplierTransactionDetailsPageState
                                   textAlign: TextAlign.right,
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                                   ),
                                 ),
                               ),
@@ -381,7 +397,7 @@ class _SupplierTransactionDetailsPageState
                         widget.transaction.details ?? "No details",
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          color: Colors.black87,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           height: 1.5,
                         ),
                       ),
@@ -400,7 +416,9 @@ class _SupplierTransactionDetailsPageState
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.color,
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -409,7 +427,9 @@ class _SupplierTransactionDetailsPageState
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
-                            color: Colors.black,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.color,
                           ),
                         ),
                       ],
@@ -465,7 +485,7 @@ class _SupplierTransactionDetailsPageState
       text,
       textAlign: align,
       style: GoogleFonts.inter(
-        color: Colors.grey[400],
+        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
         fontSize: 11,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.0,

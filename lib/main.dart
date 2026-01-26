@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/router/app_router.dart';
 import 'package:shop_ledger/core/theme/app_theme.dart';
+import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -27,12 +28,14 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
+    final settingsState = ref.watch(settingsProvider);
 
     return MaterialApp.router(
       title: 'Shop Ledger',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
+      themeMode: settingsState.themeMode,
       routerConfig: router,
     );
   }

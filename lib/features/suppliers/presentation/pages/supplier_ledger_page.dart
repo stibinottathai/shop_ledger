@@ -35,7 +35,7 @@ class SupplierLedgerPage extends ConsumerWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF3F4F6),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,10 +45,10 @@ class SupplierLedgerPage extends ConsumerWidget {
                 children: [
                   Text(
                     currentSupplier.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
                     ),
                   ),
                 ],
@@ -56,15 +56,17 @@ class SupplierLedgerPage extends ConsumerWidget {
               if (currentSupplier.phone.isNotEmpty)
                 Text(
                   currentSupplier.phone,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.greyText,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                   ),
                 ),
             ],
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).cardColor,
           elevation: 0,
           actions: [
             Container(
@@ -72,7 +74,9 @@ class SupplierLedgerPage extends ConsumerWidget {
               height: 40,
               margin: const EdgeInsets.only(right: 16),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor, // Was grey[100]
                 shape: BoxShape.circle,
               ),
               child: PopupMenuButton<String>(
@@ -80,12 +84,13 @@ class SupplierLedgerPage extends ConsumerWidget {
                 offset: const Offset(0, 50),
                 elevation: 4,
                 shadowColor: Colors.black.withOpacity(0.1),
+                color: Theme.of(context).cardColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                icon: const Icon(
+                icon: Icon(
                   Icons.more_vert,
-                  color: AppColors.textDark,
+                  color: Theme.of(context).iconTheme.color,
                   size: 20,
                 ),
                 onSelected: (value) {
@@ -101,16 +106,18 @@ class SupplierLedgerPage extends ConsumerWidget {
                       value: 'edit',
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.edit,
-                            color: AppColors.textMain,
+                            color: Theme.of(context).iconTheme.color,
                             size: 18,
                           ),
                           const SizedBox(width: 12),
                           Text(
                             'Edit Supplier',
                             style: GoogleFonts.inter(
-                              color: AppColors.textMain,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
                             ),
@@ -145,7 +152,10 @@ class SupplierLedgerPage extends ConsumerWidget {
             ),
           ],
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: Theme.of(context).iconTheme.color,
+            ),
             onPressed: () => context.pop(),
           ),
         ),
@@ -153,7 +163,7 @@ class SupplierLedgerPage extends ConsumerWidget {
         body: Column(
           children: [
             // Summary Card
-            _buildSummaryCard(supplier, ref),
+            _buildSummaryCard(supplier, ref, context),
 
             // Action Buttons
             Padding(
@@ -177,7 +187,7 @@ class SupplierLedgerPage extends ConsumerWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        backgroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).cardColor,
                       ),
                     ),
                   ),
@@ -216,7 +226,7 @@ class SupplierLedgerPage extends ConsumerWidget {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -228,7 +238,7 @@ class SupplierLedgerPage extends ConsumerWidget {
               ),
               child: TabBar(
                 labelColor: AppColors.primary,
-                unselectedLabelColor: Colors.grey,
+                unselectedLabelColor: Theme.of(context).disabledColor,
                 indicatorColor: AppColors.primary,
                 labelStyle: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
@@ -301,7 +311,7 @@ class SupplierLedgerPage extends ConsumerWidget {
       return Center(
         child: Text(
           emptyMsg,
-          style: GoogleFonts.inter(color: Colors.grey[500]),
+          style: GoogleFonts.inter(color: Theme.of(context).disabledColor),
         ),
       );
     }
@@ -329,7 +339,9 @@ class SupplierLedgerPage extends ConsumerWidget {
     required int index,
   }) {
     final isCredit = transaction.type == TransactionType.purchase;
-    final amountColor = isCredit ? AppColors.textDark : Colors.red;
+    final amountColor = isCredit
+        ? Theme.of(context).textTheme.bodyLarge?.color
+        : Colors.red;
 
     String title;
     if (transaction.type == TransactionType.purchase) {
@@ -349,7 +361,7 @@ class SupplierLedgerPage extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -368,17 +380,19 @@ class SupplierLedgerPage extends ConsumerWidget {
               children: [
                 Text(
                   DateFormat('dd MMM').format(transaction.date),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 Text(
                   DateFormat('hh:mm a').format(transaction.date),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.greyText,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -407,19 +421,21 @@ class SupplierLedgerPage extends ConsumerWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   if (transaction.details != null &&
                       transaction.details!.isNotEmpty)
                     Text(
                       transaction.details!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.greyText,
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withOpacity(0.6),
                       ),
                       maxLines: 1, // Limited to 1 line
                       overflow: TextOverflow.ellipsis,
@@ -443,7 +459,11 @@ class SupplierLedgerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummaryCard(Supplier supplier, WidgetRef ref) {
+  Widget _buildSummaryCard(
+    Supplier supplier,
+    WidgetRef ref,
+    BuildContext context,
+  ) {
     final stats = ref.watch(supplierStatsProvider(supplier.id!));
 
     return Padding(
@@ -451,7 +471,7 @@ class SupplierLedgerPage extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -464,10 +484,12 @@ class SupplierLedgerPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'OUTSTANDING BALANCE',
               style: TextStyle(
-                color: AppColors.greyText,
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.0,
@@ -478,14 +500,14 @@ class SupplierLedgerPage extends ConsumerWidget {
               '₹${stats.outstandingBalance.toStringAsFixed(2)}',
               style: TextStyle(
                 color: stats.outstandingBalance > 0
-                    ? AppColors.textDark
+                    ? Theme.of(context).textTheme.titleLarge?.color
                     : AppColors.primary,
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
-            Divider(color: Colors.grey[100]),
+            Divider(color: Theme.of(context).dividerColor),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -496,29 +518,37 @@ class SupplierLedgerPage extends ConsumerWidget {
                     Text(
                       'Total Purchased',
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       '₹${stats.totalPurchased.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: AppColors.textDark,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                Container(width: 1, height: 32, color: Colors.grey[200]),
+                Container(
+                  width: 1,
+                  height: 32,
+                  color: Theme.of(context).dividerColor,
+                ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
                       'Total Paid',
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withOpacity(0.5),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -546,14 +576,28 @@ class SupplierLedgerPage extends ConsumerWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete Supplier'),
+          backgroundColor: Theme.of(context).cardColor,
+          title: Text(
+            'Delete Supplier',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
           content: Text(
             'Are you sure you want to delete ${supplier.name}? This action cannot be undone.',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),

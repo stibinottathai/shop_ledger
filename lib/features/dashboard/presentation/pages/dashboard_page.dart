@@ -17,7 +17,7 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: navigationShell,
       bottomNavigationBar: _buildBottomNav(context),
     );
@@ -27,14 +27,15 @@ class DashboardPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24, top: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+        color: Theme.of(context).cardColor.withOpacity(0.9),
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             child: _buildNavItem(
+              context,
               Icons.grid_view,
               'Dashboard',
               navigationShell.currentIndex == 0,
@@ -43,6 +44,7 @@ class DashboardPage extends StatelessWidget {
           ),
           Expanded(
             child: _buildNavItem(
+              context,
               Icons.people,
               'Customers',
               navigationShell.currentIndex == 1,
@@ -51,6 +53,7 @@ class DashboardPage extends StatelessWidget {
           ),
           Expanded(
             child: _buildNavItem(
+              context,
               Icons.local_shipping,
               'Suppliers',
               navigationShell.currentIndex == 2,
@@ -59,6 +62,7 @@ class DashboardPage extends StatelessWidget {
           ),
           Expanded(
             child: _buildNavItem(
+              context,
               Icons.receipt_long,
               'Transactions',
               navigationShell.currentIndex == 3,
@@ -67,6 +71,7 @@ class DashboardPage extends StatelessWidget {
           ),
           Expanded(
             child: _buildNavItem(
+              context,
               Icons.history,
               'Reports',
               navigationShell.currentIndex == 4,
@@ -79,6 +84,7 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildNavItem(
+    BuildContext context,
     IconData icon,
     String label,
     bool isSelected,
@@ -91,14 +97,18 @@ class DashboardPage extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: isSelected ? AppColors.primary : Colors.grey[400],
+            color: isSelected
+                ? AppColors.primary
+                : Theme.of(context).unselectedWidgetColor,
             size: 24,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? AppColors.primary : Colors.grey[400],
+              color: isSelected
+                  ? AppColors.primary
+                  : Theme.of(context).unselectedWidgetColor,
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),

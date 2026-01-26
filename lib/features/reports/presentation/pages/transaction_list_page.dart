@@ -37,14 +37,14 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
     final transactionsAsync = ref.watch(allTransactionsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA), // background-light
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
             // Header Section
             Container(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              color: const Color(0xFFFAFAFA),
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -53,7 +53,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                     style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF111827), // text-main-light
+                      color: Theme.of(context).textTheme.titleLarge?.color,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -62,7 +62,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                   // Search Bar
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6), // subtle-light
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextField(
@@ -71,15 +71,17 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                       decoration: InputDecoration(
                         hintText: 'Search transactions, customers...',
                         hintStyle: GoogleFonts.inter(
-                          color: const Color(0xFF6B7280), // text-sec-light
+                          color: Theme.of(context).hintColor,
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.search,
-                          color: Color(0xFF6B7280),
+                          color: Theme.of(context).hintColor,
                         ),
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
@@ -87,7 +89,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                         isDense: true,
                       ),
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF111827),
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -101,7 +103,9 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
               height: 60,
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
-              color: const Color(0xFFFAFAFA).withOpacity(0.95),
+              color: Theme.of(
+                context,
+              ).scaffoldBackgroundColor.withOpacity(0.95),
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 scrollDirection: Axis.horizontal,
@@ -155,9 +159,11 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                   } else {
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                       ),
                       child: Material(
                         color: Colors.transparent,
@@ -173,7 +179,9 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                               filter,
                               style: GoogleFonts.inter(
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF6B7280),
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color,
                                 fontSize: 14,
                               ),
                             ),
@@ -299,50 +307,47 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
 
   Widget _buildTransactionCard(Transaction transaction) {
     // Colors from Request logic
-    Color iconBg;
-    Color iconColor;
+    Color iconBaseColor;
     IconData icon;
     String typeLabel;
-    Color amountColor;
     String statusLabel;
-    Color statusColor = const Color(0xFF6B7280); // Default grey
+
+    // Status text color is usually muted/secondary in detailed view but here we can make it dynamic
+    // or keep it semi-colored. Let's stick to muted for status label text itself if generic,
+    // or colored if specific. Original code had statusColor.
+    Color statusColor;
 
     switch (transaction.type) {
       case TransactionType.sale:
-        iconBg = const Color(0xFFEFF6FF); // Blue 50
-        iconColor = const Color(0xFF3B82F6); // Blue 500
+        iconBaseColor = const Color(0xFF3B82F6); // Blue 500
         icon = Icons.storefront;
         typeLabel = "Sale";
-        amountColor = const Color(0xFF111827); // Text Main
         statusLabel = "COMPLETED";
-        statusColor = const Color(0xFF6B7280);
+        statusColor =
+            Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
         break;
       case TransactionType.paymentIn:
-        iconBg = const Color(0xFFECFDF5); // Green 50
-        iconColor = const Color(0xFF10B981); // Income Green
+        iconBaseColor = const Color(0xFF10B981); // Income Green
         icon = Icons.arrow_downward;
         typeLabel = "Payment In";
-        amountColor = const Color(0xFF10B981); // Income Green
         statusLabel = "RECEIVED";
-        statusColor = const Color(0xFF6B7280);
+        statusColor =
+            Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
         break;
       case TransactionType.purchase:
-        iconBg = const Color(0xFFFFFBEB); // Amber 50
-        iconColor = const Color(0xFFF59E0B); // Amber 500
+        iconBaseColor = const Color(0xFFF59E0B); // Amber 500
         icon = Icons.shopping_bag;
         typeLabel = "Purchase";
-        amountColor = const Color(0xFF111827);
         statusLabel = "PENDING";
-        statusColor = const Color(0xFFF59E0B); // Amber
+        statusColor = const Color(0xFFF59E0B); // Amber keeps color
         break;
       case TransactionType.paymentOut:
-        iconBg = const Color(0xFFFEF2F2); // Red 50
-        iconColor = const Color(0xFFEF4444); // Expense Red
+        iconBaseColor = const Color(0xFFEF4444); // Expense Red
         icon = Icons.arrow_upward;
         typeLabel = "Payment Out";
-        amountColor = const Color(0xFFEF4444); // Expense Red
         statusLabel = "PAID";
-        statusColor = const Color(0xFF6B7280);
+        statusColor =
+            Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
         break;
     }
 
@@ -350,12 +355,26 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
     final name =
         transaction.customerName ?? transaction.supplierName ?? 'Unknown';
 
+    // For amount color:
+    // Income/Sale -> Text Main or specific Green?
+    // Original: Sale -> Text Main, Payment In -> Green, Payment Out -> Red.
+    // In Dark Mode, Text Main should be white.
+    Color amountColor;
+    if (transaction.type == TransactionType.paymentIn) {
+      amountColor = const Color(0xFF10B981);
+    } else if (transaction.type == TransactionType.paymentOut) {
+      amountColor = const Color(0xFFEF4444);
+    } else {
+      amountColor =
+          Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -376,10 +395,10 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                   height: 48,
                   width: 48,
                   decoration: BoxDecoration(
-                    color: iconBg,
+                    color: iconBaseColor.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: iconColor, size: 24),
+                  child: Icon(icon, color: iconBaseColor, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -391,7 +410,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF111827),
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -404,7 +423,9 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: const Color(0xFF6B7280),
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -415,7 +436,9 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                               "•",
                               style: GoogleFonts.inter(
                                 fontSize: 12,
-                                color: const Color(0xFF6B7280),
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color,
                               ),
                             ),
                           ),
@@ -424,7 +447,9 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFF6B7280),
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.color,
                             ),
                           ),
                         ],
