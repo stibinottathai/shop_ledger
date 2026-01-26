@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
+import 'package:shop_ledger/features/expenses/presentation/widgets/expense_statistics_view.dart';
+import 'package:shop_ledger/features/expenses/presentation/providers/expense_provider.dart';
 
 class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
@@ -13,7 +15,7 @@ class ReportsPage extends ConsumerStatefulWidget {
 }
 
 class _ReportsPageState extends ConsumerState<ReportsPage> {
-  int _selectedTabIndex = 2; // Default to 'Summary' (2)
+  int _selectedTabIndex = 3; // Default to 'Summary' (3)
   int _selectedDateFilter = 0; // 0: Today, 1: This Week, 2: Range
   DateTimeRange? _selectedDateRange;
 
@@ -59,16 +61,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                 icon: Icons.calendar_today,
                                 label: 'Today',
                                 isSelected: _selectedDateFilter == 0,
-                                onTap: () =>
-                                    setState(() => _selectedDateFilter = 0),
+                                onTap: () => _onFilterChanged(0),
                               ),
                               const SizedBox(width: 12),
                               _buildChip(
                                 icon: Icons.calendar_month,
                                 label: 'This Week',
                                 isSelected: _selectedDateFilter == 1,
-                                onTap: () =>
-                                    setState(() => _selectedDateFilter = 1),
+                                onTap: () => _onFilterChanged(1),
                               ),
                               const SizedBox(width: 12),
                               _buildChip(
@@ -134,14 +134,51 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         _selectedDateRange = picked;
         _selectedDateFilter = 2;
       });
+      _updateProviders(picked);
+    }
+  }
+
+  void _onFilterChanged(int index) {
+    setState(() => _selectedDateFilter = index);
+
+    DateTime now = DateTime.now();
+    DateTimeRange range;
+
+    if (index == 0) {
+      // Today
+      range = DateTimeRange(
+        start: DateTime(now.year, now.month, now.day),
+        end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+      );
+    } else if (index == 1) {
+      // This Week
+      // Monday start
+      final start = now.subtract(Duration(days: now.weekday - 1));
+      range = DateTimeRange(
+        start: DateTime(start.year, start.month, start.day),
+        end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+      );
     } else {
-      // If needed, handle cancellation or existing selection logic
-      if (_selectedDateFilter != 2 && _selectedDateRange != null) {
-        setState(() {
-          _selectedDateFilter = 2;
-        });
+      // Range (handled by picker, but if clicked without picker?)
+      // Should probably open picker or keep existing
+      if (_selectedDateRange != null) {
+        range = _selectedDateRange!;
+      } else {
+        return; // Wait for picker
       }
     }
+
+    _updateProviders(range);
+  }
+
+  void _updateProviders(DateTimeRange range) {
+    // Update Reports Filter
+    ref.read(reportsFilterProvider.notifier).setRange(range);
+
+    // Update Expenses Tab Filter (sync)
+    ref
+        .read(expenseFilterProvider.notifier)
+        .setFilter(ExpenseFilter(startDate: range.start, endDate: range.end));
   }
 
   Widget _buildTabContent(ReportsState state) {
@@ -151,6 +188,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       case 1:
         return _buildPurchasesView(state);
       case 2:
+        return const Padding(
+          padding: EdgeInsets.only(top: 16.0),
+          child: ExpenseStatisticsView(),
+        );
+      case 3:
       default:
         return _buildSummaryView(state);
     }
@@ -361,11 +403,22 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               ),
               const SizedBox(height: 16),
               _buildSummaryCard(
+                title: 'Total Expenses',
+                value: formatter.format(state.monthlyExpenses.last),
+                subtitle: 'Current Month',
+                icon: Icons.money_off,
+                iconColor: Colors.deepOrange,
+                iconBgColor: Colors.deepOrange.withOpacity(0.1),
+              ),
+              const SizedBox(height: 16),
+              _buildSummaryCard(
                 title: 'Net Profit (Est)',
                 value: formatter.format(
-                  state.totalSales - state.totalPurchases,
+                  state.monthlySales.last -
+                      state.monthlyPurchases.last -
+                      state.monthlyExpenses.last,
                 ),
-                subtitle: 'Sales - Purchases',
+                subtitle: 'Sales - Purchases - Expenses',
                 icon: Icons.account_balance_wallet,
                 iconColor: Colors.blue,
                 iconBgColor: Colors.blue.withOpacity(0.1),
@@ -511,7 +564,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         children: [
           _buildTab('Sales', 0, AppColors.primary),
           _buildTab('Purchases', 1, AppColors.accentOrange),
-          _buildTab('Summary', 2, AppColors.primary),
+          _buildTab('Expense', 2, Colors.purple),
+          _buildTab('Summary', 3, AppColors.primary),
         ],
       ),
     );

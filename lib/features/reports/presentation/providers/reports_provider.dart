@@ -1,38 +1,46 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
+import 'package:shop_ledger/features/expenses/presentation/providers/expense_provider.dart';
 
 class ReportsState {
+  final double totalExpenses;
   final double totalSales;
   final double totalPurchases;
   final double salesGrowth;
   final double purchaseGrowth;
   final List<double> monthlySales; // Last 6 months
   final List<double> monthlyPurchases; // Last 6 months
+  final List<double> monthlyExpenses; // Last 6 months
   final List<TopPerformer> topCustomers;
   final List<TopPerformer> topSuppliers;
 
   const ReportsState({
+    required this.totalExpenses,
     required this.totalSales,
     required this.totalPurchases,
     required this.salesGrowth,
     required this.purchaseGrowth,
     required this.monthlySales,
     required this.monthlyPurchases,
+    required this.monthlyExpenses,
     required this.topCustomers,
     required this.topSuppliers,
   });
 
   factory ReportsState.initial() {
     return const ReportsState(
+      totalExpenses: 0,
       totalSales: 0,
       totalPurchases: 0,
       salesGrowth: 0,
       purchaseGrowth: 0,
       monthlySales: [0, 0, 0, 0, 0, 0],
       monthlyPurchases: [0, 0, 0, 0, 0, 0],
+      monthlyExpenses: [0, 0, 0, 0, 0, 0],
       topCustomers: [],
       topSuppliers: [],
     );
@@ -51,6 +59,30 @@ class TopPerformer {
   });
 }
 
+final reportsFilterProvider =
+    NotifierProvider<ReportsFilterNotifier, DateTimeRange?>(
+      () => ReportsFilterNotifier(),
+    );
+
+class ReportsFilterNotifier extends Notifier<DateTimeRange?> {
+  @override
+  DateTimeRange? build() {
+    // Default to "Today" or "This Month"?
+    // User interface defaults to "Today" (index 0).
+    // Let's match typical default.
+    // Actually the UI defaults to index 0 which is Today.
+    final now = DateTime.now();
+    return DateTimeRange(
+      start: DateTime(now.year, now.month, now.day),
+      end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+    );
+  }
+
+  void setRange(DateTimeRange? range) {
+    state = range;
+  }
+}
+
 final reportsProvider = AsyncNotifierProvider<ReportsNotifier, ReportsState>(
   () {
     return ReportsNotifier();
@@ -62,25 +94,63 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
   Future<ReportsState> build() async {
     // Rebuild when transactions update
     ref.watch(transactionUpdateProvider);
+    // Rebuild when filter updates
+    // ref.watch(reportsFilterProvider); // Access inside _calculateReports to use values
     return _calculateReports();
   }
 
   Future<ReportsState> _calculateReports() async {
+    final filterRange = ref.watch(reportsFilterProvider);
+
     final transactionRepo = ref.read(transactionRepositoryProvider);
     final customerRepo = ref.read(customerRepositoryProvider);
     final supplierRepo = ref.read(supplierRepositoryProvider);
+    final expenseRepo = ref.read(expenseRepositoryProvider);
 
-    final transactions = await transactionRepo.getAllTransactions().timeout(
+    final allTransactions = await transactionRepo.getAllTransactions().timeout(
       const Duration(seconds: 10),
+    );
+
+    // Filter transactions in memory
+    final transactions = filterRange == null
+        ? allTransactions
+        : allTransactions
+              .where(
+                (t) =>
+                    t.date.isAfter(
+                      filterRange.start.subtract(const Duration(seconds: 1)),
+                    ) &&
+                    t.date.isBefore(
+                      filterRange.end.add(const Duration(seconds: 1)),
+                    ),
+              )
+              .toList();
+
+    // Fetch filtered expenses
+    final expenses = await expenseRepo.getExpenses(
+      start: filterRange?.start,
+      end: filterRange?.end,
+      limit: 2000,
     );
 
     double totalSales = 0;
     double totalPurchases = 0;
+    double totalExpenses = 0;
 
-    // Monthly aggregation
+    // Monthly aggregation (Always uses global context or filtered context?)
+    // If user filters "Today", "Monthly Sales" chart showing only today's bar is correct for "Performance during selected period".
+    // Or do we want the chart to ALWAYS show 6 month history regardless of filter?
+    // User asked "filters... make it work". Usually implies the view data should match filter.
+    // However, calculating "Growth" (vs previous month) requires data outside the filter if filter is "Today".
+    // If filter is "Today", salesGrowth = (Today - LastMonth) / LastMonth? No, usually (Today - Yesterday) or similar for daily.
+    // Given the complexity, let's stick to: ReportsState reflects the FILTERED data.
+    // Charts will just show what's passed.
+    // Growth might be weird if we don't handle it, but let's implement basic filtering first.
+
     final now = DateTime.now();
     final monthlySales = List<double>.filled(6, 0);
     final monthlyPurchases = List<double>.filled(6, 0);
+    final monthlyExpenses = List<double>.filled(6, 0);
 
     // Grouping for top performers
     final customerSales = <String, double>{};
@@ -103,6 +173,31 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
         }
       }
     }
+
+    for (var e in expenses) {
+      totalExpenses += e.amount;
+      _addToMonthly(monthlyExpenses, e.date, e.amount, now);
+    }
+
+    // --- Process Expenses ---
+    // Fetch expenses
+    // I need to import this provider.
+    // Assuming imported:
+    // final expenseRepo = ref.read(expenseRepositoryProvider);
+    // final expenses = await expenseRepo.getExpenses();
+    //
+    // But wait, ReportsNotifier needs to read expenseRepositoryProvider.
+    // I'll modify the loop to sum expenses.
+
+    // START TEMPORARY PLACEHOLDER LOGIC TO BE REPLACED WITH REAL FETCH ONCE IMPORTS ARE IN
+    // Actually I can use Ref to get it dynamically? No.
+    // I will replace this whole block after adding imports.
+    // But I can't split logic easily.
+    // I will just return the state with 0 expenses for now to match the signature,
+    // then adding imports and logic in next steps.
+
+    // Wait, I changed the constructor already! So I MUST return totalExpenses now or it breaks.
+    // So I will return 0 for now and then immediately fix it.
 
     // Fetch Top Customer
     List<TopPerformer> topCustomers = [];
@@ -153,12 +248,14 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
         : 0.0;
 
     return ReportsState(
+      totalExpenses: totalExpenses,
       totalSales: totalSales,
       totalPurchases: totalPurchases,
       salesGrowth: salesGrowth,
       purchaseGrowth: purchaseGrowth,
       monthlySales: monthlySales,
       monthlyPurchases: monthlyPurchases,
+      monthlyExpenses: monthlyExpenses,
       topCustomers: topCustomers,
       topSuppliers: topSuppliers,
     );
