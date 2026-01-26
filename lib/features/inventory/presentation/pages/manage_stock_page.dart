@@ -1,0 +1,691 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
+import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
+
+class ManageStockPage extends ConsumerStatefulWidget {
+  const ManageStockPage({super.key});
+
+  @override
+  ConsumerState<ManageStockPage> createState() => _ManageStockPageState();
+}
+
+class _ManageStockPageState extends ConsumerState<ManageStockPage> {
+  // Form handling
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _qtyController = TextEditingController();
+  bool _isSaving = false;
+
+  void _showItemForm([Item? item]) {
+    _nameController.text = item?.name ?? '';
+    _priceController.text = item?.pricePerKg.toString() ?? '';
+    _qtyController.text = item?.totalQuantity?.toString() ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 24,
+          right: 24,
+          top: 32,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    item != null ? 'Edit Stock Item' : 'Add New Item',
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMain,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.slate50,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.slate200),
+                      ),
+                      child: const Icon(Icons.close, size: 18),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildInputField(
+                      controller: _nameController,
+                      label: 'Item Name',
+                      hint: 'e.g., Golden Apple',
+                      icon: Icons.inventory_2_outlined,
+                      validator: (val) =>
+                          val == null || val.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInputField(
+                            controller: _priceController,
+                            label: 'Price (₹/kg)',
+                            hint: '0.00',
+                            icon: Icons.currency_rupee,
+                            inputType: TextInputType.number,
+                            validator: (val) {
+                              if (val == null || val.isEmpty) return 'Required';
+                              if (double.tryParse(val) == null) {
+                                return 'Invalid';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildInputField(
+                            controller: _qtyController,
+                            label: 'Quantity (kg)',
+                            hint: '0.00',
+                            icon: Icons.scale_outlined,
+                            inputType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    StatefulBuilder(
+                      builder: (context, setStateBtn) {
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: _isSaving
+                                ? null
+                                : () async {
+                                    if (!_formKey.currentState!.validate())
+                                      return;
+
+                                    setStateBtn(() => _isSaving = true);
+
+                                    final name = _nameController.text.trim();
+                                    final price =
+                                        double.tryParse(
+                                          _priceController.text.trim(),
+                                        ) ??
+                                        0.0;
+                                    final qty =
+                                        _qtyController.text.trim().isNotEmpty
+                                        ? double.tryParse(
+                                            _qtyController.text.trim(),
+                                          )
+                                        : null;
+
+                                    try {
+                                      if (item != null) {
+                                        final updated = item.copyWith(
+                                          name: name,
+                                          pricePerKg: price,
+                                          totalQuantity: qty,
+                                        );
+                                        await ref
+                                            .read(inventoryProvider.notifier)
+                                            .updateItem(updated);
+                                      } else {
+                                        await ref
+                                            .read(inventoryProvider.notifier)
+                                            .addItem(name, price, qty);
+                                      }
+                                      if (mounted) {
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              item != null
+                                                  ? 'Item updated successfully'
+                                                  : 'Item added successfully',
+                                            ),
+                                            behavior: SnackBarBehavior.floating,
+                                            backgroundColor: AppColors.textMain,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error: $e'),
+                                            backgroundColor: AppColors.danger,
+                                          ),
+                                        );
+                                      }
+                                    } finally {
+                                      if (mounted) {
+                                        setStateBtn(() => _isSaving = false);
+                                      }
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    item != null ? 'Update Item' : 'Add Item',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType inputType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.slate600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: inputType,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
+            color: AppColors.textMain,
+          ),
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.inter(color: AppColors.slate400),
+            prefixIcon: Icon(icon, color: AppColors.slate400, size: 20),
+            filled: true,
+            fillColor: AppColors.slate50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.slate200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _deleteItem(String id) async {
+    try {
+      await ref.read(inventoryProvider.notifier).deleteItem(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Item deleted successfully'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting item: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showDeleteConfirm(Item item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Delete Item',
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        ),
+        content: Text('Are you sure you want to delete "${item.name}"?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(
+                color: AppColors.slate500,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteItem(item.id!);
+            },
+            child: Text(
+              'Delete',
+              style: GoogleFonts.inter(
+                color: AppColors.danger,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final itemsAsync = ref.watch(inventoryProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF1F5F9), // Light grey background
+      appBar: AppBar(
+        title: Text(
+          'Inventory',
+          style: GoogleFonts.inter(
+            color: AppColors.textMain,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () {}, // Future: Search
+            icon: const Icon(Icons.search, color: AppColors.slate500),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: itemsAsync.when(
+        data: (items) {
+          // Calculate summary
+          final totalItems = items.length;
+          final totalValue = items.fold(0.0, (sum, item) {
+            return sum + (item.pricePerKg * (item.totalQuantity ?? 0));
+          });
+
+          return Column(
+            children: [
+              // Summary Section
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(24),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color.fromRGBO(0, 0, 0, 0.03),
+                      offset: Offset(0, 10),
+                      blurRadius: 15,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    _buildSummaryCard(
+                      'Total Items',
+                      totalItems.toString(),
+                      Icons.inventory_2,
+                      AppColors.primary,
+                      AppColors.emerald50,
+                    ),
+                    const SizedBox(width: 16),
+                    _buildSummaryCard(
+                      'Total Value',
+                      '₹${totalValue.toStringAsFixed(0)}',
+                      Icons.currency_rupee,
+                      AppColors.orange400,
+                      const Color(0xFFFFF7ED),
+                    ),
+                  ],
+                ),
+              ),
+
+              // List Section
+              Expanded(
+                child: items.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: items.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return _buildItemCard(item);
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showItemForm(),
+        backgroundColor: AppColors.primary,
+        elevation: 4,
+        highlightElevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: Text(
+          'Add Item',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    Color bg,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              value,
+              style: GoogleFonts.inter(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textMain,
+              ),
+            ),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.slate500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.inventory_2_outlined,
+              size: 48,
+              color: AppColors.slate300,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No Items in Stock',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textMain,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add your first item to start tracking\nyour inventory.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.slate500,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemCard(Item item) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color.fromRGBO(0, 0, 0, 0.05),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
+            spreadRadius: -2,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showItemForm(item),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Icon Avatar
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.slate50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.slate100),
+                  ),
+                  child: Center(
+                    child: Text(
+                      item.name.isNotEmpty ? item.name[0].toUpperCase() : '?',
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+
+                // Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppColors.textMain,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.currency_rupee,
+                            size: 14,
+                            color: AppColors.slate500,
+                          ),
+                          Text(
+                            '${item.pricePerKg.toStringAsFixed(2)} / kg',
+                            style: GoogleFonts.inter(
+                              color: AppColors.slate500,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Qty Badge
+                if (item.totalQuantity != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.emerald50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.emerald200.withOpacity(0.5),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${item.totalQuantity}',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: AppColors.emerald600,
+                          ),
+                        ),
+                        Text(
+                          'KG',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 8,
+                            color: AppColors.emerald600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

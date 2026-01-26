@@ -26,7 +26,7 @@ import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_list_
 import 'package:shop_ledger/features/suppliers/presentation/pages/payment_out_page.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_transaction_details_page.dart';
-import 'package:shop_ledger/features/reports/presentation/pages/transaction_list_page.dart';
+import 'package:shop_ledger/features/inventory/presentation/pages/manage_stock_page.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // We do NOT watch authStateProvider here to prevent GoRouter from rebuilding
@@ -198,8 +198,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/transactions',
-                builder: (context, state) => const TransactionListPage(),
+                path: '/inventory',
+                builder: (context, state) => const ManageStockPage(),
               ),
             ],
           ),

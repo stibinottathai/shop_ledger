@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shop_ledger/core/theme/app_colors.dart';
+
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';

@@ -59,8 +59,8 @@ class DashboardPage extends StatelessWidget {
           ),
           Expanded(
             child: _buildNavItem(
-              Icons.receipt_long,
-              'Transactions',
+              Icons.inventory,
+              'Stock',
               navigationShell.currentIndex == 3,
               () => _goBranch(3),
             ),

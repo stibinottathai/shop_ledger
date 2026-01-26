@@ -319,10 +319,6 @@ class SupplierLedgerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildBottomAction(BuildContext context) {
-    return const SizedBox.shrink(); // Removing bottom action
-  }
-
   Widget _buildLedgerItem(
     BuildContext context, {
     required Transaction transaction,
