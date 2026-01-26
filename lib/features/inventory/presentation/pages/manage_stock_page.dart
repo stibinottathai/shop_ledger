@@ -73,6 +73,40 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
       setSheetState(() {
         _barcodeController.text = result;
       });
+
+      // Smart Lookup: Check if item with this barcode already exists
+      try {
+        final existingItem = await ref
+            .read(inventoryProvider.notifier)
+            .getItemByBarcode(result);
+
+        if (existingItem != null && mounted) {
+          // Auto-fill name and price from existing item
+          setSheetState(() {
+            _nameController.text = existingItem.name;
+            _priceController.text = existingItem.pricePerKg.toString();
+            _selectedUnit = existingItem.unit;
+            // Don't auto-fill quantity - user will add new quantity
+            _qtyController.clear();
+          });
+
+          // Show feedback
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Found: ${existingItem.name} - Just add quantity!',
+                ),
+                backgroundColor: AppColors.primary,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        // If lookup fails, just continue with manual entry
+        // (User can still enter details manually)
+      }
     }
   }
 

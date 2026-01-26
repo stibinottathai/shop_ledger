@@ -64,4 +64,8 @@ class InventoryNotifier extends AsyncNotifier<List<Item>> {
     await ref.read(itemRepositoryProvider).deleteAllItems();
     state = const AsyncData([]);
   }
+
+  Future<Item?> getItemByBarcode(String barcode) async {
+    return ref.read(itemRepositoryProvider).getItemByBarcode(barcode);
+  }
 }
