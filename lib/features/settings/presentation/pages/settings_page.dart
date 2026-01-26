@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/inventory/presentation/widgets/manage_items_sheet.dart';
+import 'package:shop_ledger/features/settings/presentation/widgets/business_card_sheet.dart';
 import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -102,6 +103,25 @@ class SettingsPage extends ConsumerWidget {
                 style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 13),
               ),
             ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Business Card
+          _buildSettingsTile(
+            context,
+            icon: Icons.badge_outlined,
+            title: 'Share Business Card',
+            subtitle: 'Share your business details',
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor:
+                    Colors.transparent, // Important for rounded corners
+                builder: (context) => const BusinessCardSheet(),
+              );
+            },
           ),
 
           const SizedBox(height: 12),
