@@ -41,7 +41,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   }
 
   Future<void> _scanBarcode(StateSetter setSheetState) async {
-    final result = await Navigator.push(
+    final result = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (context) => Scaffold(
@@ -51,8 +51,9 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 if (barcode.rawValue != null) {
+                  // Pop with the barcode value
                   Navigator.pop(context, barcode.rawValue);
-                  break;
+                  return;
                 }
               }
             },
@@ -61,7 +62,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
       ),
     );
 
-    if (result != null && result is String) {
+    if (result != null) {
       setSheetState(() {
         _barcodeController.text = result;
       });
