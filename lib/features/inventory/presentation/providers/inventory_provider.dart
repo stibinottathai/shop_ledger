@@ -22,8 +22,9 @@ class InventoryNotifier extends AsyncNotifier<List<Item>> {
   Future<void> addItem(
     String name,
     double pricePerKg,
-    double? totalQuantity,
-  ) async {
+    double? totalQuantity, {
+    String unit = 'kg',
+  }) async {
     // Optimistic update could be complex with ID generation, so standard async for now
     await ref
         .read(itemRepositoryProvider)
@@ -32,6 +33,7 @@ class InventoryNotifier extends AsyncNotifier<List<Item>> {
             name: name,
             pricePerKg: pricePerKg,
             totalQuantity: totalQuantity,
+            unit: unit,
           ),
         );
     // Refresh to get new item with ID
@@ -54,5 +56,10 @@ class InventoryNotifier extends AsyncNotifier<List<Item>> {
     } else {
       ref.invalidateSelf();
     }
+  }
+
+  Future<void> deleteAllItems() async {
+    await ref.read(itemRepositoryProvider).deleteAllItems();
+    state = const AsyncData([]);
   }
 }

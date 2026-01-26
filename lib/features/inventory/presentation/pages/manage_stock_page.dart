@@ -20,10 +20,28 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   final _qtyController = TextEditingController();
   bool _isSaving = false;
 
+  // Search
+  bool _isSearching = false;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  // Unit Selection
+  String _selectedUnit = 'kg'; // Default
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _nameController.dispose();
+    _priceController.dispose();
+    _qtyController.dispose();
+    super.dispose();
+  }
+
   void _showItemForm([Item? item]) {
     _nameController.text = item?.name ?? '';
     _priceController.text = item?.pricePerKg.toString() ?? '';
     _qtyController.text = item?.totalQuantity?.toString() ?? '';
+    _selectedUnit = item?.unit ?? 'kg';
 
     showModalBottomSheet(
       context: context,
@@ -32,92 +50,141 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 24,
-          right: 24,
-          top: 32,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 24,
+              right: 24,
+              top: 32,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    item != null ? 'Edit Stock Item' : 'Add New Item',
-                    style: GoogleFonts.inter(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textMain,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.slate50,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.slate200),
-                      ),
-                      child: const Icon(Icons.close, size: 18),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    _buildInputField(
-                      controller: _nameController,
-                      label: 'Item Name',
-                      hint: 'e.g., Golden Apple',
-                      icon: Icons.inventory_2_outlined,
-                      validator: (val) =>
-                          val == null || val.isEmpty ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInputField(
-                            controller: _priceController,
-                            label: 'Price (₹/kg)',
-                            hint: '0.00',
-                            icon: Icons.currency_rupee,
-                            inputType: TextInputType.number,
-                            validator: (val) {
-                              if (val == null || val.isEmpty) return 'Required';
-                              if (double.tryParse(val) == null) {
-                                return 'Invalid';
-                              }
-                              return null;
-                            },
-                          ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item != null ? 'Edit Stock Item' : 'Add New Item',
+                        style: GoogleFonts.inter(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textMain,
+                          letterSpacing: -0.5,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildInputField(
-                            controller: _qtyController,
-                            label: 'Quantity (kg)',
-                            hint: '0.00',
-                            icon: Icons.scale_outlined,
-                            inputType: TextInputType.number,
+                      ),
+                      Row(
+                        children: [
+                          if (item != null)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.danger,
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _showDeleteConfirm(item);
+                                },
+                              ),
+                            ),
+                          IconButton(
+                            icon: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppColors.slate50,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.slate200),
+                              ),
+                              child: const Icon(Icons.close, size: 18),
+                            ),
+                            onPressed: () => Navigator.pop(context),
                           ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Unit Selection Toggle
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.slate50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.slate200),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildUnitToggleOption(
+                          'Kilogram (Kg)',
+                          'kg',
+                          setSheetState,
+                        ),
+                        _buildUnitToggleOption(
+                          'Pieces (Pcs)',
+                          'pcs',
+                          setSheetState,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 32),
-                    StatefulBuilder(
-                      builder: (context, setStateBtn) {
-                        return SizedBox(
+                  ),
+                  const SizedBox(height: 24),
+
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        _buildInputField(
+                          controller: _nameController,
+                          label: 'Item Name',
+                          hint: 'e.g., Golden Apple',
+                          icon: Icons.inventory_2_outlined,
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildInputField(
+                                controller: _priceController,
+                                label: _selectedUnit == 'kg'
+                                    ? 'Price (₹/kg)'
+                                    : 'Price (₹/pc)',
+                                hint: '0.00',
+                                icon: Icons.currency_rupee,
+                                inputType: TextInputType.number,
+                                validator: (val) {
+                                  if (val == null || val.isEmpty)
+                                    return 'Required';
+                                  if (double.tryParse(val) == null) {
+                                    return 'Invalid';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildInputField(
+                                controller: _qtyController,
+                                label: _selectedUnit == 'kg'
+                                    ? 'Quantity (kg)'
+                                    : 'Quantity (pcs)',
+                                hint: '0.00',
+                                icon: Icons.scale_outlined,
+                                inputType: TextInputType.number,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
                           width: double.infinity,
                           height: 54,
                           child: ElevatedButton(
@@ -127,7 +194,9 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                     if (!_formKey.currentState!.validate())
                                       return;
 
-                                    setStateBtn(() => _isSaving = true);
+                                    setSheetState(
+                                      () => _isSaving = true,
+                                    ); // Use local setState
 
                                     final name = _nameController.text.trim();
                                     final price =
@@ -148,6 +217,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                           name: name,
                                           pricePerKg: price,
                                           totalQuantity: qty,
+                                          unit: _selectedUnit,
                                         );
                                         await ref
                                             .read(inventoryProvider.notifier)
@@ -155,7 +225,12 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                       } else {
                                         await ref
                                             .read(inventoryProvider.notifier)
-                                            .addItem(name, price, qty);
+                                            .addItem(
+                                              name,
+                                              price,
+                                              qty,
+                                              unit: _selectedUnit,
+                                            );
                                       }
                                       if (mounted) {
                                         Navigator.pop(context);
@@ -186,7 +261,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                       }
                                     } finally {
                                       if (mounted) {
-                                        setStateBtn(() => _isSaving = false);
+                                        setSheetState(() => _isSaving = false);
                                       }
                                     }
                                   },
@@ -215,14 +290,57 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                     ),
                                   ),
                           ),
-                        );
-                      },
+                        ),
+                        const SizedBox(height: 32),
+                      ],
                     ),
-                    const SizedBox(height: 32),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildUnitToggleOption(
+    String label,
+    String value,
+    StateSetter setSheetState,
+  ) {
+    final isSelected = _selectedUnit == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setSheetState(() {
+            _selectedUnit = value;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? AppColors.textMain : AppColors.slate500,
+              ),
+            ),
           ),
         ),
       ),
@@ -315,6 +433,70 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     }
   }
 
+  Future<void> _deleteAllItems() async {
+    try {
+      await ref.read(inventoryProvider.notifier).deleteAllItems();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All terms deleted successfully'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting all items: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showDeleteAllConfirm() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Delete All Stock?',
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'This will permanently delete ALL items from your inventory. This action cannot be undone.',
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(
+                color: AppColors.slate500,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteAllItems();
+            },
+            child: Text(
+              'Delete All',
+              style: GoogleFonts.inter(
+                color: AppColors.danger,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showDeleteConfirm(Item item) {
     showDialog(
       context: context,
@@ -361,28 +543,109 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9), // Light grey background
       appBar: AppBar(
-        title: Text(
-          'Inventory',
-          style: GoogleFonts.inter(
-            color: AppColors.textMain,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search items...',
+                  hintStyle: GoogleFonts.inter(color: AppColors.slate400),
+                  border: InputBorder.none,
+                ),
+                style: GoogleFonts.inter(
+                  color: AppColors.textMain,
+                  fontWeight: FontWeight.w500,
+                ),
+                onChanged: (val) {
+                  setState(() {
+                    _searchQuery = val.trim().toLowerCase();
+                  });
+                },
+              )
+            : Text(
+                'Inventory',
+                style: GoogleFonts.inter(
+                  color: AppColors.textMain,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
         centerTitle: false,
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            onPressed: () {}, // Future: Search
-            icon: const Icon(Icons.search, color: AppColors.slate500),
+            onPressed: () {
+              setState(() {
+                if (_isSearching) {
+                  _isSearching = false;
+                  _searchQuery = '';
+                  _searchController.clear();
+                } else {
+                  _isSearching = true;
+                }
+              });
+            },
+            icon: Icon(
+              _isSearching ? Icons.close : Icons.search,
+              color: AppColors.slate500,
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: AppColors.slate500),
+            color: Colors.white,
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            onSelected: (value) {
+              if (value == 'deleteAll') {
+                _showDeleteAllConfirm();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'deleteAll',
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.delete_forever,
+                        color: AppColors.danger,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Delete All Stock',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMain,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: itemsAsync.when(
         data: (items) {
-          // Calculate summary
+          // Filter items based on search query
+          final filteredItems = items.where((item) {
+            return item.name.toLowerCase().contains(_searchQuery);
+          }).toList();
+
+          // Calculate summary (based on ALL items, or filtered? Usually all items makes sense for dashboard stats, but filtered for list view.
+          // Let's keep summary for ALL items as it is "Total Stock" summary).
           final totalItems = items.length;
           final totalValue = items.fold(0.0, (sum, item) {
             return sum + (item.pricePerKg * (item.totalQuantity ?? 0));
@@ -390,56 +653,121 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
 
           return Column(
             children: [
-              // Summary Section
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(24),
+              // Summary Section (Hide when searching to give more space? Or keep it? Let's keep it for now)
+              if (!_isSearching)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(24),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color.fromRGBO(0, 0, 0, 0.03),
+                        offset: Offset(0, 10),
+                        blurRadius: 15,
+                      ),
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.03),
-                      offset: Offset(0, 10),
-                      blurRadius: 15,
-                    ),
-                  ],
+                  child: Row(
+                    children: [
+                      _buildSummaryCard(
+                        'Total Items',
+                        totalItems.toString(),
+                        Icons.inventory_2,
+                        AppColors.primary,
+                        AppColors.emerald50,
+                      ),
+                      const SizedBox(width: 16),
+                      _buildSummaryCard(
+                        'Total Value',
+                        '₹${totalValue.toStringAsFixed(0)}',
+                        Icons.currency_rupee,
+                        AppColors.orange400,
+                        const Color(0xFFFFF7ED),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    _buildSummaryCard(
-                      'Total Items',
-                      totalItems.toString(),
-                      Icons.inventory_2,
-                      AppColors.primary,
-                      AppColors.emerald50,
-                    ),
-                    const SizedBox(width: 16),
-                    _buildSummaryCard(
-                      'Total Value',
-                      '₹${totalValue.toStringAsFixed(0)}',
-                      Icons.currency_rupee,
-                      AppColors.orange400,
-                      const Color(0xFFFFF7ED),
-                    ),
-                  ],
-                ),
-              ),
 
               // List Section
               Expanded(
-                child: items.isEmpty
-                    ? _buildEmptyState()
+                child: filteredItems.isEmpty
+                    ? (items.isEmpty
+                          ? _buildEmptyState()
+                          : _buildNoSearchResults())
                     : ListView.separated(
                         padding: const EdgeInsets.all(20),
-                        itemCount: items.length,
+                        itemCount: filteredItems.length,
                         separatorBuilder: (context, index) =>
                             const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          final item = items[index];
-                          return _buildItemCard(item);
+                          final item = filteredItems[index];
+                          return Dismissible(
+                            key: Key(item.id ?? item.name),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              decoration: BoxDecoration(
+                                color: AppColors.danger,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.white,
+                              ),
+                            ),
+                            confirmDismiss: (direction) async {
+                              return await showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Text(
+                                    'Delete Item',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  content: Text(
+                                    'Are you sure you want to delete "${item.name}"?',
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(false),
+                                      child: Text(
+                                        'Cancel',
+                                        style: GoogleFonts.inter(
+                                          color: AppColors.slate500,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(ctx).pop(true),
+                                      child: Text(
+                                        'Delete',
+                                        style: GoogleFonts.inter(
+                                          color: AppColors.danger,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            onDismissed: (direction) {
+                              _deleteItem(item.id!);
+                            },
+                            child: _buildItemCard(item),
+                          );
                         },
                       ),
               ),
@@ -463,6 +791,26 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
             color: Colors.white,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNoSearchResults() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.search_off, size: 48, color: AppColors.slate300),
+          const SizedBox(height: 16),
+          Text(
+            'No items found',
+            style: GoogleFonts.inter(
+              color: AppColors.slate500,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -632,7 +980,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                             color: AppColors.slate500,
                           ),
                           Text(
-                            '${item.pricePerKg.toStringAsFixed(2)} / kg',
+                            '${item.pricePerKg.toStringAsFixed(2)} / ${item.unit == 'pcs' ? 'pc' : item.unit}',
                             style: GoogleFonts.inter(
                               color: AppColors.slate500,
                               fontSize: 13,
@@ -671,7 +1019,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                           ),
                         ),
                         Text(
-                          'KG',
+                          item.unit.toUpperCase(),
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 8,

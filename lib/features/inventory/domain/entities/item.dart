@@ -1,8 +1,9 @@
 class Item {
   final String? id;
   final String name;
-  final double pricePerKg;
+  final double pricePerKg; // This is now pricePerUnit generically
   final double? totalQuantity;
+  final String unit; // 'kg' or 'pcs'
   final DateTime? createdAt;
 
   Item({
@@ -10,6 +11,7 @@ class Item {
     required this.name,
     required this.pricePerKg,
     this.totalQuantity,
+    this.unit = 'kg',
     this.createdAt,
   });
 
@@ -21,6 +23,7 @@ class Item {
       totalQuantity: json['total_quantity'] != null
           ? (json['total_quantity'] as num).toDouble()
           : null,
+      unit: json['unit'] as String? ?? 'kg',
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -33,6 +36,7 @@ class Item {
       'name': name,
       'price_per_kg': pricePerKg,
       if (totalQuantity != null) 'total_quantity': totalQuantity,
+      'unit': unit,
     };
   }
 
@@ -41,6 +45,7 @@ class Item {
     String? name,
     double? pricePerKg,
     double? totalQuantity,
+    String? unit,
     DateTime? createdAt,
   }) {
     return Item(
@@ -48,6 +53,7 @@ class Item {
       name: name ?? this.name,
       pricePerKg: pricePerKg ?? this.pricePerKg,
       totalQuantity: totalQuantity ?? this.totalQuantity,
+      unit: unit ?? this.unit,
       createdAt: createdAt ?? this.createdAt,
     );
   }
