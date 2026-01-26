@@ -603,36 +603,47 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                 _showDeleteAllConfirm();
               }
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'deleteAll',
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.danger.withOpacity(0.1),
-                        shape: BoxShape.circle,
+            itemBuilder: (context) {
+              final items = itemsAsync.value ?? [];
+              final hasItems = items.isNotEmpty;
+              return [
+                PopupMenuItem(
+                  value: 'deleteAll',
+                  enabled: hasItems,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: hasItems
+                              ? AppColors.danger.withOpacity(0.1)
+                              : AppColors.slate100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.delete_forever,
+                          color: hasItems
+                              ? AppColors.danger
+                              : AppColors.slate400,
+                          size: 20,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.delete_forever,
-                        color: AppColors.danger,
-                        size: 20,
+                      const SizedBox(width: 12),
+                      Text(
+                        'Delete All Stock',
+                        style: GoogleFonts.inter(
+                          color: hasItems
+                              ? AppColors.textMain
+                              : AppColors.slate400,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Delete All Stock',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMain,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ];
+            },
           ),
           const SizedBox(width: 8),
         ],

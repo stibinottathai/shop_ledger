@@ -7,7 +7,7 @@ import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
-import 'package:shop_ledger/features/inventory/presentation/widgets/manage_items_sheet.dart';
+
 import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class CustomerListPage extends ConsumerStatefulWidget {
@@ -148,43 +148,6 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   ),
                 ),
                 const SizedBox(width: 12), // Spacing
-                Container(
-                  height: 36,
-                  width: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.slate50,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.05),
-                        offset: Offset(0, 1),
-                        blurRadius: 3,
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.add,
-                      size: 20,
-                      color: AppColors.slate600,
-                    ),
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.white,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(20),
-                          ),
-                        ),
-                        builder: (context) => const ManageItemsSheet(),
-                      );
-                    },
-                  ),
-                ),
               ],
             ),
           ),

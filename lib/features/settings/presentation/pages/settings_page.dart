@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
-import 'package:shop_ledger/features/inventory/presentation/widgets/manage_items_sheet.dart';
+
 import 'package:shop_ledger/features/settings/presentation/widgets/business_card_sheet.dart';
 import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
 
@@ -37,26 +37,6 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Manage Items
-          _buildSettingsTile(
-            context,
-            icon: Icons.inventory_2_outlined,
-            title: 'Manage Items',
-            subtitle: 'Add or edit items in your inventory',
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.white,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                builder: (context) => const ManageItemsSheet(),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-
           // Privacy Mode Toggle
           Container(
             decoration: BoxDecoration(
