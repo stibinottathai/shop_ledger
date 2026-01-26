@@ -47,6 +47,11 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.all(16),
       ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Colors.black,
+        contentTextStyle: TextStyle(color: Colors.white),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 

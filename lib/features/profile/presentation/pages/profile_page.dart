@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart'; // Assuming standard font used
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/core/error/failures.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -107,10 +108,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
-            backgroundColor: AppColors.primary,
-          ),
+          const SnackBar(content: Text('Profile updated successfully')),
         );
       }
     } catch (e) {
@@ -265,74 +263,127 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  Future<void> _performLogout() async {
-    await ref.read(authControllerProvider.notifier).signOut();
-    if (mounted) {
-      // Clear navigation stack and go to login
-      context.go('/login');
-    }
-  }
-
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.power_settings_new_rounded, color: Colors.red),
-            const SizedBox(width: 12),
-            Text(
-              'Logout',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          bool isLoading = false;
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to log out of your account?',
-          style: GoogleFonts.inter(fontSize: 14, color: _textMain),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 24,
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            title: Row(
+              children: [
+                const Icon(Icons.power_settings_new_rounded, color: Colors.red),
+                const SizedBox(width: 12),
+                Text(
+                  'Logout',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            content: Text(
+              'Are you sure you want to log out of your account?',
+              style: GoogleFonts.inter(fontSize: 14, color: _textMain),
+            ),
+            actionsPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 24,
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: isLoading ? null : () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(color: Colors.grey[300]!),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: GoogleFonts.inter(
+                    color: _textMain,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-              side: BorderSide(color: Colors.grey[300]!),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.inter(
-                color: _textMain,
-                fontWeight: FontWeight.w600,
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() => isLoading = true);
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .signOut();
+
+                        // Check for errors
+                        final state = ref.read(authControllerProvider);
+                        if (state.hasError) {
+                          final error = state.error;
+                          final message = error is Failure
+                              ? error.message
+                              : error.toString();
+
+                          if (mounted) {
+                            setState(() => isLoading = false);
+                            Navigator.pop(context); // Close dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(message),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } else {
+                          if (mounted) {
+                            Navigator.pop(context); // Close dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Logged out successfully'),
+                                backgroundColor:
+                                    Colors.black, // Consistent with theme
+                              ),
+                            );
+                            // Clear navigation stack and go to login
+                            context.go('/login');
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        'Logout',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      ),
               ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _performLogout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              'Logout',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

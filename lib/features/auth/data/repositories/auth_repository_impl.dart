@@ -3,6 +3,7 @@ import 'package:shop_ledger/core/error/failures.dart';
 import 'package:shop_ledger/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:shop_ledger/features/auth/domain/repositories/auth_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -21,8 +22,29 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right(response);
     } on AuthException catch (e) {
+      if (e.message.contains('SocketException') ||
+          e.message.contains('ClientException') ||
+          e.message.contains('host lookup') ||
+          e.message.contains('Network is unreachable')) {
+        return const Left(
+          ServerFailure('No Internet connection. Please check your network.'),
+        );
+      }
       return Left(ServerFailure(e.message));
+    } on SocketException {
+      return const Left(
+        ServerFailure('No Internet connection. Please check your network.'),
+      );
     } catch (e) {
+      // Handle generic network errors if they don't match SocketException
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('ClientException') ||
+          e.toString().contains('host lookup') ||
+          e.toString().contains('Network is unreachable')) {
+        return const Left(
+          ServerFailure('No Internet connection. Please check your network.'),
+        );
+      }
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -45,8 +67,28 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right(response);
     } on AuthException catch (e) {
+      if (e.message.contains('SocketException') ||
+          e.message.contains('ClientException') ||
+          e.message.contains('host lookup') ||
+          e.message.contains('Network is unreachable')) {
+        return const Left(
+          ServerFailure('No Internet connection. Please check your network.'),
+        );
+      }
       return Left(ServerFailure(e.message));
+    } on SocketException {
+      return const Left(
+        ServerFailure('No Internet connection. Please check your network.'),
+      );
     } catch (e) {
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('ClientException') ||
+          e.toString().contains('host lookup') ||
+          e.toString().contains('Network is unreachable')) {
+        return const Left(
+          ServerFailure('No Internet connection. Please check your network.'),
+        );
+      }
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -56,6 +98,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await remoteDataSource.signOut();
       return const Right(null);
+    } on SocketException {
+      return const Left(
+        ServerFailure('No Internet connection. Please check your network.'),
+      );
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

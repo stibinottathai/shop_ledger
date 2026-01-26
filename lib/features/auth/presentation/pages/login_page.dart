@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/core/error/failures.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -48,9 +49,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           }
         },
         error: (e, stack) {
+          final message = e is Failure ? e.message : e.toString();
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text(e.toString())));
+          ).showSnackBar(SnackBar(content: Text(message)));
         },
         loading: () {},
       );

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/core/error/failures.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});
@@ -58,7 +59,13 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           context.go('/home');
         },
         error: (e, stack) {
-          String errorMessage = e.toString();
+          String errorMessage;
+          if (e is Failure) {
+            errorMessage = e.message;
+          } else {
+            errorMessage = e.toString();
+          }
+
           if (errorMessage.contains('Email rate limit exceeded')) {
             errorMessage = 'Too many attempts. Please try again later.';
           }
