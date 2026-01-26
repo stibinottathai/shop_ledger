@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
@@ -22,10 +23,86 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
   final GlobalKey _globalKey = GlobalKey();
   bool _isSharing = false;
 
+  // Customization State
+  int _selectedBgIndex = 0;
+  int _selectedFontIndex = 0;
+  int _selectedTextColorIndex = 0;
+
+  // Options
+  final List<Gradient> _backgrounds = [
+    // 41644A
+    const LinearGradient(
+      colors: [Color(0xFF41644A), Color(0xFF41644A)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    // 001F3D
+    const LinearGradient(
+      colors: [Color(0xFF001F3D), Color(0xFF001F3D)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    // 0C2C55
+    const LinearGradient(
+      colors: [Color(0xFF0C2C55), Color(0xFF0C2C55)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    // 6E026F
+    const LinearGradient(
+      colors: [Color(0xFF6E026F), Color(0xFF6E026F)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    // 30364F
+    const LinearGradient(
+      colors: [Color(0xFF30364F), Color(0xFF30364F)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    // 6F8F72
+    const LinearGradient(
+      colors: [Color(0xFF6F8F72), Color(0xFF6F8F72)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    // 000000
+    const LinearGradient(
+      colors: [Color(0xFF000000), Color(0xFF000000)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+  ];
+
+  final List<TextStyle> _fonts = [
+    GoogleFonts.inter(),
+    GoogleFonts.roboto(),
+    GoogleFonts.lato(),
+    GoogleFonts.playfairDisplay(),
+    GoogleFonts.lora(),
+    GoogleFonts.oswald(),
+  ];
+
+  final List<String> _fontNames = [
+    'Inter',
+    'Roboto',
+    'Lato',
+    'Playfair',
+    'Lora',
+    'Oswald',
+  ];
+
+  final List<Color> _textColors = [
+    Colors.white,
+    const Color(0xFFF1F5F9), // Slate 100
+    const Color(0xFFFEF08A), // Yellow 200
+    const Color(0xFFBBF7D0), // Green 200
+    const Color(0xFFBFDBFE), // Blue 200
+  ];
+
   Future<void> _captureAndShare() async {
     setState(() => _isSharing = true);
     try {
-      // 1. Capture Image
       final boundary =
           _globalKey.currentContext?.findRenderObject()
               as RenderRepaintBoundary?;
@@ -33,10 +110,6 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
       if (boundary == null) {
         throw Exception("Could not find boundary");
       }
-
-      // Need a slight delay sometimes for the widget to be fully repainted if it was just built
-      // But usually fine in a sheet that's already visible.
-      // Retrying if needed or ensuring context is valid.
 
       if (boundary.debugNeedsPaint) {
         await Future.delayed(const Duration(milliseconds: 20));
@@ -46,13 +119,11 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       final pngBytes = byteData!.buffer.asUint8List();
 
-      // 2. Save to Temp File
       final directory = await getTemporaryDirectory();
       final imagePath = '${directory.path}/business_card.png';
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(pngBytes);
 
-      // 3. Share
       await Share.shareXFiles([
         XFile(imagePath),
       ], text: 'Check out my business!');
@@ -67,22 +138,43 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
     }
   }
 
+  // Generate vCard Data
+  String _generateVCard(
+    String name,
+    String shopName,
+    String phone,
+    String email,
+  ) {
+    return 'BEGIN:VCARD\n'
+        'VERSION:3.0\n'
+        'N:$name;;;;\n'
+        'FN:$name\n'
+        'ORG:$shopName\n'
+        'TEL;TYPE=CELL:$phone\n'
+        'EMAIL:$email\n'
+        'END:VCARD';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Fetch User Data
     final user = ref.watch(authRepositoryProvider).getCurrentUser();
     final metadata = user?.userMetadata ?? {};
 
     final shopName = metadata['shop_name']?.toString() ?? 'My Shop';
     final ownerName = metadata['username']?.toString() ?? 'Owner Name';
 
-    // Logic for phone: User.phone OR metadata['phone']
     String phone = user?.phone ?? '';
     if (phone.isEmpty) {
       phone = metadata['phone']?.toString() ?? '';
     }
 
     final email = user?.email ?? '';
+
+    // Create vCard data
+    final vCardData = _generateVCard(ownerName, shopName, phone, email);
+
+    final currentFont = _fonts[_selectedFontIndex];
+    final currentTextColor = _textColors[_selectedTextColorIndex];
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -93,7 +185,6 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle Bar
           Container(
             width: 40,
             height: 4,
@@ -103,23 +194,17 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
             ),
           ),
           const SizedBox(height: 24),
-
           Text(
-            'Share Business Card',
+            'Customize Card',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textDark,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Share your business details with customers',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
 
-          // --- THE CARD TO CAPTURE ---
+          // --- PREVIEW ---
           Center(
             child: RepaintBoundary(
               key: _globalKey,
@@ -127,14 +212,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
                 width: 340,
                 height: 200,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF1E293B), // Slate 800
-                      Color(0xFF0F172A), // Slate 900
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: _backgrounds[_selectedBgIndex],
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -166,7 +244,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
                         width: 150,
                         height: 150,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.05),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -175,25 +253,24 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
                     // Content
                     Padding(
                       padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Row(
                         children: [
-                          // Top Section: Shop Name & Logo/Icon
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
+                          // Left Side (Text Info)
+                          Expanded(
+                            flex: 3,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       shopName,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 24,
+                                      style: currentFont.copyWith(
+                                        fontSize: 22,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                        color: currentTextColor,
                                         height: 1.1,
                                       ),
                                       maxLines: 2,
@@ -202,45 +279,82 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
                                     const SizedBox(height: 4),
                                     Text(
                                       'Proprietor : $ownerName',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
+                                      style: currentFont.copyWith(
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w500,
-                                        color: Colors.white70,
+                                        color: currentTextColor.withOpacity(
+                                          0.8,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
+                                Column(
+                                  children: [
+                                    _buildContactRow(
+                                      Icons.phone,
+                                      phone,
+                                      currentTextColor,
+                                      currentFont,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildContactRow(
+                                      Icons.email,
+                                      email,
+                                      currentTextColor,
+                                      currentFont,
+                                    ),
+                                  ],
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    shopName.isNotEmpty
-                                        ? shopName[0].toUpperCase()
-                                        : 'S',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                              ],
+                            ),
+                          ),
+
+                          // Right Side (Logo + QR)
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Shop Initials
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      shopName.isNotEmpty
+                                          ? shopName[0].toUpperCase()
+                                          : 'S',
+                                      style: currentFont.copyWith(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: currentTextColor,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
 
-                          // Bottom Section: Contact Info
-                          Column(
-                            children: [
-                              _buildContactRow(Icons.phone, phone),
-                              const SizedBox(height: 8),
-                              _buildContactRow(Icons.email, email),
-                            ],
+                                // QR Code
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: QrImageView(
+                                    data: vCardData,
+                                    version: QrVersions.auto,
+                                    size: 60,
+                                    backgroundColor: Colors.white,
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -251,10 +365,127 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
             ),
           ),
 
-          // ---------------------------
           const SizedBox(height: 32),
 
-          // Share Button
+          // --- CUSTOMIZATION OPTIONS ---
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionLabel('Background'),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 50,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _backgrounds.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final isSelected = _selectedBgIndex == index;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedBgIndex = index),
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: _backgrounds[index],
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(color: AppColors.primary, width: 3)
+                              : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: isSelected
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildSectionLabel('Font Style'),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _fonts.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final isSelected = _selectedFontIndex == index;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedFontIndex = index),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.slate100,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          _fontNames[index],
+                          style: _fonts[index].copyWith(
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textMain,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildSectionLabel('Text Color'),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _textColors.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    final isSelected = _selectedTextColorIndex == index;
+                    return GestureDetector(
+                      onTap: () =>
+                          setState(() => _selectedTextColorIndex = index),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: _textColors[index],
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : Colors.grey[300]!,
+                            width: isSelected ? 3 : 1,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
             height: 56,
@@ -293,18 +524,37 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
     );
   }
 
-  Widget _buildContactRow(IconData icon, String text) {
+  Widget _buildSectionLabel(String label) {
+    return Text(
+      label,
+      style: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppColors.slate500,
+      ),
+    );
+  }
+
+  Widget _buildContactRow(
+    IconData icon,
+    String text,
+    Color color,
+    TextStyle font,
+  ) {
     if (text.isEmpty) return const SizedBox.shrink();
     return Row(
       children: [
-        Icon(icon, color: Colors.white70, size: 16),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
+        Icon(icon, color: color.withOpacity(0.8), size: 14),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            text,
+            style: font.copyWith(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
