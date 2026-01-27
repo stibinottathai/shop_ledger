@@ -98,11 +98,33 @@ class ExpenseListNotifier extends AsyncNotifier<List<Expense>> {
   }
 
   Future<void> deleteExpense(String id) async {
+    // 1. Optimistic Update: Remove from filtered list locally
+    final previousState = state.asData?.value;
+    if (previousState != null) {
+      state = AsyncData(previousState.where((e) => e.id != id).toList());
+    }
+
+    // 2. Optimistic Update: Remove from recent list locally
+    ref.read(recentExpensesProvider.notifier).optimisticDelete(id);
+
+    // 3. Perform actual network request
     final repository = ref.read(expenseRepositoryProvider);
-    await repository.deleteExpense(id);
-    ref.invalidateSelf();
-    ref.invalidate(recentExpensesProvider);
-    ref.invalidate(totalExpenseProvider);
+    try {
+      await repository.deleteExpense(id);
+
+      // 4. Update the totals and other data that relies on aggregation
+      ref.invalidate(totalExpenseProvider);
+
+      // Optional: Invalidate recent to fetch the 5th item if one was deleted
+      // We delay slightly or just invalidate now. Invalidating might cause loading state.
+      // Better to just let it be 4 items until next natural refresh or force silent refresh?
+      // ref.invalidate(recentExpensesProvider);
+    } catch (e) {
+      // Revert if failed (simple restart)
+      ref.invalidateSelf();
+      ref.invalidate(recentExpensesProvider);
+      rethrow;
+    }
   }
 
   void updateFilter(ExpenseFilter filter) {
@@ -111,12 +133,25 @@ class ExpenseListNotifier extends AsyncNotifier<List<Expense>> {
 }
 
 // --- Recent Expenses Provider (Top 5) ---
-final recentExpensesProvider = FutureProvider.autoDispose<List<Expense>>((
-  ref,
-) async {
-  final repository = ref.watch(expenseRepositoryProvider);
-  return await repository.getExpenses(limit: 5);
-});
+final recentExpensesProvider =
+    AsyncNotifierProvider<RecentExpensesNotifier, List<Expense>>(
+      () => RecentExpensesNotifier(),
+    );
+
+class RecentExpensesNotifier extends AsyncNotifier<List<Expense>> {
+  @override
+  Future<List<Expense>> build() async {
+    final repository = ref.watch(expenseRepositoryProvider);
+    return await repository.getExpenses(limit: 5);
+  }
+
+  void optimisticDelete(String id) {
+    final current = state.asData?.value;
+    if (current != null) {
+      state = AsyncData(current.where((e) => e.id != id).toList());
+    }
+  }
+}
 
 // --- Total Expense Provider ---
 final totalExpenseProvider = FutureProvider.autoDispose<double>((ref) async {

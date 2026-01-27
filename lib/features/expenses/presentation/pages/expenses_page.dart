@@ -170,91 +170,158 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
   }
 
   Widget _buildExpenseItem(Expense expense) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    if (expense.id == null) return const SizedBox.shrink();
+
+    return Dismissible(
+      key: Key(expense.id!),
+      direction: DismissDirection.startToEnd,
+      background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(Icons.delete, color: Colors.white, size: 28),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Color(0xFF016B61),
-              shape: BoxShape.circle,
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(
+                'Delete Transaction?',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textMain,
+                ),
+              ),
+              content: Text(
+                'Are you sure you want to delete this transaction?',
+                style: GoogleFonts.inter(color: AppColors.textMain),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(color: AppColors.textMuted),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(
+                    'Delete',
+                    style: GoogleFonts.inter(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      onDismissed: (direction) {
+        if (expense.id != null) {
+          ref.read(expenseListProvider.notifier).deleteExpense(expense.id!);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Transaction deleted', style: GoogleFonts.inter()),
+              backgroundColor: AppColors.textMain,
+              behavior: SnackBarBehavior.floating,
             ),
-            child: Icon(
-              _getCategoryIcon(expense.category),
-              color: Colors.white,
-              size: 20,
+          );
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                color: Color(0xFF016B61),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _getCategoryIcon(expense.category),
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    expense.category,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('d MMM yyyy, hh:mm a').format(expense.date),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  if (expense.notes != null)
+                    Text(
+                      expense.notes!,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  expense.category,
+                  '- ₹${NumberFormat("##,##0").format(expense.amount)}',
                   style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: AppColors.textDark,
+                    color: const Color(0xFFB91C1C),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  DateFormat('d MMM yyyy, hh:mm a').format(expense.date),
+                  expense.paymentMethod.toUpperCase(),
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textMuted,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                if (expense.notes != null)
-                  Text(
-                    expense.notes!,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '- ₹${NumberFormat("##,##0").format(expense.amount)}',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: const Color(0xFFB91C1C),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                expense.paymentMethod.toUpperCase(),
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textMuted,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

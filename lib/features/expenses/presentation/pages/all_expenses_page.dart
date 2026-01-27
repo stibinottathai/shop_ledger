@@ -181,66 +181,133 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
   }
 
   Widget _buildExpenseItem(Expense expense) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    if (expense.id == null) return const SizedBox.shrink();
+
+    return Dismissible(
+      key: Key(expense.id!),
+      direction: DismissDirection.startToEnd,
+      background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.delete, color: Colors.white, size: 28),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              _getCategoryIcon(expense.category),
-              color: const Color(0xFF15803D),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  expense.category,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: AppColors.textMain,
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(
+                'Delete Transaction?',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textMain,
+                ),
+              ),
+              content: Text(
+                'Are you sure you want to delete this transaction?',
+                style: GoogleFonts.inter(color: AppColors.textMain),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(color: AppColors.textMuted),
                   ),
                 ),
-                Text(
-                  DateFormat('d MMM yyyy, hh:mm a').format(expense.date),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.textMuted,
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(
+                    'Delete',
+                    style: GoogleFonts.inter(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
+            );
+          },
+        );
+      },
+      onDismissed: (direction) {
+        if (expense.id != null) {
+          ref.read(expenseListProvider.notifier).deleteExpense(expense.id!);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Transaction deleted', style: GoogleFonts.inter()),
+              backgroundColor: AppColors.textMain,
+              behavior: SnackBarBehavior.floating,
             ),
-          ),
-          Text(
-            '- ₹${NumberFormat("##,##0").format(expense.amount)}',
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: const Color(0xFFB91C1C),
+          );
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _getCategoryIcon(expense.category),
+                color: const Color(0xFF15803D),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    expense.category,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: AppColors.textMain,
+                    ),
+                  ),
+                  Text(
+                    DateFormat('d MMM yyyy, hh:mm a').format(expense.date),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '- ₹${NumberFormat("##,##0").format(expense.amount)}',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: const Color(0xFFB91C1C),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
