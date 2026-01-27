@@ -607,11 +607,23 @@ class CustomerDetailPage extends ConsumerWidget {
         finalNumber = '91$cleanNumber';
       }
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text:
-            'Hello ${customer.name}, please find your account statement attached. Outstanding Balance: ₹${amount.toStringAsFixed(2)}',
-      );
+      // Share with robust error handling for release builds
+      try {
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path)],
+            text:
+                'Hello ${customer.name}, please find your account statement attached. Outstanding Balance: ₹${amount.toStringAsFixed(2)}',
+          ),
+        );
+      } catch (shareError) {
+        // In release builds, share_plus may throw LateInitializationError
+        // The share dialog was shown, we just can't track the result
+        final errorStr = shareError.toString().toLowerCase();
+        if (!errorStr.contains('late') && !errorStr.contains('result')) {
+          rethrow;
+        }
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

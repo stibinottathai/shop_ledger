@@ -48,11 +48,23 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
             true, // We might need to update PdfService to handle this flag if we want specific receipt format
       );
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text:
-            'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
-      );
+      // Share with robust error handling for release builds
+      try {
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path)],
+            text:
+                'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
+          ),
+        );
+      } catch (shareError) {
+        // In release builds, share_plus may throw LateInitializationError
+        // The share dialog was shown, we just can't track the result
+        final errorStr = shareError.toString().toLowerCase();
+        if (!errorStr.contains('late') && !errorStr.contains('result')) {
+          rethrow;
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

@@ -9,6 +9,7 @@ import 'package:shop_ledger/features/customer/presentation/providers/transaction
 import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
 import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
+import 'package:mobile_scanner/mobile_scanner.dart'; // Add this
 
 class SelectedSaleItem {
   final Item item;
@@ -63,6 +64,85 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
     _itemQtyController.dispose();
     _itemCountController.dispose();
     super.dispose();
+  }
+
+  Future<void> _scanBarcode() async {
+    final controller = MobileScannerController();
+    bool hasScanned = false;
+
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: const Text('Scan Barcode')),
+          body: MobileScanner(
+            controller: controller,
+            onDetect: (capture) {
+              if (hasScanned) return;
+
+              final List<Barcode> barcodes = capture.barcodes;
+              for (final barcode in barcodes) {
+                if (barcode.rawValue != null && !hasScanned) {
+                  hasScanned = true;
+                  controller.stop();
+                  Navigator.pop(context, barcode.rawValue);
+                  return;
+                }
+              }
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (result != null && mounted) {
+      // Find item by barcode
+      try {
+        final existingItem = await ref
+            .read(inventoryProvider.notifier)
+            .getItemByBarcode(result);
+
+        if (existingItem != null) {
+          setState(() {
+            _selectedInventoryItem = existingItem;
+            // Clear quantity for user to enter
+            _itemQtyController.clear();
+            _itemCountController.text = '1';
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Item found: ${existingItem.name}'),
+                backgroundColor: AppColors.primary,
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Item not found in inventory'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error finding item: $e')));
+        }
+      }
+    }
+  }
+
+  double _calculateCurrentItemTotal() {
+    if (_selectedInventoryItem == null) return 0;
+    final qty = double.tryParse(_itemQtyController.text) ?? 0;
+    return _selectedInventoryItem!.pricePerKg * qty;
   }
 
   void _calculateTotal() {
@@ -364,29 +444,59 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            DropdownButtonFormField<Item>(
-                              value: _selectedInventoryItem,
-                              decoration: InputDecoration(
-                                labelText: 'Select Item',
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              items: items.map((item) {
-                                return DropdownMenuItem(
-                                  value: item,
-                                  child: Text(
-                                    '${item.name} (₹${item.pricePerKg}/kg)',
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<Item>(
+                                    value: _selectedInventoryItem,
+                                    isExpanded: true,
+                                    decoration: InputDecoration(
+                                      labelText: 'Select Item',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 16,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    items: items.map((item) {
+                                      return DropdownMenuItem(
+                                        value: item,
+                                        child: Text(
+                                          '${item.name} (₹${item.pricePerKg}/${item.unit == 'pcs' ? 'pc' : 'kg'})',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _selectedInventoryItem = val;
+                                        // Update quantity label/logic if needed
+                                      });
+                                    },
                                   ),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                setState(() {
-                                  _selectedInventoryItem = val;
-                                });
-                              },
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.primary.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(Icons.qr_code_scanner),
+                                    color: AppColors.primary,
+                                    onPressed: _scanBarcode,
+                                    tooltip: 'Scan Item QR',
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 12),
                             const SizedBox(height: 12),
@@ -399,8 +509,12 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                         const TextInputType.numberWithOptions(
                                           decimal: true,
                                         ),
+                                    onChanged: (_) => setState(() {}),
                                     decoration: InputDecoration(
-                                      labelText: 'Quantity (Kg)',
+                                      labelText:
+                                          _selectedInventoryItem?.unit == 'pcs'
+                                          ? 'Quantity (Nos)'
+                                          : 'Quantity (Kg)',
                                       filled: true,
                                       fillColor: Colors.white,
                                       border: OutlineInputBorder(
@@ -473,9 +587,9 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Add Item',
-                                  style: TextStyle(
+                                child: Text(
+                                  'Add Item (Total: ₹${_calculateCurrentItemTotal().toStringAsFixed(2)})',
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
                                   ),

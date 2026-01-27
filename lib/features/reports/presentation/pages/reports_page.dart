@@ -205,11 +205,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       decimalDigits: 2,
     );
 
-    // Normalize monthly sales for bar chart (0.0 to 1.0)
-    final maxSale = state.monthlySales.reduce(
-      (curr, next) => curr > next ? curr : next,
+    // Normalize sales for bar chart (0.0 to 1.0)
+    final maxSale = state.chartSales.fold<double>(
+      0,
+      (prev, curr) => curr > prev ? curr : prev,
     );
-    final normalizedBars = state.monthlySales
+
+    final normalizedBars = state.chartSales
         .map((e) => maxSale > 0 ? e / maxSale : 0.0)
         .toList();
 
@@ -219,7 +221,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
-            title: 'Total Sales',
+            title: 'Total Sales (${state.chartPeriod})',
             amount: formatter.format(state.totalSales),
             percentage: '+${state.salesGrowth.toStringAsFixed(1)}%',
             percentageColor: state.salesGrowth >= 0
@@ -227,6 +229,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 : Colors.red,
             primaryColor: AppColors.primary,
             bars: normalizedBars,
+            labels: state.chartLabels,
           ),
         ),
         const SizedBox(height: 24),
@@ -253,11 +256,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                   _buildSummaryCard(
                     title: 'Top Customer',
                     value: formatter.format(performer.amount),
-                    subtitle: performer
-                        .name, // Display Name as subtitle for now to match old design structure? Or swap?
-                    // Old design: Title: Top Customer, Value: Total, Subtitle: Name.
-                    // Let's swap: Title: Customer Name. Value: Amount. Subtitle: 'Top Customer'
-                    // Actually let's stick to design: Title "Top Customer", Value "Total: ...", Subtitle "Name"
+                    subtitle: performer.name,
                     icon: Icons.person,
                     iconColor: AppColors.primary,
                     iconBgColor: AppColors.primary.withOpacity(0.1),
@@ -279,10 +278,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       decimalDigits: 2,
     );
 
-    final maxPurchase = state.monthlyPurchases.reduce(
-      (curr, next) => curr > next ? curr : next,
+    final maxPurchase = state.chartPurchases.fold<double>(
+      0,
+      (prev, curr) => curr > prev ? curr : prev,
     );
-    final normalizedBars = state.monthlyPurchases
+
+    final normalizedBars = state.chartPurchases
         .map((e) => maxPurchase > 0 ? e / maxPurchase : 0.0)
         .toList();
 
@@ -292,15 +293,15 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
-            title: 'Total Purchases',
+            title: 'Total Purchases (${state.chartPeriod})',
             amount: formatter.format(state.totalPurchases),
             percentage: '+${state.purchaseGrowth.toStringAsFixed(1)}%',
             percentageColor: state.purchaseGrowth >= 0
                 ? AppColors.accentOrange
-                : Colors
-                      .red, // Orange for purchase growth? Maybe red if cost increases? sticking to design
+                : Colors.red,
             primaryColor: AppColors.accentOrange,
             bars: normalizedBars,
+            labels: state.chartLabels,
           ),
         ),
         const SizedBox(height: 24),
@@ -349,25 +350,29 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       decimalDigits: 2,
     );
 
+    // Normalize chartSales for summary chart
+    final maxSale = state.chartSales.fold<double>(
+      0,
+      (prev, curr) => curr > prev ? curr : prev,
+    );
+
+    final normalizedBars = state.chartSales
+        .map((e) => maxSale > 0 ? e / maxSale : 0.0)
+        .toList();
+
     return Column(
       children: [
-        // Main Chart Section (Summary - Sales mainly?)
-        // Reusing Sales chart for summary but maybe combining?
-        // Let's us total Revenue (sales) for Monthly Performance chart
+        // Main Chart Section (Summary)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
-            title: 'Monthly Performance',
+            title: 'Performance (${state.chartPeriod})',
             amount: formatter.format(state.totalSales),
             percentage: '+${state.salesGrowth.toStringAsFixed(1)}%',
             percentageColor: AppColors.primary,
             primaryColor: AppColors.primary,
-            bars: state.monthlySales.map((e) {
-              final max = state.monthlySales.reduce(
-                (curr, next) => curr > next ? curr : next,
-              );
-              return max > 0 ? e / max : 0.0;
-            }).toList(),
+            bars: normalizedBars,
+            labels: state.chartLabels,
           ),
         ),
 
@@ -394,9 +399,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           child: Column(
             children: [
               _buildSummaryCard(
-                title: 'Monthly Sales',
-                value: formatter.format(state.monthlySales.last),
-                subtitle: 'Current Month',
+                title: 'Total Sales',
+                value: formatter.format(state.totalSales),
+                subtitle: state.chartPeriod,
                 icon: Icons.trending_up,
                 iconColor: AppColors.primary,
                 iconBgColor: AppColors.primary.withOpacity(0.1),
@@ -404,8 +409,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               const SizedBox(height: 16),
               _buildSummaryCard(
                 title: 'Total Expenses',
-                value: formatter.format(state.monthlyExpenses.last),
-                subtitle: 'Current Month',
+                value: formatter.format(state.totalExpenses),
+                subtitle: state.chartPeriod,
                 icon: Icons.money_off,
                 iconColor: Colors.deepOrange,
                 iconBgColor: Colors.deepOrange.withOpacity(0.1),
@@ -414,9 +419,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               _buildSummaryCard(
                 title: 'Net Profit (Est)',
                 value: formatter.format(
-                  state.monthlySales.last -
-                      state.monthlyPurchases.last -
-                      state.monthlyExpenses.last,
+                  state.totalSales - state.totalPurchases - state.totalExpenses,
                 ),
                 subtitle: 'Sales - Purchases - Expenses',
                 icon: Icons.account_balance_wallet,
@@ -438,14 +441,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     required String percentage,
     required Color primaryColor,
     required List<double> bars,
+    required List<String> labels,
     Color? percentageColor,
   }) {
-    // Generate month labels for last 6 months
-    final now = DateTime.now();
-    final months = List.generate(6, (i) {
-      final d = DateTime(now.year, now.month - (5 - i), 1);
-      return DateFormat('MMM').format(d).toUpperCase();
-    });
+    // Use provided labels and bars
+    final displayLabels = labels;
+    final displayBars = bars;
+    final count = displayBars.length;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -511,14 +513,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             height: 180,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(6, (index) {
+              children: List.generate(count, (index) {
                 return Expanded(
                   child: _buildBar(
                     primaryColor,
-                    months[index],
-                    bars.length > index ? bars[index] : 0.0,
-                    bars.length > index ? bars[index] > 0 : false,
-                    isCurrent: index == 5,
+                    index < displayLabels.length ? displayLabels[index] : '',
+                    index < displayBars.length ? displayBars[index] : 0.0,
+                    index < displayBars.length ? displayBars[index] > 0 : false,
+                    isCurrent: index == count - 1, // Highlight last bar?
                   ),
                 );
               }),

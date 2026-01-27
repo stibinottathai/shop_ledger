@@ -135,18 +135,40 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(pngBytes);
 
-      // Share without expecting a result (avoid late initialization error)
-      final result = await Share.shareXFiles([
-        XFile(imagePath),
-      ], text: 'Check out my business card!');
+      // Share with robust error handling for release builds
+      // The late initialization error can occur in release mode when accessing result
+      bool shareSuccess = false;
+      try {
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(imagePath)],
+            text: 'Check out my business card!',
+          ),
+        );
+        shareSuccess = true;
+      } catch (shareError) {
+        print("Checking the error $shareError");
+        // In release builds, share_plus may throw LateInitializationError
+        // The share dialog was shown, we just can't track the result
+        final errorStr = shareError.toString().toLowerCase();
+        if (errorStr.contains('lateinitializationerror') ||
+            errorStr.contains('late') ||
+            errorStr.contains('result')) {
+          // Share was likely successful, just couldn't get result
+          shareSuccess = true;
+        } else {
+          rethrow;
+        }
+      }
 
-      // Optionally handle the result
-      if (mounted && result.status == ShareResultStatus.success) {
+      // Show success message
+      if (mounted && shareSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Card shared successfully!')),
         );
       }
     } catch (e) {
+      print("Checking the error......... $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
