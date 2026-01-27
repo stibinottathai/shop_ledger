@@ -21,7 +21,9 @@ class SelectedSaleItem {
     required this.item,
     required this.quantity,
     required this.count,
-  }) : totalPrice = item.pricePerKg * quantity;
+  }) : totalPrice = (item.unit == 'ml' || item.unit == 'mg')
+           ? (item.pricePerKg * quantity) / 1000
+           : item.pricePerKg * quantity;
 }
 
 class AddSalePage extends ConsumerStatefulWidget {
@@ -45,7 +47,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
   bool _isLoading = false;
 
   // Itemized Mode
-  bool _isManualMode = true;
+  bool _isManualMode = false;
   final List<SelectedSaleItem> _selectedItems = [];
 
   // Item Form
@@ -142,6 +144,18 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
   double _calculateCurrentItemTotal() {
     if (_selectedInventoryItem == null) return 0;
     final qty = double.tryParse(_itemQtyController.text) ?? 0;
+
+    // For ml and mg, the pricePerKg is stored as Price/Liter or Price/Gram
+    // So we need to divide the quantity (ml/mg) by 1000 to get L/g equivalent for calculation
+    // Wait, if Price is per Gram, and Qty is mg. Cost = Price * (Qty/1000). Correct.
+    // If Price is per Gram (e.g. Saffron 500/g). Qty 100mg. Cost = 500 * 0.1 = 50. Correct.
+    // If Price is per Liter (e.g. Oil 26/L). Qty 500ml. Cost = 26 * 0.5 = 13. Correct.
+
+    if (_selectedInventoryItem!.unit == 'ml' ||
+        _selectedInventoryItem!.unit == 'mg') {
+      return (_selectedInventoryItem!.pricePerKg * qty) / 1000;
+    }
+
     return _selectedInventoryItem!.pricePerKg * qty;
   }
 
@@ -464,10 +478,14 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                       ),
                                     ),
                                     items: items.map((item) {
+                                      String priceUnit = item.unit;
+                                      if (item.unit == 'ml') priceUnit = 'l';
+                                      if (item.unit == 'mg') priceUnit = 'g';
+
                                       return DropdownMenuItem(
                                         value: item,
                                         child: Text(
-                                          '${item.name} (₹${item.pricePerKg}/${item.unit == 'pcs' ? 'pc' : 'kg'})',
+                                          '${item.name} (₹${item.pricePerKg}/$priceUnit)',
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       );
@@ -512,9 +530,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                     onChanged: (_) => setState(() {}),
                                     decoration: InputDecoration(
                                       labelText:
-                                          _selectedInventoryItem?.unit == 'pcs'
-                                          ? 'Quantity (Nos)'
-                                          : 'Quantity (Kg)',
+                                          'Quantity (${_selectedInventoryItem?.unit ?? 'Units'})',
                                       filled: true,
                                       fillColor: Colors.white,
                                       border: OutlineInputBorder(
@@ -631,7 +647,11 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          '${sItem.quantity} kg (${sItem.count} Nos) x ₹${sItem.item.pricePerKg}',
+                          '${sItem.quantity} ${sItem.item.unit} (${sItem.count} Nos) x ₹${sItem.item.pricePerKg}/${(sItem.item.unit == 'ml'
+                              ? 'l'
+                              : sItem.item.unit == 'mg'
+                              ? 'g'
+                              : sItem.item.unit)}',
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,

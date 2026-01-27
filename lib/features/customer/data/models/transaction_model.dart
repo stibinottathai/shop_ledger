@@ -41,10 +41,10 @@ class TransactionModel extends Transaction {
       supplierId: json['supplier_id'] as String?,
       amount: (json['amount'] as num).toDouble(),
       type: type,
-      date: DateTime.parse(dateStr),
+      date: DateTime.parse(dateStr).toLocal(),
       details: json['details'] as String?,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? DateTime.parse(json['created_at'] as String).toLocal()
           : null,
       customerName: json['customers'] != null
           ? json['customers']['name']

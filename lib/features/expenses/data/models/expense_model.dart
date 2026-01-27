@@ -17,7 +17,7 @@ class ExpenseModel extends Expense {
       amount: (map['amount'] as num).toDouble(),
       category: map['category'] as String,
       paymentMethod: map['payment_method'] as String,
-      date: DateTime.parse(map['date'] as String),
+      date: DateTime.parse(map['date'] as String).toLocal(),
       notes: map['notes'] as String?,
       recurring: map['recurring'] as String?,
     );

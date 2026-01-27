@@ -184,35 +184,12 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Unit Selection Toggle
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.slate50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.slate200),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildUnitToggleOption(
-                          'Kilogram (Kg)',
-                          'kg',
-                          setSheetState,
-                        ),
-                        _buildUnitToggleOption(
-                          'Pieces (Pcs)',
-                          'pcs',
-                          setSheetState,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
                   Form(
                     key: _formKey,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // 1. Item Name
                         _buildInputField(
                           controller: _nameController,
                           label: 'Item Name',
@@ -222,6 +199,8 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                               val == null || val.isEmpty ? 'Required' : null,
                         ),
                         const SizedBox(height: 20),
+
+                        // 2. Barcode
                         _buildInputField(
                           controller: _barcodeController,
                           label: 'Barcode (Optional)',
@@ -233,14 +212,81 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
+
+                        // 3. Unit Selection Dropdown
+                        Text(
+                          'Unit Type',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.slate600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: _selectedUnit,
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.slate200),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.slate200),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: AppColors.primary,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'kg',
+                              child: Text('Kilogram (kg)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'mg',
+                              child: Text('Milligram (mg)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'pcs',
+                              child: Text('Pieces (pcs)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'l',
+                              child: Text('Liter (l)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ml',
+                              child: Text('Milliliter (ml)'),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setSheetState(() => _selectedUnit = val);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
+                        // 4. Price and Quantity
                         Row(
                           children: [
                             Expanded(
                               child: _buildInputField(
                                 controller: _priceController,
-                                label: _selectedUnit == 'kg'
-                                    ? 'Price (₹/kg)'
-                                    : 'Price (₹/pc)',
+                                label: _selectedUnit == 'ml'
+                                    ? 'Price (₹/l)' // ml implies price per Liter
+                                    : _selectedUnit == 'mg'
+                                    ? 'Price (₹/g)' // mg implies price per Gram
+                                    : 'Price (₹/${_selectedUnit})',
                                 hint: '0.00',
                                 icon: Icons.currency_rupee,
                                 inputType: TextInputType.number,
@@ -258,9 +304,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                             Expanded(
                               child: _buildInputField(
                                 controller: _qtyController,
-                                label: _selectedUnit == 'kg'
-                                    ? 'Quantity (kg)'
-                                    : 'Quantity (pcs)',
+                                label: 'Quantity (${_selectedUnit})',
                                 hint: '0.00',
                                 icon: Icons.scale_outlined,
                                 inputType: TextInputType.number,
@@ -269,6 +313,8 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                           ],
                         ),
                         const SizedBox(height: 32),
+
+                        // Save Button
                         SizedBox(
                           width: double.infinity,
                           height: 54,
@@ -391,49 +437,6 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildUnitToggleOption(
-    String label,
-    String value,
-    StateSetter setSheetState,
-  ) {
-    final isSelected = _selectedUnit == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setSheetState(() {
-            _selectedUnit = value;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? AppColors.textMain : AppColors.slate500,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
