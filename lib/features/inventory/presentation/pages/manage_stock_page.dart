@@ -904,18 +904,39 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error: $error')),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showItemForm(),
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        highlightElevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(
-          'Add Item',
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 24, right: 24),
+        child: SizedBox(
+          width: 56,
+          height: 56,
+          child: FloatingActionButton(
+            heroTag: 'manage_stock_add_fab',
+            onPressed: () => _showItemForm(),
+            backgroundColor: AppColors.primary,
+            elevation: 0,
+            shape: const CircleBorder(),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.05),
+                    offset: Offset(0, 10),
+                    blurRadius: 15,
+                    spreadRadius: -3,
+                  ),
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.025),
+                    offset: Offset(0, 4),
+                    blurRadius: 6,
+                    spreadRadius: -4,
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            ),
           ),
         ),
       ),

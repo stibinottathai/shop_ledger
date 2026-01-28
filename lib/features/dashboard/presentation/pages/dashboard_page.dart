@@ -25,7 +25,7 @@ class DashboardPage extends StatelessWidget {
 
   Widget _buildBottomNav(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24, top: 16),
+      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 12, top: 16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         border: Border(top: BorderSide(color: Colors.grey[200]!)),
@@ -86,24 +86,29 @@ class DashboardPage extends StatelessWidget {
   ) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? AppColors.primary : Colors.grey[400],
-            size: 24,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
               color: isSelected ? AppColors.primary : Colors.grey[400],
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              size: 24,
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? AppColors.primary : Colors.grey[400],
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -69,16 +69,39 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
         controller: _tabController,
         children: [_buildHomeTab(), _buildChartsTab()],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/reports/add'),
-        backgroundColor: const Color(0xFF016B61),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(
-          'Add Expense',
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 24, right: 24),
+        child: SizedBox(
+          width: 56,
+          height: 56,
+          child: FloatingActionButton(
+            heroTag: 'expense_add_fab',
+            onPressed: () => context.push('/reports/add'),
+            backgroundColor: AppColors.primary,
+            elevation: 0,
+            shape: const CircleBorder(),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.05),
+                    offset: Offset(0, 10),
+                    blurRadius: 15,
+                    spreadRadius: -3,
+                  ),
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.025),
+                    offset: Offset(0, 4),
+                    blurRadius: 6,
+                    spreadRadius: -4,
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            ),
           ),
         ),
       ),
@@ -180,10 +203,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
 
     return Dismissible(
       key: Key(expense.id!),
-      direction: DismissDirection.startToEnd,
+      direction: DismissDirection.endToStart,
       background: Container(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: Colors.red,

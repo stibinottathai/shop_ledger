@@ -185,10 +185,10 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
 
     return Dismissible(
       key: Key(expense.id!),
-      direction: DismissDirection.startToEnd,
+      direction: DismissDirection.endToStart,
       background: Container(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: Colors.red,

@@ -31,7 +31,7 @@ class ExpenseStatisticsView extends ConsumerWidget {
         final weeklyData = _calculateWeeklyData(expenses);
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             children: [
               _buildStatsTotalCard(total),
@@ -82,61 +82,69 @@ class ExpenseStatisticsView extends ConsumerWidget {
   Widget _buildStatsTotalCard(double total) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF6366F1),
-            Color(0xFF8B5CF6),
-          ], // Purple/Blue gradient
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0xFF6366F1).withOpacity(0.4),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            offset: Offset(0, 1),
+            blurRadius: 3,
+          ),
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.01),
+            offset: Offset(0, 1),
+            blurRadius: 2,
+            spreadRadius: -1,
           ),
         ],
       ),
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TOTAL EXPENDITURE',
+                    style: GoogleFonts.inter(
+                      color: AppColors.slate400,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '₹ ${NumberFormat("##,##0.00").format(total)}',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textMain,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                ],
+              ),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: const Color(0xFFFEF2F2), // Red 50
                   shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFFEE2E2)),
                 ),
                 child: const Icon(
-                  Icons.show_chart,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Total Expenditure',
-                style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  Icons
+                      .trending_down, // Trending down implies money leaving? Or show_chart.
+                  color: AppColors.danger,
+                  size: 24,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '₹ ${NumberFormat("##,##0.00").format(total)}',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 42,
-              fontWeight: FontWeight.bold,
-            ),
           ),
         ],
       ),
