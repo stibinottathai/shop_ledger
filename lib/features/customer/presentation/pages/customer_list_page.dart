@@ -262,50 +262,32 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                         ),
                                       ),
                                     )
-                                  : Container(
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: AppColors.slate100,
-                                        ),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Color.fromRGBO(
-                                              0,
-                                              0,
-                                              0,
-                                              0.05,
-                                            ),
-                                            offset: Offset(0, 1),
-                                            blurRadius: 3,
-                                          ),
-                                          BoxShadow(
-                                            color: Color.fromRGBO(
-                                              0,
-                                              0,
-                                              0,
-                                              0.01,
-                                            ),
-                                            offset: Offset(0, 1),
-                                            blurRadius: 2,
-                                            spreadRadius: -1,
-                                          ),
-                                        ],
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: ListView.separated(
+                                  : RefreshIndicator(
+                                      onRefresh: () async {
+                                        // Ignoring the return value is fine here as onRefresh expects a Future
+                                        // and ref.refresh returns the new state, but we just need to wait for it.
+                                        // However, ref.refresh is synchronous for providers.
+                                        // Ideally we invalidate and read to trigger rebuild.
+                                        // But invalidating generic providers is simpler.
+                                        // Actually `ref.refresh` re-executes the provider immediately and returns the result.
+                                        // If it returns a Future (for FutureProvider), we can await it.
+                                        // customerListProvider is likely a FutureProvider or similar.
+                                        // Let's assume it returns a generic async value or we can just invalidate.
+                                        return ref.refresh(
+                                          customerListProvider.future,
+                                        );
+                                      },
+                                      child: ListView.builder(
                                         padding: EdgeInsets.zero,
                                         itemCount: customers.length,
-                                        separatorBuilder: (context, index) =>
-                                            const Divider(
-                                              height: 1,
-                                              thickness: 1,
-                                              color: AppColors.slate50,
-                                            ),
                                         itemBuilder: (context, index) {
                                           final customer = customers[index];
-                                          return _buildCustomerItem(customer);
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            child: _buildCustomerItem(customer),
+                                          );
                                         },
                                       ),
                                     ),
@@ -434,122 +416,137 @@ class CustomerListItem extends ConsumerWidget {
     final colorIndex = customer.name.length % colors.length;
     final avatarColor = colors[colorIndex];
 
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        onTap: () {
-          context.go('/customers/${customer.id}', extra: customer);
-        },
-        hoverColor: AppColors.slate50,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Avatar
-              Container(
-                height: 40,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: avatarColor,
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.05),
-                      offset: Offset(0, 1),
-                      blurRadius: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            offset: Offset(0, 1),
+            blurRadius: 3,
+          ),
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.01),
+            offset: Offset(0, 1),
+            blurRadius: 2,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            context.go('/customers/${customer.id}', extra: customer);
+          },
+          borderRadius: BorderRadius.circular(16),
+          hoverColor: AppColors.slate50,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Avatar
+                Container(
+                  height: 48, // Increased size for better visual
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: avatarColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: avatarColor.withOpacity(0.2)),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    customer.name.isNotEmpty
+                        ? customer.name
+                              .substring(0, math.min(2, customer.name.length))
+                              .toUpperCase()
+                        : '?',
+                    style: GoogleFonts.inter(
+                      color: avatarColor, // Colored text on light bg (elegant)
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  customer.name.isNotEmpty
-                      ? customer.name
-                            .substring(0, math.min(2, customer.name.length))
-                            .toUpperCase()
-                      : '?',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 16),
 
-              // Name & Phone
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      customer.name,
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMain,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      customer.phone,
-                      style: GoogleFonts.inter(
-                        color: AppColors.slate500,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Balance & Chevron
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                // Name & Phone
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "₹${stats.outstandingBalance.abs().toStringAsFixed(2)}",
+                        customer.name,
                         style: GoogleFonts.inter(
-                          color: stats.outstandingBalance > 0
-                              ? AppColors.danger
-                              : stats.outstandingBalance < 0
-                              ? AppColors
-                                    .emerald500 // Or textMain if 0? Design shows Paid as green/textMain structure
-                              : AppColors.textMain,
-                          fontSize: 14,
+                          color: AppColors.textMain,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        stats.outstandingBalance > 0
-                            ? "DUE"
-                            : stats.outstandingBalance < 0
-                            ? "ADVANCE"
-                            : "PAID",
+                        customer.phone,
                         style: GoogleFonts.inter(
-                          color: stats.outstandingBalance > 0
-                              ? AppColors.danger
-                              : stats.outstandingBalance < 0
-                              ? AppColors.emerald500
-                              : AppColors.emerald500,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                          color: AppColors.slate500,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 12),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.slate300,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ],
+                ),
+
+                const SizedBox(width: 12),
+
+                // Balance & Chevron
+                Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "₹${stats.outstandingBalance.abs().toStringAsFixed(2)}",
+                          style: GoogleFonts.inter(
+                            color: stats.outstandingBalance > 0
+                                ? AppColors.danger
+                                : stats.outstandingBalance < 0
+                                ? AppColors.emerald500
+                                : AppColors.textMain,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          stats.outstandingBalance > 0
+                              ? "DUE"
+                              : stats.outstandingBalance < 0
+                              ? "ADVANCE"
+                              : "PAID",
+                          style: GoogleFonts.inter(
+                            color: stats.outstandingBalance > 0
+                                ? AppColors.danger
+                                : stats.outstandingBalance < 0
+                                ? AppColors.emerald500
+                                : AppColors.emerald500,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.slate300,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

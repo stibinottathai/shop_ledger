@@ -260,50 +260,23 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                                         ),
                                       ),
                                     )
-                                  : Container(
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: AppColors.slate100,
-                                        ),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Color.fromRGBO(
-                                              0,
-                                              0,
-                                              0,
-                                              0.05,
-                                            ),
-                                            offset: Offset(0, 1),
-                                            blurRadius: 3,
-                                          ),
-                                          BoxShadow(
-                                            color: Color.fromRGBO(
-                                              0,
-                                              0,
-                                              0,
-                                              0.01,
-                                            ),
-                                            offset: Offset(0, 1),
-                                            blurRadius: 2,
-                                            spreadRadius: -1,
-                                          ),
-                                        ],
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: ListView.separated(
+                                  : RefreshIndicator(
+                                      onRefresh: () async {
+                                        return ref.refresh(
+                                          supplierListProvider.future,
+                                        );
+                                      },
+                                      child: ListView.builder(
                                         padding: EdgeInsets.zero,
                                         itemCount: suppliers.length,
-                                        separatorBuilder: (context, index) =>
-                                            const Divider(
-                                              height: 1,
-                                              thickness: 1,
-                                              color: AppColors.slate50,
-                                            ),
                                         itemBuilder: (context, index) {
                                           final supplier = suppliers[index];
-                                          return _buildSupplierItem(supplier);
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            child: _buildSupplierItem(supplier),
+                                          );
                                         },
                                       ),
                                     ),
@@ -435,121 +408,137 @@ class SupplierListItem extends ConsumerWidget {
     final colorIndex = supplier.name.length % colors.length;
     final avatarColor = colors[colorIndex];
 
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        onTap: () {
-          context.go('/suppliers/${supplier.id}', extra: supplier);
-        },
-        hoverColor: AppColors.slate50,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Avatar
-              Container(
-                height: 40,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: avatarColor,
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.05),
-                      offset: Offset(0, 1),
-                      blurRadius: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            offset: Offset(0, 1),
+            blurRadius: 3,
+          ),
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.01),
+            offset: Offset(0, 1),
+            blurRadius: 2,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            context.go('/suppliers/${supplier.id}', extra: supplier);
+          },
+          borderRadius: BorderRadius.circular(16),
+          hoverColor: AppColors.slate50,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Avatar
+                Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: avatarColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: avatarColor.withOpacity(0.2)),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    supplier.name.isNotEmpty
+                        ? supplier.name
+                              .substring(0, math.min(2, supplier.name.length))
+                              .toUpperCase()
+                        : '?',
+                    style: GoogleFonts.inter(
+                      color: avatarColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  supplier.name.isNotEmpty
-                      ? supplier.name
-                            .substring(0, math.min(2, supplier.name.length))
-                            .toUpperCase()
-                      : '?',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 16),
 
-              // Name & Phone
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      supplier.name,
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMain,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      supplier.phone,
-                      style: GoogleFonts.inter(
-                        color: AppColors.slate500,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Balance & Chevron
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                // Name & Phone
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "₹${stats.outstandingBalance.abs().toStringAsFixed(2)}",
+                        supplier.name,
                         style: GoogleFonts.inter(
-                          color: stats.outstandingBalance > 0
-                              ? AppColors.danger
-                              : stats.outstandingBalance < 0
-                              ? AppColors.emerald500
-                              : AppColors.textMain,
-                          fontSize: 14,
+                          color: AppColors.textMain,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        stats.outstandingBalance > 0
-                            ? "TO PAY"
-                            : stats.outstandingBalance < 0
-                            ? "ADVANCE"
-                            : "SETTLED",
+                        supplier.phone,
                         style: GoogleFonts.inter(
-                          color: stats.outstandingBalance > 0
-                              ? AppColors.danger
-                              : stats.outstandingBalance < 0
-                              ? AppColors.emerald500
-                              : AppColors.emerald500,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                          color: AppColors.slate500,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 12),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.slate300,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ],
+                ),
+
+                const SizedBox(width: 12),
+
+                // Balance & Chevron
+                Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "₹${stats.outstandingBalance.abs().toStringAsFixed(2)}",
+                          style: GoogleFonts.inter(
+                            color: stats.outstandingBalance > 0
+                                ? AppColors.danger
+                                : stats.outstandingBalance < 0
+                                ? AppColors.emerald500
+                                : AppColors.textMain,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          stats.outstandingBalance > 0
+                              ? "TO PAY"
+                              : stats.outstandingBalance < 0
+                              ? "ADVANCE"
+                              : "SETTLED",
+                          style: GoogleFonts.inter(
+                            color: stats.outstandingBalance > 0
+                                ? AppColors.danger
+                                : stats.outstandingBalance < 0
+                                ? AppColors.emerald500
+                                : AppColors.emerald500,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.slate300,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

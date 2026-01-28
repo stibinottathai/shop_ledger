@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/core/widgets/common_error_widget.dart';
@@ -541,10 +542,15 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          ),
+          const SizedBox(width: 16),
           const Expanded(
             child: Text(
               'Reports & Analytics',
-              textAlign: TextAlign.center,
+              // textAlign: TextAlign.center, // Removed center alignment to align with back button
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -552,7 +558,6 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               ),
             ),
           ),
-          // const SizedBox(width: 40), // No back button so no balancing needed if title centered by Expanded
         ],
       ),
     );

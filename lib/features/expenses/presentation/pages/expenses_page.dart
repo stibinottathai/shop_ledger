@@ -40,8 +40,8 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
         title: Text(
           'Business Reports',
           style: GoogleFonts.inter(
-            fontWeight: FontWeight.w800,
-            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
             color: AppColors.textDark,
           ),
         ),

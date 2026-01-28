@@ -289,6 +289,8 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                 : 'Sale')
           : _constructItemizedDetails();
 
+      final futures = <Future<void>>[];
+
       // 1. Save Sale Transaction
       final receivedAmountForTx = _receivedAmountController.text.isNotEmpty
           ? double.tryParse(_receivedAmountController.text) ?? 0.0
@@ -307,7 +309,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
         transactionListProvider(widget.customer.id!).notifier,
       );
 
-      await notifier.addTransaction(saleTransaction);
+      futures.add(notifier.addTransaction(saleTransaction));
 
       // 2. Save Payment Transaction (if received amount > 0)
       final receivedAmountStr = _receivedAmountController.text;
@@ -321,9 +323,11 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
             date: _selectedDate,
             details: 'Payment received for sale',
           );
-          await notifier.addTransaction(paymentTransaction);
+          futures.add(notifier.addTransaction(paymentTransaction));
         }
       }
+
+      await Future.wait(futures);
 
       // Force refresh of global transaction list
       ref.invalidate(allTransactionsProvider);

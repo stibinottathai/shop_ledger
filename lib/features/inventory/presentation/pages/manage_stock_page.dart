@@ -766,82 +766,97 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
 
               // List Section
               Expanded(
-                child: filteredItems.isEmpty
-                    ? (items.isEmpty
-                          ? _buildEmptyState()
-                          : _buildNoSearchResults())
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: filteredItems.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final item = filteredItems[index];
-                          return Dismissible(
-                            key: Key(item.id ?? item.name),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              decoration: BoxDecoration(
-                                color: AppColors.danger,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.white,
-                              ),
-                            ),
-                            confirmDismiss: (direction) async {
-                              return await showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: Text(
-                                    'Delete Item',
-                                    style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                child: RefreshIndicator(
+                  onRefresh: () => ref.refresh(inventoryProvider.future),
+                  child: filteredItems.isEmpty
+                      ? LayoutBuilder(
+                          builder: (context, constraints) =>
+                              SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minHeight: constraints.maxHeight,
                                   ),
-                                  content: Text(
-                                    'Are you sure you want to delete "${item.name}"?',
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(ctx).pop(false),
-                                      child: Text(
-                                        'Cancel',
-                                        style: GoogleFonts.inter(
-                                          color: AppColors.slate500,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(ctx).pop(true),
-                                      child: Text(
-                                        'Delete',
-                                        style: GoogleFonts.inter(
-                                          color: AppColors.danger,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                  child: items.isEmpty
+                                      ? _buildEmptyState()
+                                      : _buildNoSearchResults(),
                                 ),
-                              );
-                            },
-                            onDismissed: (direction) {
-                              _deleteItem(item.id!);
-                            },
-                            child: _buildItemCard(item),
-                          );
-                        },
-                      ),
+                              ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(20),
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: filteredItems.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final item = filteredItems[index];
+                            return Dismissible(
+                              key: Key(item.id ?? item.name),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                decoration: BoxDecoration(
+                                  color: AppColors.danger,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              confirmDismiss: (direction) async {
+                                return await showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: Text(
+                                      'Delete Item',
+                                      style: GoogleFonts.inter(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    content: Text(
+                                      'Are you sure you want to delete "${item.name}"?',
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(ctx).pop(false),
+                                        child: Text(
+                                          'Cancel',
+                                          style: GoogleFonts.inter(
+                                            color: AppColors.slate500,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(ctx).pop(true),
+                                        child: Text(
+                                          'Delete',
+                                          style: GoogleFonts.inter(
+                                            color: AppColors.danger,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              onDismissed: (direction) {
+                                _deleteItem(item.id!);
+                              },
+                              child: _buildItemCard(item),
+                            );
+                          },
+                        ),
+                ),
               ),
             ],
           );
