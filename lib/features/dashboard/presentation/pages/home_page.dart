@@ -491,9 +491,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          const TextSpan(
+                                          TextSpan(
                                             text:
-                                                " with pending dues exceeding ₹5,000. Follow up today to improve cashflow.",
+                                                " with pending dues exceeding ${_formatCurrency(stats.creditLimit)}. Follow up today to improve cashflow.",
                                           ),
                                         ],
                                       ),

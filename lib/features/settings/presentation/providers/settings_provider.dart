@@ -11,12 +11,17 @@ final sharedPreferencesProvider = FutureProvider<SharedPreferences>((
 // Settings State
 class SettingsState {
   final bool hideSensitiveData;
+  final double maxCreditLimit;
 
-  const SettingsState({this.hideSensitiveData = false});
+  const SettingsState({
+    this.hideSensitiveData = false,
+    this.maxCreditLimit = 5000.0,
+  });
 
-  SettingsState copyWith({bool? hideSensitiveData}) {
+  SettingsState copyWith({bool? hideSensitiveData, double? maxCreditLimit}) {
     return SettingsState(
       hideSensitiveData: hideSensitiveData ?? this.hideSensitiveData,
+      maxCreditLimit: maxCreditLimit ?? this.maxCreditLimit,
     );
   }
 }
@@ -32,13 +37,20 @@ class SettingsNotifier extends Notifier<SettingsState> {
   Future<void> _loadSettings() async {
     final prefs = await ref.watch(sharedPreferencesProvider.future);
     final hide = prefs.getBool('hide_sensitive_data') ?? false;
-    state = state.copyWith(hideSensitiveData: hide);
+    final limit = prefs.getDouble('max_credit_limit') ?? 5000.0;
+    state = state.copyWith(hideSensitiveData: hide, maxCreditLimit: limit);
   }
 
   Future<void> toggleHideSensitiveData(bool value) async {
     state = state.copyWith(hideSensitiveData: value);
     final prefs = await ref.read(sharedPreferencesProvider.future);
     await prefs.setBool('hide_sensitive_data', value);
+  }
+
+  Future<void> updateMaxCreditLimit(double value) async {
+    state = state.copyWith(maxCreditLimit: value);
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    await prefs.setDouble('max_credit_limit', value);
   }
 }
 

@@ -54,9 +54,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(
-                          left: 40,
-                        ), // Balance the right button
+                        padding: const EdgeInsets.only(left: 40),
                         child: Text(
                           'Customers',
                           style: GoogleFonts.inter(
@@ -147,7 +145,6 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     },
                   ),
                 ),
-                const SizedBox(width: 12), // Spacing
               ],
             ),
           ),

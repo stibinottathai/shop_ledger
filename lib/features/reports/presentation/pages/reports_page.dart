@@ -540,24 +540,23 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             onPressed: () => context.pop(),
             icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
           ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Text(
-              'Reports & Analytics',
-              // textAlign: TextAlign.center, // Removed center alignment to align with back button
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              ),
+          const Text(
+            'Reports & Analytics',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
             ),
           ),
+          const SizedBox(
+            width: 48,
+          ), // Balance the back button (icon button roughly 48px)
         ],
       ),
     );

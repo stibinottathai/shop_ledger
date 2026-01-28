@@ -25,7 +25,6 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   bool _isSaving = false;
 
   // Search
-  bool _isSearching = false;
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -605,304 +604,410 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Search items...',
-                  hintStyle: GoogleFonts.inter(color: AppColors.slate400),
-                  border: InputBorder.none,
+      body: Column(
+        children: [
+          // Header
+          Container(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              MediaQuery.of(context).padding.top + 16,
+              20,
+              16,
+            ),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFFFFC),
+              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 40),
+                        child: Text(
+                          'Inventory',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textMain,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            height: 1.25,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                style: GoogleFonts.inter(
-                  color: AppColors.textMain,
-                  fontWeight: FontWeight.w500,
+                Container(
+                  height: 36,
+                  width: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.slate50,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.slate100),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color.fromRGBO(0, 0, 0, 0.05),
+                        offset: Offset(0, 1),
+                        blurRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(
+                      Icons.more_vert,
+                      color: AppColors.textMain,
+                      size: 20,
+                    ),
+                    elevation: 4,
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    onSelected: (value) {
+                      if (value == 'deleteAll') {
+                        _showDeleteAllConfirm();
+                      }
+                    },
+                    itemBuilder: (context) {
+                      final items = itemsAsync.value ?? [];
+                      final hasItems = items.isNotEmpty;
+                      return [
+                        PopupMenuItem(
+                          value: 'deleteAll',
+                          enabled: hasItems,
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: hasItems
+                                      ? AppColors.danger.withOpacity(0.1)
+                                      : AppColors.slate100,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.delete_forever,
+                                  color: hasItems
+                                      ? AppColors.danger
+                                      : AppColors.slate400,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Delete All Stock',
+                                style: GoogleFonts.inter(
+                                  color: hasItems
+                                      ? AppColors.textMain
+                                      : AppColors.slate400,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ];
+                    },
+                  ),
                 ),
-                onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val.trim().toLowerCase();
-                  });
-                },
-              )
-            : Text(
-                'Inventory',
-                style: GoogleFonts.inter(
-                  color: AppColors.textMain,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-        centerTitle: false,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                if (_isSearching) {
-                  _isSearching = false;
-                  _searchQuery = '';
-                  _searchController.clear();
-                } else {
-                  _isSearching = true;
-                }
-              });
-            },
-            icon: Icon(
-              _isSearching ? Icons.close : Icons.search,
-              color: AppColors.slate500,
+              ],
             ),
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: AppColors.slate500),
-            color: Colors.white,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            onSelected: (value) {
-              if (value == 'deleteAll') {
-                _showDeleteAllConfirm();
-              }
-            },
-            itemBuilder: (context) {
-              final items = itemsAsync.value ?? [];
-              final hasItems = items.isNotEmpty;
-              return [
-                PopupMenuItem(
-                  value: 'deleteAll',
-                  enabled: hasItems,
-                  child: Row(
+
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Column(
+                children: [
+                  // Search Bar
+                  Stack(
+                    alignment: Alignment.centerLeft,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: hasItems
-                              ? AppColors.danger.withOpacity(0.1)
-                              : AppColors.slate100,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.delete_forever,
-                          color: hasItems
-                              ? AppColors.danger
-                              : AppColors.slate400,
-                          size: 20,
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color.fromRGBO(0, 0, 0, 0.05),
+                              offset: Offset(0, 1),
+                              blurRadius: 3,
+                            ),
+                            BoxShadow(
+                              color: Color.fromRGBO(0, 0, 0, 0.01),
+                              offset: Offset(0, 1),
+                              blurRadius: 2,
+                              spreadRadius: -1,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Delete All Stock',
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (val) {
+                          setState(() {
+                            _searchQuery = val.trim().toLowerCase();
+                          });
+                        },
                         style: GoogleFonts.inter(
-                          color: hasItems
-                              ? AppColors.textMain
-                              : AppColors.slate400,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ];
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: itemsAsync.when(
-        data: (items) {
-          // Filter items based on search query
-          final filteredItems = items.where((item) {
-            return item.name.toLowerCase().contains(_searchQuery);
-          }).toList();
-
-          // Calculate summary (based on ALL items, or filtered? Usually all items makes sense for dashboard stats, but filtered for list view.
-          // Let's keep summary for ALL items as it is "Total Stock" summary).
-          final totalItems = items.length;
-          final totalValue = items.fold(0.0, (sum, item) {
-            return sum + (item.pricePerKg * (item.totalQuantity ?? 0));
-          });
-
-          return Column(
-            children: [
-              // Summary Section (Hide when searching to give more space? Or keep it? Let's keep it for now)
-              if (!_isSearching)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(24),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.03),
-                        offset: Offset(0, 10),
-                        blurRadius: 15,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      _buildSummaryCard(
-                        'Total Items',
-                        totalItems.toString(),
-                        Icons.inventory_2,
-                        AppColors.primary,
-                        AppColors.emerald50,
-                      ),
-                      const SizedBox(width: 16),
-                      _buildSummaryCard(
-                        'Total Value',
-                        '₹${totalValue.toStringAsFixed(0)}',
-                        Icons.currency_rupee,
-                        AppColors.orange400,
-                        const Color(0xFFFFF7ED),
-                      ),
-                    ],
-                  ),
-                ),
-
-              if (!_isSearching && items.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Recent Items',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
                           color: AppColors.textMain,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ),
-                      if (items.length > 6)
-                        TextButton(
-                          onPressed: () => context.go('/inventory/all'),
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: AppColors.slate400,
+                            size: 20,
                           ),
-                          child: Text(
-                            'View All',
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                              fontSize: 14,
+                          hintText: 'Search items...',
+                          hintStyle: GoogleFonts.inter(
+                            color: AppColors.slate400,
+                          ),
+                          border: InputBorder.none,
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: AppColors.primary.withOpacity(0.2),
+                              width: 2.5,
                             ),
                           ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: AppColors.slate200,
+                              width: 1.5,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
+                      ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 24),
 
-              // List Section
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () => ref.refresh(inventoryProvider.future),
-                  child: filteredItems.isEmpty
-                      ? LayoutBuilder(
-                          builder: (context, constraints) =>
-                              SingleChildScrollView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    minHeight: constraints.maxHeight,
+                  // Content
+                  Expanded(
+                    child: itemsAsync.when(
+                      data: (items) {
+                        final filteredItems = items.where((item) {
+                          return item.name.toLowerCase().contains(_searchQuery);
+                        }).toList();
+
+                        final totalItems = items.length;
+                        final totalValue = items.fold(0.0, (sum, item) {
+                          return sum +
+                              (item.pricePerKg * (item.totalQuantity ?? 0));
+                        });
+
+                        return Column(
+                          children: [
+                            if (_searchQuery.isEmpty) ...[
+                              Row(
+                                children: [
+                                  _buildSummaryCard(
+                                    'Total Items',
+                                    totalItems.toString(),
+                                    Icons.inventory_2,
+                                    AppColors.primary,
+                                    AppColors.emerald50,
                                   ),
-                                  child: items.isEmpty
-                                      ? _buildEmptyState()
-                                      : _buildNoSearchResults(),
-                                ),
+                                  const SizedBox(width: 16),
+                                  _buildSummaryCard(
+                                    'Total Value',
+                                    '₹${totalValue.toStringAsFixed(0)}',
+                                    Icons.currency_rupee,
+                                    AppColors.orange400,
+                                    const Color(0xFFFFF7ED),
+                                  ),
+                                ],
                               ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(20),
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: filteredItems.length > 6
-                              ? 6
-                              : filteredItems.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final item = filteredItems[index];
-
-                            return Dismissible(
-                              key: Key(item.id ?? item.name),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                decoration: BoxDecoration(
-                                  color: AppColors.danger,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              confirmDismiss: (direction) async {
-                                return await showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: Text(
-                                      'Delete Item',
+                              const SizedBox(height: 24),
+                              if (items.isNotEmpty)
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Recent Items',
                                       style: GoogleFonts.inter(
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
+                                        color: AppColors.textMain,
                                       ),
                                     ),
-                                    content: Text(
-                                      'Are you sure you want to delete "${item.name}"?',
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    actions: [
+                                    if (items.length > 6)
                                       TextButton(
                                         onPressed: () =>
-                                            Navigator.of(ctx).pop(false),
+                                            context.go('/inventory/all'),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: Size.zero,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
                                         child: Text(
-                                          'Cancel',
+                                          'View All',
                                           style: GoogleFonts.inter(
-                                            color: AppColors.slate500,
                                             fontWeight: FontWeight.w600,
+                                            color: AppColors.primary,
+                                            fontSize: 14,
                                           ),
                                         ),
                                       ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(ctx).pop(true),
-                                        child: Text(
-                                          'Delete',
-                                          style: GoogleFonts.inter(
-                                            color: AppColors.danger,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                  ],
+                                ),
+                              const SizedBox(height: 12),
+                            ],
+
+                            Expanded(
+                              child: RefreshIndicator(
+                                onRefresh: () =>
+                                    ref.refresh(inventoryProvider.future),
+                                child: filteredItems.isEmpty
+                                    ? LayoutBuilder(
+                                        builder: (context, constraints) =>
+                                            SingleChildScrollView(
+                                              physics:
+                                                  const AlwaysScrollableScrollPhysics(),
+                                              child: ConstrainedBox(
+                                                constraints: BoxConstraints(
+                                                  minHeight:
+                                                      constraints.maxHeight,
+                                                ),
+                                                child: items.isEmpty
+                                                    ? _buildEmptyState()
+                                                    : _buildNoSearchResults(),
+                                              ),
+                                            ),
+                                      )
+                                    : ListView.separated(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 100,
                                         ),
+                                        physics:
+                                            const AlwaysScrollableScrollPhysics(),
+                                        itemCount:
+                                            _searchQuery.isEmpty &&
+                                                filteredItems.length > 6
+                                            ? 6
+                                            : filteredItems.length,
+                                        separatorBuilder: (context, index) =>
+                                            const SizedBox(height: 12),
+                                        itemBuilder: (context, index) {
+                                          final item = filteredItems[index];
+
+                                          return Dismissible(
+                                            key: Key(item.id ?? item.name),
+                                            direction:
+                                                DismissDirection.endToStart,
+                                            background: Container(
+                                              alignment: Alignment.centerRight,
+                                              padding: const EdgeInsets.only(
+                                                right: 20,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.danger,
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              child: const Icon(
+                                                Icons.delete_outline,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            confirmDismiss: (direction) async {
+                                              return await showDialog(
+                                                context: context,
+                                                builder: (ctx) => AlertDialog(
+                                                  title: Text(
+                                                    'Delete Item',
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  content: Text(
+                                                    'Are you sure you want to delete "${item.name}"?',
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          20,
+                                                        ),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(
+                                                            ctx,
+                                                          ).pop(false),
+                                                      child: Text(
+                                                        'Cancel',
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                              color: AppColors
+                                                                  .slate500,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(
+                                                            ctx,
+                                                          ).pop(true),
+                                                      child: Text(
+                                                        'Delete',
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                              color: AppColors
+                                                                  .danger,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                            onDismissed: (direction) {
+                                              _deleteItem(item.id!);
+                                            },
+                                            child: _buildItemCard(item),
+                                          );
+                                        },
                                       ),
-                                    ],
-                                  ),
-                                );
-                              },
-                              onDismissed: (direction) {
-                                _deleteItem(item.id!);
-                              },
-                              child: _buildItemCard(item),
-                            );
-                          },
-                        ),
-                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) =>
+                          Center(child: Text('Error: $error')),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 24, right: 24),

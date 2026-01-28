@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
+import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
 
 class DashboardStats {
   final double todaysSale;
@@ -13,6 +14,7 @@ class DashboardStats {
   final double toGet;
   final double toGive;
   final int highDueCustomerCount;
+  final double creditLimit;
 
   const DashboardStats({
     required this.todaysSale,
@@ -24,6 +26,7 @@ class DashboardStats {
     required this.toGet,
     required this.toGive,
     required this.highDueCustomerCount,
+    this.creditLimit = 5000.0,
   });
 }
 
@@ -60,6 +63,9 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
     double totalPaymentOut = 0;
 
     final now = DateTime.now();
+
+    final settings = ref.watch(settingsProvider);
+    final creditLimit = settings.maxCreditLimit;
 
     // Calculate customer balances
     final customerBalances = <String, double>{};
@@ -114,7 +120,7 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
     }
 
     final highDueCustomerCount = customerBalances.values
-        .where((balance) => balance > 5000)
+        .where((balance) => balance > creditLimit)
         .length;
 
     return DashboardStats(
@@ -127,6 +133,7 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
       toGet: totalSales - totalPaymentIn,
       toGive: totalPurchases - totalPaymentOut,
       highDueCustomerCount: highDueCustomerCount,
+      creditLimit: creditLimit,
     );
   }
 

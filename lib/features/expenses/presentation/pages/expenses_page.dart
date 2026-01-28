@@ -38,7 +38,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
-          'Business Reports',
+          'Expense Reports',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -47,7 +47,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
         ),
         backgroundColor: const Color(0xFFF8FAFC),
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
         toolbarHeight: 80,
         bottom: TabBar(
           controller: _tabController,

@@ -87,6 +87,68 @@ class SettingsPage extends ConsumerWidget {
 
           const SizedBox(height: 12),
 
+          // Maximum Credit Limit
+          _buildSettingsTile(
+            context,
+            icon: Icons.credit_score,
+            title: 'Maximum Credit Limit',
+            subtitle: '₹${settingsState.maxCreditLimit.toStringAsFixed(0)}',
+            onTap: () {
+              final controller = TextEditingController(
+                text: settingsState.maxCreditLimit.toStringAsFixed(0),
+              );
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(
+                    'Set Credit Limit',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  content: TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Amount (₹)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => context.pop(),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(color: AppColors.textMuted),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final value = double.tryParse(controller.text);
+                        if (value != null) {
+                          notifier.updateMaxCreditLimit(value);
+                          context.pop();
+                        }
+                      },
+                      child: Text(
+                        'Save',
+                        style: GoogleFonts.inter(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 12),
+
           // Business Card
           _buildSettingsTile(
             context,
