@@ -21,16 +21,8 @@ class SupplierLedgerPage extends ConsumerWidget {
       supplierTransactionListProvider(supplier.id!),
     );
 
-    // Watch for supplier updates
-    final currentSupplier = ref
-        .watch(supplierListProvider)
-        .maybeWhen(
-          data: (suppliers) => suppliers.cast<Supplier>().firstWhere(
-            (s) => s.id == supplier.id,
-            orElse: () => supplier,
-          ),
-          orElse: () => supplier,
-        );
+    // Use the supplier passed in directly to avoid re-watching the whole list
+    final currentSupplier = supplier;
 
     return DefaultTabController(
       length: 2,

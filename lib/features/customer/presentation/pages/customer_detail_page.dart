@@ -595,7 +595,8 @@ class CustomerDetailPage extends ConsumerWidget {
       // Generate PDF
       final pdfService = PdfService();
       final file = await pdfService.generateTransactionPdf(
-        customer: customer,
+        name: customer.name,
+        phone: customer.phone,
         transactions: transactions,
         outstandingBalance: amount,
         shopName: shopName,

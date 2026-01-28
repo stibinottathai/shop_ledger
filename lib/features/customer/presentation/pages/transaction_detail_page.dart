@@ -39,13 +39,12 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
       final pdfService = PdfService();
       // Use existing service but passing only this transaction
       final file = await pdfService.generateTransactionPdf(
-        customer: widget.customer,
+        name: widget.customer.name,
+        phone: widget.customer.phone,
         transactions: [widget.transaction],
-        outstandingBalance:
-            0, // Not needed for single receipt ideally but required by signature
+        outstandingBalance: 0,
         shopName: shopName,
-        isSingleReceipt:
-            true, // We might need to update PdfService to handle this flag if we want specific receipt format
+        isSingleReceipt: true,
       );
 
       // Share with robust error handling for release builds
@@ -134,8 +133,8 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
 
     // Regex to match: ItemName (Price/kg) Weight [Count Nos] = Total
     // Example: Apple (100/kg) 2kg [5 Nos] = 200
-    // Updated regex to be more flexible
-    final regex = RegExp(r'^(.*?) \((.*?)\) (.*?) \[(.*?)\] = (.*?)$');
+    // Updated regex to be more flexible and make count optional
+    final regex = RegExp(r'^(.*?) \((.*?)\) (.*?)(?: \[(.*?)\])? = (.*?)$');
 
     for (var line in lines) {
       final match = regex.firstMatch(line);
@@ -172,6 +171,42 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
     final parsedItems = (isSale && widget.transaction.details != null)
         ? _parseItems(widget.transaction.details!)
         : <Map<String, String>>[];
+
+    // Determine dominant unit
+    String unitHeader = 'QTY/WT';
+    String? commonUnit;
+    bool mixedUnits = false;
+
+    if (parsedItems.isNotEmpty) {
+      final firstUnit = parsedItems.first['weight']!
+          .replaceAll(RegExp(r'[0-9.]'), '')
+          .trim();
+      commonUnit = firstUnit;
+
+      for (var item in parsedItems) {
+        final currentUnit = item['weight']!
+            .replaceAll(RegExp(r'[0-9.]'), '')
+            .trim();
+        if (currentUnit != commonUnit) {
+          mixedUnits = true;
+          break;
+        }
+      }
+
+      if (!mixedUnits && commonUnit.isNotEmpty) {
+        if (commonUnit == 'kg') {
+          unitHeader = 'WEIGHT';
+        } else if (commonUnit == 'pcs') {
+          unitHeader = 'PIECES';
+        } else if (commonUnit == 'box') {
+          unitHeader = 'BOXES';
+        } else if (commonUnit == 'l') {
+          unitHeader = 'VOLUME';
+        } else {
+          unitHeader = commonUnit.toUpperCase();
+        }
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -305,7 +340,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                       child: Row(
                         children: [
                           Expanded(flex: 3, child: _tableHeader('ITEM')),
-                          Expanded(flex: 2, child: _tableHeader('WEIGHT')),
+                          Expanded(flex: 2, child: _tableHeader(unitHeader)),
                           Expanded(flex: 2, child: _tableHeader('QTY')),
                           Expanded(
                             flex: 2,
@@ -335,6 +370,14 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                               style: const TextStyle(fontSize: 14),
                             ),
                           );
+                        }
+
+                        // Format logic: if unified header, strip unit. If mixed, show unit.
+                        String quantityDisplay = item['weight']!;
+                        if (!mixedUnits && commonUnit != null) {
+                          quantityDisplay = quantityDisplay
+                              .replaceAll(commonUnit, '')
+                              .trim();
                         }
 
                         return Padding(
@@ -371,10 +414,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                               Expanded(
                                 flex: 2,
                                 child: Text(
-                                  item['weight']!.replaceAll(
-                                    'kg',
-                                    '',
-                                  ), // Just show number
+                                  quantityDisplay,
                                   style: const TextStyle(fontSize: 14),
                                 ),
                               ),
@@ -433,8 +473,8 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             letterSpacing: 1.0,
-                          ),
-                        ),
+                          ), // Text style
+                        ), // Text
                         Text(
                           '₹${widget.transaction.amount.toStringAsFixed(2)}',
                           style: TextStyle(
@@ -448,6 +488,65 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                       ],
                     ),
                   ),
+                  if (isSale &&
+                      widget.transaction.receivedAmount != null &&
+                      widget.transaction.receivedAmount! > 0) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Divider(color: Colors.grey[100]),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'RECEIVED AMOUNT',
+                            style: TextStyle(
+                              color: AppColors.greyText,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            '- ₹${widget.transaction.receivedAmount!.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      color: Colors.grey[50],
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'BALANCE',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          Text(
+                            '₹${(widget.transaction.amount - widget.transaction.receivedAmount!).toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

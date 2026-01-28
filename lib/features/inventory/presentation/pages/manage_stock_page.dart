@@ -17,7 +17,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   // Form handling
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
+  final _sellingPriceController = TextEditingController();
   final _qtyController = TextEditingController();
   final _barcodeController = TextEditingController();
   bool _isSaving = false;
@@ -34,7 +34,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   void dispose() {
     _searchController.dispose();
     _nameController.dispose();
-    _priceController.dispose();
+    _sellingPriceController.dispose();
     _qtyController.dispose();
     _barcodeController.dispose();
     super.dispose();
@@ -84,7 +84,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
           // Auto-fill name and price from existing item
           setSheetState(() {
             _nameController.text = existingItem.name;
-            _priceController.text = existingItem.pricePerKg.toString();
+            _sellingPriceController.text = existingItem.pricePerKg.toString();
             _selectedUnit = existingItem.unit;
             // Don't auto-fill quantity - user will add new quantity
             _qtyController.clear();
@@ -112,10 +112,12 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
 
   void _showItemForm([Item? item]) {
     _nameController.text = item?.name ?? '';
-    _priceController.text = item?.pricePerKg.toString() ?? '';
+    _sellingPriceController.text = item?.pricePerKg.toString() ?? '';
     _qtyController.text = item?.totalQuantity?.toString() ?? '';
     _barcodeController.text = item?.barcode ?? '';
-    _selectedUnit = item?.unit ?? 'kg';
+    _selectedUnit = ['kg', 'pcs', 'l', 'box'].contains(item?.unit)
+        ? item!.unit
+        : 'kg';
 
     showModalBottomSheet(
       context: context,
@@ -247,25 +249,18 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                             ),
                           ),
                           items: const [
-                            DropdownMenuItem(
-                              value: 'kg',
-                              child: Text('Kilogram (kg)'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'mg',
-                              child: Text('Milligram (mg)'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'pcs',
-                              child: Text('Pieces (pcs)'),
-                            ),
+                            DropdownMenuItem(value: 'box', child: Text('Box')),
                             DropdownMenuItem(
                               value: 'l',
                               child: Text('Liter (l)'),
                             ),
                             DropdownMenuItem(
-                              value: 'ml',
-                              child: Text('Milliliter (ml)'),
+                              value: 'kg',
+                              child: Text('Kilogram (kg)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'pcs',
+                              child: Text('Pieces (pcs)'),
                             ),
                           ],
                           onChanged: (val) {
@@ -281,12 +276,8 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                           children: [
                             Expanded(
                               child: _buildInputField(
-                                controller: _priceController,
-                                label: _selectedUnit == 'ml'
-                                    ? 'Price (₹/l)' // ml implies price per Liter
-                                    : _selectedUnit == 'mg'
-                                    ? 'Price (₹/g)' // mg implies price per Gram
-                                    : 'Price (₹/${_selectedUnit})',
+                                controller: _sellingPriceController,
+                                label: 'Price (₹/${_selectedUnit})',
                                 hint: '0.00',
                                 icon: Icons.currency_rupee,
                                 inputType: TextInputType.number,
@@ -336,7 +327,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                         : _barcodeController.text.trim();
                                     final price =
                                         double.tryParse(
-                                          _priceController.text.trim(),
+                                          _sellingPriceController.text.trim(),
                                         ) ??
                                         0.0;
                                     final qty =

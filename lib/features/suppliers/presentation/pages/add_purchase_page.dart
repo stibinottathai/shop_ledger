@@ -60,6 +60,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
   final TextEditingController _countController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _paidAmountController = TextEditingController();
   final List<PurchaseItem> _addedItems = [];
 
   @override
@@ -70,6 +71,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
     _countController.dispose();
     _quantityController.dispose();
     _priceController.dispose();
+    _paidAmountController.dispose();
     super.dispose();
   }
 
@@ -181,16 +183,38 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
         details = _generateDetailsFromItems();
       }
 
+      final paidAmount = _paidAmountController.text.isNotEmpty
+          ? double.tryParse(_paidAmountController.text) ?? 0.0
+          : null;
+
       final transaction = Transaction(
         supplierId: widget.supplier.id,
         amount: amount,
         type: TransactionType.purchase,
         date: _selectedDate,
         details: details,
+        receivedAmount:
+            paidAmount, // Reusing receivedAmount field for Amount Paid
       );
 
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
+
+      // 2. Save Payment Out Transaction (if amount paid > 0)
+      final paidAmountStr = _paidAmountController.text;
+      if (paidAmountStr.isNotEmpty) {
+        final paidAmount = double.tryParse(paidAmountStr);
+        if (paidAmount != null && paidAmount > 0) {
+          final paymentTransaction = Transaction(
+            supplierId: widget.supplier.id,
+            amount: paidAmount,
+            type: TransactionType.paymentOut,
+            date: _selectedDate,
+            details: 'Payment made for purchase',
+          );
+          await repository.addTransaction(paymentTransaction);
+        }
+      }
 
       // Trigger global update for dashboard
       await Future.delayed(const Duration(milliseconds: 1000));
@@ -417,6 +441,106 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                         horizontal: 16,
                         vertical: 16,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Amount Paid & Balance
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Amount Paid',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _paidAmountController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) => setState(() {}),
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: '0.00',
+                            prefixText: '₹ ',
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Balance Display
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Balance',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 53, // Match TextField height approx
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.red.withOpacity(0.2),
+                            ),
+                          ),
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '₹ ${(() {
+                              final total = _entryMode == 0 ? (double.tryParse(_amountController.text) ?? 0) : _calculatedTotal;
+                              final paid = double.tryParse(_paidAmountController.text) ?? 0;
+                              return (total - paid).toStringAsFixed(2);
+                            })()}',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

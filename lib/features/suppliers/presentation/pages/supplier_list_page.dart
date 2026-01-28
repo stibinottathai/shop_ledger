@@ -414,7 +414,15 @@ class SupplierListItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stats = ref.watch(supplierStatsProvider(supplier.id!));
+    // Use the overview provider which fetches all stats at once
+    final statsMapAsync = ref.watch(supplierOverviewStatsProvider);
+    final stats =
+        statsMapAsync.value?[supplier.id] ??
+        const SupplierStats(
+          totalPurchased: 0,
+          totalPaid: 0,
+          outstandingBalance: 0,
+        );
 
     // Determine avatar color logic (cycling through branding colors)
     final colors = [

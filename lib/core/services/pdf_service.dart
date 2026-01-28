@@ -1,15 +1,14 @@
 import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 
 class PdfService {
   Future<File> generateTransactionPdf({
-    required Customer customer,
+    required String name,
+    required String phone,
     required List<Transaction> transactions,
     required double outstandingBalance,
     String? shopName,
@@ -17,15 +16,8 @@ class PdfService {
   }) async {
     final pdf = pw.Document();
 
-    // Use a standard font
-    final font = await rootBundle
-        .load("assets/fonts/Inter-Regular.ttf")
-        .catchError((_) {
-          // Fallback or use standard font if not available
-          // Using standard helvetica for now as getting custom fonts might be tricky without setup
-          return Future.value(ByteData(0));
-        });
-    // However, pdf package has built-in fonts, let's use them to avoid asset issues for now.
+    // Use a standard font (Helvetica by default)
+    // Removed asset load that was causing crashes
 
     final DateFormat dateFormatter = DateFormat('dd MMM yyyy');
     final currencyFormatter = NumberFormat.currency(
@@ -41,13 +33,13 @@ class PdfService {
         build: (pw.Context context) {
           return [
             _buildHeader(
-              customer,
+              name,
               dateFormatter.format(DateTime.now()),
               shopName,
               isSingleReceipt: isSingleReceipt,
             ),
             pw.SizedBox(height: 20),
-            _buildSummary(customer, outstandingBalance, currencyFormatter),
+            _buildSummary(name, phone, outstandingBalance, currencyFormatter),
             pw.SizedBox(height: 20),
             _buildTransactionTable(
               transactions,
@@ -63,14 +55,14 @@ class PdfService {
 
     final output = await getTemporaryDirectory();
     final file = File(
-      '${output.path}/statement_${customer.name}_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      '${output.path}/statement_${name}_${DateTime.now().millisecondsSinceEpoch}.pdf',
     );
     await file.writeAsBytes(await pdf.save());
     return file;
   }
 
   pw.Widget _buildHeader(
-    Customer customer,
+    String name,
     String date,
     String? shopName, {
     bool isSingleReceipt = false,
@@ -100,7 +92,8 @@ class PdfService {
   }
 
   pw.Widget _buildSummary(
-    Customer customer,
+    String name,
+    String phone,
     double balance,
     NumberFormat currency,
   ) {
@@ -122,13 +115,13 @@ class PdfService {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                customer.name.toUpperCase(),
+                name.toUpperCase(),
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
-              pw.Text(customer.phone),
+              pw.Text(phone),
             ],
           ),
           pw.Column(

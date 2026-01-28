@@ -10,6 +10,9 @@ import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_
 import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
+import 'package:shop_ledger/core/services/pdf_service.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SupplierTransactionDetailsPage extends ConsumerStatefulWidget {
   final Transaction transaction;
@@ -24,6 +27,7 @@ class SupplierTransactionDetailsPage extends ConsumerStatefulWidget {
 class _SupplierTransactionDetailsPageState
     extends ConsumerState<SupplierTransactionDetailsPage> {
   bool _isLoading = false;
+  bool _isSharing = false;
 
   Future<void> _deleteTransaction() async {
     final confirmed = await showDialog<bool>(
@@ -141,6 +145,65 @@ class _SupplierTransactionDetailsPageState
     }
 
     return items;
+  }
+
+  Future<void> _shareTransaction() async {
+    setState(() => _isSharing = true);
+    try {
+      final user = ref.read(authRepositoryProvider).getCurrentUser();
+      final shopName = user?.userMetadata?['shop_name'] as String?;
+
+      // Find supplier details
+      String name = 'Supplier';
+      String phone = '';
+      if (widget.transaction.supplierId != null) {
+        final supplierList = ref.read(supplierListProvider).value;
+        if (supplierList != null) {
+          try {
+            final supplier = supplierList.firstWhere(
+              (s) => s.id == widget.transaction.supplierId,
+            );
+            name = supplier.name;
+            phone = supplier.phone;
+          } catch (_) {}
+        }
+      }
+
+      final pdfService = PdfService();
+      final file = await pdfService.generateTransactionPdf(
+        name: name,
+        phone: phone,
+        transactions: [widget.transaction],
+        outstandingBalance: 0,
+        shopName: shopName,
+        isSingleReceipt: true,
+      );
+
+      try {
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path)],
+            text:
+                'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
+          ),
+        );
+      } catch (shareError) {
+        final errorStr = shareError.toString().toLowerCase();
+        if (!errorStr.contains('late') && !errorStr.contains('result')) {
+          rethrow;
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error sharing: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSharing = false);
+      }
+    }
   }
 
   @override
@@ -264,6 +327,66 @@ class _SupplierTransactionDetailsPageState
                       ],
                     ),
                   ),
+                  // Amount Paid & Balance (If applicable)
+                  if (widget.transaction.receivedAmount != null &&
+                      widget.transaction.receivedAmount! > 0) ...[
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "AMOUNT PAID",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            "₹${widget.transaction.receivedAmount!.toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: const Color(0xFF00695C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      color: Colors.red.withOpacity(0.05),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "BALANCE",
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                          Text(
+                            "₹${(widget.transaction.amount - widget.transaction.receivedAmount!).toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const Divider(height: 1),
 
                   // Table Header
@@ -415,6 +538,66 @@ class _SupplierTransactionDetailsPageState
                       ],
                     ),
                   ),
+                  // Amount Paid & Balance (If applicable)
+                  if (widget.transaction.receivedAmount != null &&
+                      widget.transaction.receivedAmount! > 0) ...[
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "AMOUNT PAID",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            "₹${widget.transaction.receivedAmount!.toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: const Color(0xFF00695C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      color: Colors.red.withOpacity(0.05),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "BALANCE",
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                          Text(
+                            "₹${(widget.transaction.amount - widget.transaction.receivedAmount!).toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -428,22 +611,25 @@ class _SupplierTransactionDetailsPageState
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Share Receipt feature coming soon'),
-                      ),
-                    );
-                  },
+                  onPressed: _isSharing ? null : _shareTransaction,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00695C),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  icon: const Icon(Icons.share, color: Colors.white, size: 20),
+                  icon: _isSharing
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.share, color: Colors.white, size: 20),
                   label: Text(
-                    "Share Receipt",
+                    _isSharing ? "Generating PDF..." : "Share Receipt",
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

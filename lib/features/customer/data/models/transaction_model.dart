@@ -12,6 +12,7 @@ class TransactionModel extends Transaction {
     super.createdAt,
     super.customerName,
     super.supplierName,
+    super.receivedAmount,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +53,9 @@ class TransactionModel extends Transaction {
       supplierName: json['suppliers'] != null
           ? json['suppliers']['name']
           : null,
+      receivedAmount: json['received_amount'] != null
+          ? (json['received_amount'] as num).toDouble()
+          : null,
     );
   }
 
@@ -80,6 +84,7 @@ class TransactionModel extends Transaction {
       'date': date.toUtc().toIso8601String(),
       'details': details,
       // 'created_at': createdAt?.toIso8601String(),
+      'received_amount': receivedAmount,
     };
   }
 
@@ -95,6 +100,7 @@ class TransactionModel extends Transaction {
       createdAt: transaction.createdAt,
       customerName: transaction.customerName,
       supplierName: transaction.supplierName,
+      receivedAmount: transaction.receivedAmount,
     );
   }
 }
