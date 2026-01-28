@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gal/gal.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -22,6 +23,7 @@ class BusinessCardSheet extends ConsumerStatefulWidget {
 class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
   final GlobalKey _globalKey = GlobalKey();
   bool _isSharing = false;
+  bool _isSaving = false;
 
   // Customization State
   int _selectedBgIndex = 0;
@@ -179,6 +181,61 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
       }
     } finally {
       if (mounted) setState(() => _isSharing = false);
+    }
+  }
+
+  Future<void> _saveToGallery() async {
+    if (!mounted) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      // Logic to capture the image
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final boundary =
+          _globalKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
+
+      if (boundary == null) throw Exception("Could not find boundary");
+
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData == null) throw Exception("Failed to convert image");
+
+      final pngBytes = byteData.buffer.asUint8List();
+      final directory = await getTemporaryDirectory();
+      final imagePath = '${directory.path}/business_card.png';
+      final imageFile = File(imagePath);
+      await imageFile.writeAsBytes(pngBytes);
+
+      // Save to gallery using Gal
+      await Gal.putImage(imagePath);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Card saved to gallery successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving card: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -530,37 +587,77 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
           ),
 
           const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: _isSharing ? null : _captureAndShare,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              icon: _isSharing
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 56,
+                  child: OutlinedButton.icon(
+                    onPressed: _isSaving ? null : _saveToGallery,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.primary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    )
-                  : const Icon(Icons.share),
-              label: Text(
-                _isSharing ? 'Generating...' : 'Share Card',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                    ),
+                    icon: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        : const Icon(Icons.download, color: AppColors.primary),
+                    label: Text(
+                      _isSaving ? 'Saving...' : 'Save',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: _isSharing ? null : _captureAndShare,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: _isSharing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.share),
+                    label: Text(
+                      _isSharing ? 'Sharing...' : 'Share',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
         ],

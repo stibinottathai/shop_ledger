@@ -27,6 +27,7 @@ import 'package:shop_ledger/features/suppliers/presentation/pages/payment_out_pa
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/suppliers/presentation/pages/supplier_transaction_details_page.dart';
 import 'package:shop_ledger/features/inventory/presentation/pages/manage_stock_page.dart';
+import 'package:shop_ledger/features/inventory/presentation/pages/all_stock_page.dart';
 import 'package:shop_ledger/features/expenses/presentation/pages/expenses_page.dart';
 import 'package:shop_ledger/features/expenses/presentation/pages/add_expense_page.dart';
 import 'package:shop_ledger/features/expenses/presentation/pages/all_expenses_page.dart';
@@ -209,6 +210,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/inventory',
                 builder: (context, state) => const ManageStockPage(),
+                routes: [
+                  GoRoute(
+                    path: 'all',
+                    builder: (context, state) => const AllStockPage(),
+                  ),
+                ],
               ),
             ],
           ),

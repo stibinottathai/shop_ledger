@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:shop_ledger/features/inventory/presentation/widgets/stock_item_card.dart';
 
 class ManageStockPage extends ConsumerStatefulWidget {
   const ManageStockPage({super.key});
@@ -602,7 +604,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     final itemsAsync = ref.watch(inventoryProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9), // Light grey background
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: _isSearching
             ? TextField(
@@ -764,6 +766,41 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                   ),
                 ),
 
+              if (!_isSearching && items.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recent Items',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textMain,
+                        ),
+                      ),
+                      if (items.length > 6)
+                        TextButton(
+                          onPressed: () => context.go('/inventory/all'),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'View All',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
               // List Section
               Expanded(
                 child: RefreshIndicator(
@@ -786,11 +823,14 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                       : ListView.separated(
                           padding: const EdgeInsets.all(20),
                           physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: filteredItems.length,
+                          itemCount: filteredItems.length > 6
+                              ? 6
+                              : filteredItems.length,
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final item = filteredItems[index];
+
                             return Dismissible(
                               key: Key(item.id ?? item.name),
                               direction: DismissDirection.endToStart,
@@ -911,38 +951,51 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   ) {
     return Expanded(
       child: Container(
+        height: 112,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.1)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.slate100),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, 0.05),
+              offset: Offset(0, 1),
+              blurRadius: 3,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 20, color: color),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF94a3b8), // Slate 400
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+                  child: Icon(icon, size: 14, color: color),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
             Text(
               value,
               style: GoogleFonts.inter(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
                 color: AppColors.textMain,
-              ),
-            ),
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.slate500,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
               ),
             ),
           ],
@@ -1000,127 +1053,6 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   }
 
   Widget _buildItemCard(Item item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color.fromRGBO(0, 0, 0, 0.05),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-            spreadRadius: -2,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _showItemForm(item),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Icon Avatar
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.slate50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.slate100),
-                  ),
-                  child: Center(
-                    child: Text(
-                      item.name.isNotEmpty ? item.name[0].toUpperCase() : '?',
-                      style: GoogleFonts.inter(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-
-                // Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.name,
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: AppColors.textMain,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.currency_rupee,
-                            size: 14,
-                            color: AppColors.slate500,
-                          ),
-                          Text(
-                            '${item.pricePerKg.toStringAsFixed(2)} / ${item.unit == 'pcs' ? 'pc' : item.unit}',
-                            style: GoogleFonts.inter(
-                              color: AppColors.slate500,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Qty Badge
-                if (item.totalQuantity != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.emerald50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.emerald200.withOpacity(0.5),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${item.totalQuantity}',
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: AppColors.emerald600,
-                          ),
-                        ),
-                        Text(
-                          item.unit.toUpperCase(),
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 8,
-                            color: AppColors.emerald600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    return StockItemCard(item: item, onTap: () => _showItemForm(item));
   }
 }

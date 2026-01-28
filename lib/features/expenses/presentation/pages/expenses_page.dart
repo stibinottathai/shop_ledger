@@ -102,61 +102,67 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
               },
             ),
             data: (expenses) {
-              return CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 24),
-                          _buildTotalExpenseCard(totalExpenseAsync),
-                          const SizedBox(height: 32),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Recent Transactions',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () => context.push('/reports/all'),
-                                child: Text(
-                                  'View All',
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.refresh(recentExpensesProvider.future);
+                  ref.refresh(totalExpenseProvider.future);
+                },
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 24),
+                            _buildTotalExpenseCard(totalExpenseAsync),
+                            const SizedBox(height: 32),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Recent Transactions',
                                   style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textDark,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                        ],
+                                TextButton(
+                                  onPressed: () => context.push('/reports/all'),
+                                  child: Text(
+                                    'View All',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final expense = expenses[index];
-                          return _buildExpenseItem(expense);
-                        },
-                        childCount:
-                            expenses.length, // Already limited by provider
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final expense = expenses[index];
+                            return _buildExpenseItem(expense);
+                          },
+                          childCount:
+                              expenses.length, // Already limited by provider
+                        ),
                       ),
                     ),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                ],
+                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                  ],
+                ),
               );
             },
           ),
