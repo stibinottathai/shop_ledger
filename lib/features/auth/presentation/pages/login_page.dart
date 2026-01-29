@@ -52,7 +52,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           }
         },
         error: (e, stack) {
-          final message = e is Failure ? e.message : e.toString();
+          var message = e is Failure ? e.message : e.toString();
+          final lowerCaseError = message.toLowerCase();
+          if (lowerCaseError.contains('rate limit') ||
+              lowerCaseError.contains('too many requests') ||
+              lowerCaseError.contains('email rate exceeded')) {
+            message = 'Too many attempts. Please try again in a few minutes.';
+          }
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(message)));

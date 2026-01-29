@@ -136,8 +136,12 @@ class _SignupPageState extends ConsumerState<SignupPage> {
             errorMessage = e.toString();
           }
 
-          if (errorMessage.contains('Email rate limit exceeded')) {
-            errorMessage = 'Too many attempts. Please try again later.';
+          final lowerCaseError = errorMessage.toLowerCase();
+          if (lowerCaseError.contains('rate limit') ||
+              lowerCaseError.contains('too many requests') ||
+              lowerCaseError.contains('email rate exceeded')) {
+            errorMessage =
+                'Too many sign-up attempts. Please try again in a few minutes.';
           }
           ScaffoldMessenger.of(
             context,

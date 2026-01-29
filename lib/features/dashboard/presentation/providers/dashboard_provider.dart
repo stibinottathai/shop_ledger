@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
@@ -47,16 +46,13 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
   Future<DashboardStats> _calculateStats() async {
     print('DashboardStatsNotifier: _calculateStats started');
     try {
-      final repository = ref.read(transactionRepositoryProvider);
-      print('DashboardStatsNotifier: Fetching transactions...');
-
-      final transactions = await repository.getTransactions().timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          print('DashboardStatsNotifier: Timeout fetching transactions');
-          throw const SocketException('Connection timed out');
-        },
+      print(
+        'DashboardStatsNotifier: Fetching transactions from allTransactionsProvider...',
       );
+
+      // Use the cached allTransactionsProvider instead of making a new API call
+      final transactions = await ref.read(allTransactionsProvider.future);
+
       print(
         'DashboardStatsNotifier: Fetched ${transactions.length} transactions',
       );
