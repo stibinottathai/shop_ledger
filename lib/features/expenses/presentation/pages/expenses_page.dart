@@ -37,38 +37,66 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'Expense Reports',
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: AppColors.textDark,
+      body: Column(
+        children: [
+          // Custom Header
+          Container(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              MediaQuery.of(context).padding.top + 16,
+              20,
+              0,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+            ),
+            child: Column(
+              children: [
+                // Title Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Expense Reports',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMain,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        height: 1.25,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // TabBar
+                TabBar(
+                  controller: _tabController,
+                  labelColor: const Color(0xFF016B61),
+                  unselectedLabelColor: AppColors.textMuted,
+                  indicatorColor: const Color(0xFF016B61),
+                  indicatorWeight: 3,
+                  labelStyle: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                  tabs: const [
+                    Tab(text: 'Home'),
+                    Tab(text: 'Statistics'),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        centerTitle: true,
-        toolbarHeight: 80,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: const Color(0xFF016B61),
-          unselectedLabelColor: AppColors.textMuted,
-          indicatorColor: const Color(0xFF016B61),
-          indicatorWeight: 3,
-          labelStyle: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
+          // Body
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildHomeTab(), _buildChartsTab()],
+            ),
           ),
-          tabs: const [
-            Tab(text: 'Home'),
-            Tab(text: 'Statistics'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildHomeTab(), _buildChartsTab()],
+        ],
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 24, right: 24),
@@ -162,13 +190,29 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                                 ),
                                 TextButton(
                                   onPressed: () => context.push('/reports/all'),
-                                  child: Text(
-                                    'View All',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.primary,
-                                    ),
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'View All',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: 12,
+                                        color: AppColors.primary,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
