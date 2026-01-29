@@ -40,7 +40,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
+    ref.listen<AsyncValue<AuthResponse?>>(authControllerProvider, (
+      previous,
+      next,
+    ) {
       next.when(
         data: (_) {
           final session = Supabase.instance.client.auth.currentSession;

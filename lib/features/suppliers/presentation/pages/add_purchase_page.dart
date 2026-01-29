@@ -10,7 +10,7 @@ import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_p
 import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
-import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
+
 import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 

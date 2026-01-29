@@ -114,4 +114,42 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<AuthState> get authStateChanges => remoteDataSource.authStateChanges;
+
+  @override
+  Future<Either<Failure, AuthResponse>> verifyOtp({
+    required String email,
+    required String token,
+  }) async {
+    try {
+      final response = await remoteDataSource.verifyOtp(
+        email: email,
+        token: token,
+      );
+      return Right(response);
+    } on AuthException catch (e) {
+      if (e.message.contains('SocketException') ||
+          e.message.contains('ClientException') ||
+          e.message.contains('host lookup') ||
+          e.message.contains('Network is unreachable')) {
+        return const Left(
+          ServerFailure('No Internet connection. Please check your network.'),
+        );
+      }
+      return Left(ServerFailure(e.message));
+    } on SocketException {
+      return const Left(
+        ServerFailure('No Internet connection. Please check your network.'),
+      );
+    } catch (e) {
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('ClientException') ||
+          e.toString().contains('host lookup') ||
+          e.toString().contains('Network is unreachable')) {
+        return const Left(
+          ServerFailure('No Internet connection. Please check your network.'),
+        );
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

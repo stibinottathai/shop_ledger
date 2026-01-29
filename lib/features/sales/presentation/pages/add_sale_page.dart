@@ -6,7 +6,7 @@ import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
-import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
+
 import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 import 'package:mobile_scanner/mobile_scanner.dart'; // Add this

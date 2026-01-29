@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/core/error/failures.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});
@@ -49,14 +50,83 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
+    ref.listen<AsyncValue<AuthResponse?>>(authControllerProvider, (
+      previous,
+      next,
+    ) {
       next.when(
-        data: (_) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Signup Successful!')));
-          // Navigate to dashboard instead of popping
-          context.go('/home');
+        data: (response) {
+          if (response != null && response.session == null) {
+            // Email confirmation required (OTP)
+            final otpController = TextEditingController();
+            final formKey = GlobalKey<FormState>();
+
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Text('Enter OTP'),
+                content: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Enter the 6-digit code sent to ${_emailController.text}.',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: otpController,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        decoration: const InputDecoration(
+                          hintText: '000000',
+                          border: OutlineInputBorder(),
+                          counterText: '',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.length != 6) {
+                            return 'Enter a valid 6-digit OTP';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      context.pop(); // Close dialog
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (formKey.currentState!.validate()) {
+                        context.pop(); // Close dialog
+                        ref
+                            .read(authControllerProvider.notifier)
+                            .verifyOtp(
+                              email: _emailController.text.trim(),
+                              token: otpController.text.trim(),
+                            );
+                      }
+                    },
+                    child: const Text('Verify'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Verification Successful!')),
+            );
+            // Navigate to dashboard instead of popping
+            context.go('/home');
+          }
         },
         error: (e, stack) {
           String errorMessage;
