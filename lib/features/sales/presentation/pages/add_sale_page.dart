@@ -329,6 +329,26 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
 
       await Future.wait(futures);
 
+      // 3. Update Inventory Stock (Deduct Items)
+      if (!_isManualMode && _selectedItems.isNotEmpty) {
+        final inventoryNotifier = ref.read(inventoryProvider.notifier);
+        for (final sItem in _selectedItems) {
+          final originalItem = sItem.item;
+          final currentQty = originalItem.totalQuantity ?? 0;
+          final soldQty = sItem.quantity;
+
+          final newQty = currentQty - soldQty;
+
+          // Debug log
+          print(
+            'Debug: Sale - Deducting ${originalItem.name}. Current: $currentQty, Sold: $soldQty, New: $newQty',
+          );
+
+          final updatedItem = originalItem.copyWith(totalQuantity: newQty);
+          await inventoryNotifier.updateItem(updatedItem);
+        }
+      }
+
       // Force refresh of global transaction list
       ref.invalidate(allTransactionsProvider);
 

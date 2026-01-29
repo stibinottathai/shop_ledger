@@ -17,6 +17,7 @@ class AllStockPage extends ConsumerStatefulWidget {
 class _AllStockPageState extends ConsumerState<AllStockPage> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedFilter = 'All'; // 'All', 'Low Stock', 'Out of Stock'
 
   @override
   void dispose() {
@@ -316,114 +317,119 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+
+                  // Content with Filters
                   Expanded(
                     child: itemsAsync.when(
                       data: (items) {
+                        // Calculate counts
+                        final lowStockCount = items
+                            .where(
+                              (i) =>
+                                  (i.totalQuantity ?? 0) > 0 &&
+                                  (i.totalQuantity ?? 0) < 5,
+                            )
+                            .length;
+                        final outOfStockCount = items
+                            .where((i) => (i.totalQuantity ?? 0) <= 0)
+                            .length;
+
+                        // Filter items
                         final filteredItems = items.where((item) {
+                          // Search check
                           final query = _searchQuery.toLowerCase();
-                          return item.name.toLowerCase().contains(query) ||
+                          final matchesSearch =
+                              item.name.toLowerCase().contains(query) ||
                               (item.barcode != null &&
                                   item.barcode!.contains(query));
+                          if (!matchesSearch) return false;
+
+                          // Filter check
+                          if (_selectedFilter == 'Low Stock') {
+                            return (item.totalQuantity ?? 0) > 0 &&
+                                (item.totalQuantity ?? 0) < 5;
+                          } else if (_selectedFilter == 'Out of Stock') {
+                            return (item.totalQuantity ?? 0) <= 0;
+                          }
+                          return true;
                         }).toList();
 
-                        if (filteredItems.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'No items found',
-                              style: GoogleFonts.inter(
-                                color: AppColors.slate500,
+                        return Column(
+                          children: [
+                            // Filter Chips Row
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildFilterChip('All Items', true),
+                                  const SizedBox(width: 8),
+                                  _buildFilterChip(
+                                    'Low Stock',
+                                    false,
+                                    count: lowStockCount,
+                                    isWarning: true,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildFilterChip(
+                                    'Out of Stock',
+                                    false,
+                                    count: outOfStockCount,
+                                    isDanger: true,
+                                  ),
+                                ],
                               ),
                             ),
-                          );
-                        }
+                            const SizedBox(height: 16),
 
-                        return RefreshIndicator(
-                          onRefresh: () =>
-                              ref.refresh(inventoryProvider.future),
-                          child: ListView.separated(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            itemCount: filteredItems.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final item = filteredItems[index];
-                              return Dismissible(
-                                key: Key(item.id ?? item.name),
-                                direction: DismissDirection.endToStart,
-                                background: Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 20),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.danger,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: const Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                confirmDismiss: (direction) async {
-                                  return await showDialog(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text(
-                                        'Delete Item',
-                                        style: GoogleFonts.inter(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                            // Results Header if filtering
+                            if (_searchQuery.isNotEmpty ||
+                                _selectedFilter != 'All')
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Results (${filteredItems.length})',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.slate500,
                                       ),
-                                      content: Text(
-                                        'Are you sure you want to delete "${item.name}"?',
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(ctx).pop(false),
-                                          child: Text(
-                                            'Cancel',
-                                            style: GoogleFonts.inter(
-                                              color: AppColors.slate500,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(ctx).pop(true),
-                                          child: Text(
-                                            'Delete',
-                                            style: GoogleFonts.inter(
-                                              color: AppColors.danger,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
                                     ),
-                                  );
-                                },
-                                onDismissed: (direction) {
-                                  _deleteItem(item.id!);
-                                },
-                                child: StockItemCard(
-                                  item: item,
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          "Editing from 'View All' coming soon",
+                                  ],
+                                ),
+                              ),
+
+                            Expanded(
+                              child: filteredItems.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        'No items found',
+                                        style: GoogleFonts.inter(
+                                          color: AppColors.slate500,
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
+                                    )
+                                  : RefreshIndicator(
+                                      onRefresh: () =>
+                                          ref.refresh(inventoryProvider.future),
+                                      child: ListView.separated(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 20,
+                                        ),
+                                        itemCount: filteredItems.length,
+                                        separatorBuilder: (context, index) =>
+                                            const SizedBox(height: 12),
+                                        itemBuilder: (context, index) {
+                                          final item = filteredItems[index];
+                                          // ... existing item builder ...
+                                          return _buildItemWithDismiss(item);
+                                        },
+                                      ),
+                                    ),
+                            ),
+                          ],
                         );
                       },
                       loading: () =>
@@ -436,6 +442,149 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildItemWithDismiss(Item item) {
+    return Dismissible(
+      key: Key(item.id ?? item.name),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: AppColors.danger,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(
+              'Delete Item',
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+            ),
+            content: Text('Are you sure you want to delete "${item.name}"?'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(
+                  'Cancel',
+                  style: GoogleFonts.inter(
+                    color: AppColors.slate500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(
+                  'Delete',
+                  style: GoogleFonts.inter(
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) => _deleteItem(item.id!),
+      child: StockItemCard(
+        item: item,
+        onTap: () {
+          // Reuse edit logic or placeholder
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Editing from 'View All' coming soon"),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(
+    String label,
+    bool isDefault, {
+    int? count,
+    bool isWarning = false,
+    bool isDanger = false,
+  }) {
+    final isSelected =
+        _selectedFilter == (label == 'All Items' ? 'All' : label);
+    Color getBgColor() {
+      if (isSelected) return AppColors.primary;
+      if (isDanger) return AppColors.danger.withOpacity(0.1);
+      if (isWarning) return AppColors.orange400.withOpacity(0.1);
+      return AppColors.slate50;
+    }
+
+    Color getTextColor() {
+      if (isSelected) return Colors.white;
+      if (isDanger) return AppColors.danger;
+      if (isWarning) return AppColors.orange400;
+      return AppColors.slate600;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedFilter = label == 'All Items' ? 'All' : label;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: getBgColor(),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? Colors.transparent
+                : (isDanger
+                      ? AppColors.danger.withOpacity(0.2)
+                      : AppColors.slate200),
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: getTextColor(),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+            if (count != null && count > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withOpacity(0.2)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: GoogleFonts.inter(
+                    color: isSelected ? Colors.white : getTextColor(),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

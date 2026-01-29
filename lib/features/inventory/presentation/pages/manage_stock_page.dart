@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
@@ -615,7 +615,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
               16,
             ),
             decoration: const BoxDecoration(
-              color: Color(0xFFFFFFFC),
+              color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
             ),
             child: Row(
@@ -800,113 +800,129 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                   Expanded(
                     child: itemsAsync.when(
                       data: (items) {
-                        final filteredItems = items.where((item) {
-                          return item.name.toLowerCase().contains(_searchQuery);
-                        }).toList();
-
+                        // 1. Calculate Stats
                         final totalItems = items.length;
                         final totalValue = items.fold(0.0, (sum, item) {
                           return sum +
                               (item.pricePerKg * (item.totalQuantity ?? 0));
                         });
+                        final lowStockCount = items
+                            .where(
+                              (i) =>
+                                  (i.totalQuantity ?? 0) > 0 &&
+                                  (i.totalQuantity ?? 0) < 5,
+                            )
+                            .length;
+                        final outOfStockCount = items
+                            .where((i) => (i.totalQuantity ?? 0) <= 0)
+                            .length;
+
+                        // 2. Filter Items (Only Search + Limit 5)
+                        final filteredItems = items
+                            .where((item) {
+                              final matchesSearch = item.name
+                                  .toLowerCase()
+                                  .contains(_searchQuery);
+                              return matchesSearch;
+                            })
+                            .take(5)
+                            .toList();
 
                         return Column(
                           children: [
-                            if (_searchQuery.isEmpty) ...[
-                              Row(
-                                children: [
-                                  _buildSummaryCard(
-                                    'Total Items',
-                                    totalItems.toString(),
-                                    Icons.inventory_2,
-                                    AppColors.primary,
-                                    AppColors.emerald50,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  _buildSummaryCard(
-                                    'Total Value',
-                                    '₹${totalValue.toStringAsFixed(0)}',
-                                    Icons.currency_rupee,
-                                    AppColors.orange400,
-                                    const Color(0xFFFFF7ED),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              if (items.isNotEmpty)
-                                Row(
+                            // Hero Summary Card
+                            _buildHeroSummaryCard(
+                              totalValue,
+                              totalItems,
+                              lowStockCount,
+                              outOfStockCount,
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Filter Chips Removed
+
+                            // List Header
+                            if (_searchQuery.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Results (${filteredItems.length})',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.slate500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Recent Items',
+                                      'Stock Items',
                                       style: GoogleFonts.inter(
-                                        fontSize: 18,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textMain,
                                       ),
                                     ),
-                                    if (items.length > 6)
-                                      TextButton(
-                                        onPressed: () =>
-                                            context.go('/inventory/all'),
-                                        style: TextButton.styleFrom(
-                                          padding: EdgeInsets.zero,
-                                          minimumSize: Size.zero,
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                        child: Text(
-                                          'View All',
-                                          style: GoogleFonts.inter(
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.primary,
-                                            fontSize: 14,
-                                          ),
-                                        ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          context.push('/inventory/all'),
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.zero,
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
                                       ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            'View All',
+                                            style: GoogleFonts.inter(
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.primary,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 12,
+                                            color: AppColors.primary,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              const SizedBox(height: 12),
-                            ],
+                              ),
 
+                            // List
                             Expanded(
                               child: RefreshIndicator(
                                 onRefresh: () =>
                                     ref.refresh(inventoryProvider.future),
-                                child: filteredItems.isEmpty
-                                    ? LayoutBuilder(
-                                        builder: (context, constraints) =>
-                                            SingleChildScrollView(
-                                              physics:
-                                                  const AlwaysScrollableScrollPhysics(),
-                                              child: ConstrainedBox(
-                                                constraints: BoxConstraints(
-                                                  minHeight:
-                                                      constraints.maxHeight,
-                                                ),
-                                                child: items.isEmpty
-                                                    ? _buildEmptyState()
-                                                    : _buildNoSearchResults(),
-                                              ),
-                                            ),
-                                      )
+                                child: items.isEmpty
+                                    ? _buildEmptyState()
+                                    : filteredItems.isEmpty
+                                    ? _buildNoSearchResults()
                                     : ListView.separated(
                                         padding: const EdgeInsets.only(
                                           bottom: 100,
                                         ),
-                                        physics:
-                                            const AlwaysScrollableScrollPhysics(),
-                                        itemCount:
-                                            _searchQuery.isEmpty &&
-                                                filteredItems.length > 6
-                                            ? 6
-                                            : filteredItems.length,
-                                        separatorBuilder: (context, index) =>
+                                        itemCount: filteredItems.length,
+                                        separatorBuilder: (ctx, i) =>
                                             const SizedBox(height: 12),
-                                        itemBuilder: (context, index) {
+                                        itemBuilder: (ctx, index) {
                                           final item = filteredItems[index];
-
                                           return Dismissible(
                                             key: Key(item.id ?? item.name),
                                             direction:
@@ -927,6 +943,11 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                               ),
                                             ),
                                             confirmDismiss: (direction) async {
+                                              // Reuse existing delete dialog logic logic if needed or reimplement
+                                              // For brevity reusing logic via existing method calls if possible
+                                              // But to allow simple copy paste I will write a simple one here or Assume _showDeleteConfirm works?
+                                              // _showDeleteConfirm is void.
+                                              // Re-implementing quick confirm:
                                               return await showDialog(
                                                 context: context,
                                                 builder: (ctx) => AlertDialog(
@@ -938,57 +959,42 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                                     ),
                                                   ),
                                                   content: Text(
-                                                    'Are you sure you want to delete "${item.name}"?',
-                                                  ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          20,
-                                                        ),
+                                                    'Delete "${item.name}"?',
                                                   ),
                                                   actions: [
                                                     TextButton(
                                                       onPressed: () =>
-                                                          Navigator.of(
+                                                          Navigator.pop(
                                                             ctx,
-                                                          ).pop(false),
-                                                      child: Text(
+                                                            false,
+                                                          ),
+                                                      child: const Text(
                                                         'Cancel',
-                                                        style:
-                                                            GoogleFonts.inter(
-                                                              color: AppColors
-                                                                  .slate500,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
                                                       ),
                                                     ),
                                                     TextButton(
                                                       onPressed: () =>
-                                                          Navigator.of(
+                                                          Navigator.pop(
                                                             ctx,
-                                                          ).pop(true),
-                                                      child: Text(
+                                                            true,
+                                                          ),
+                                                      child: const Text(
                                                         'Delete',
-                                                        style:
-                                                            GoogleFonts.inter(
-                                                              color: AppColors
-                                                                  .danger,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                            ),
+                                                        style: TextStyle(
+                                                          color: Colors.red,
+                                                        ),
                                                       ),
                                                     ),
                                                   ],
                                                 ),
                                               );
                                             },
-                                            onDismissed: (direction) {
-                                              _deleteItem(item.id!);
-                                            },
-                                            child: _buildItemCard(item),
+                                            onDismissed: (_) =>
+                                                _deleteItem(item.id!),
+                                            child: StockItemCard(
+                                              item: item,
+                                              onTap: () => _showItemForm(item),
+                                            ),
                                           );
                                         },
                                       ),
@@ -999,8 +1005,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                       },
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) =>
-                          Center(child: Text('Error: $error')),
+                      error: (e, s) => Center(child: Text('Error: $e')),
                     ),
                   ),
                 ],
@@ -1068,67 +1073,94 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     );
   }
 
-  Widget _buildSummaryCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-    Color bg,
+  Widget _buildHeroSummaryCard(
+    double totalValue,
+    int totalItems,
+    int lowStock,
+    int outOfStock,
   ) {
-    return Expanded(
-      child: Container(
-        height: 112,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.slate100),
-          boxShadow: const [
-            BoxShadow(
-              color: Color.fromRGBO(0, 0, 0, 0.05),
-              offset: Offset(0, 1),
-              blurRadius: 3,
-            ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary,
+            const Color(0xFF028D81), // Slightly lighter teal
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF94a3b8), // Slate 400
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-                  child: Icon(icon, size: 14, color: color),
-                ),
-              ],
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            offset: const Offset(0, 8),
+            blurRadius: 20,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'TOTAL STOCK VALUE',
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
             ),
-            Text(
-              value,
-              style: GoogleFonts.inter(
-                color: AppColors.textMain,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '₹ ${totalValue.toStringAsFixed(0)}',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -1.0,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildCompactStat(
+                Icons.inventory_2_outlined,
+                '$totalItems Items',
+                Colors.white,
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 24),
+              _buildCompactStat(
+                Icons.warning_amber_rounded,
+                '$lowStock Low Stock',
+                const Color(0xFFFFD54F),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
+
+  Widget _buildCompactStat(IconData icon, String label, Color color) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            color: color,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Removed _buildFilterChip as it is no longer used here
 
   Widget _buildEmptyState() {
     return Center(
@@ -1178,7 +1210,5 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     );
   }
 
-  Widget _buildItemCard(Item item) {
-    return StockItemCard(item: item, onTap: () => _showItemForm(item));
-  }
+  // _buildItemCard removed as it was unused and implemented inline
 }

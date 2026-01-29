@@ -8,6 +8,7 @@ import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 import 'package:shop_ledger/features/expenses/domain/entities/expense.dart';
 import 'package:shop_ledger/features/expenses/presentation/providers/expense_provider.dart';
 import 'package:shop_ledger/features/expenses/presentation/widgets/expense_statistics_view.dart';
+import 'package:shop_ledger/features/expenses/presentation/widgets/add_expense_sheet.dart';
 
 class ExpensesPage extends ConsumerStatefulWidget {
   const ExpensesPage({super.key});
@@ -76,7 +77,14 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
           height: 56,
           child: FloatingActionButton(
             heroTag: 'expense_add_fab',
-            onPressed: () => context.push('/reports/add'),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const AddExpenseSheet(),
+              );
+            },
             backgroundColor: AppColors.primary,
             elevation: 0,
             shape: const CircleBorder(),

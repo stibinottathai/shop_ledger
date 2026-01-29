@@ -16,18 +16,20 @@ import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 
 class PurchaseItem {
   final Item item;
-  final int count; // Number of items
-  final double quantity; // Kg
-  final double pricePerKg;
+  final int count; // Number of items (relevant for kg)
+  final double quantity; // Qty in Unit
+  final double pricePerUnit;
+  final String unit;
 
   PurchaseItem({
     required this.item,
     required this.count,
     required this.quantity,
-    required this.pricePerKg,
+    required this.pricePerUnit,
+    required this.unit,
   });
 
-  double get total => quantity * pricePerKg;
+  double get total => quantity * pricePerUnit;
 }
 
 class AddPurchasePage extends ConsumerStatefulWidget {
@@ -57,6 +59,9 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
 
   // Select Items Logic
   Item? _selectedItem;
+  String _selectedUnit = 'kg';
+  final List<String> _unitOptions = ['kg', 'box', 'piece', 'liter'];
+
   final TextEditingController _countController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
@@ -101,13 +106,20 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
       return;
     }
 
+    // If unit is NOT kg, count is irrelevant (or implicit).
+    // User said "maintain number of items only for kg".
+    // For Box/Piece/Liter, we can treat count as 0 or equal to quantity if integer?
+    // Let's set count to 0 for non-kg to avoid confusion, or purely use it for display.
+    final finalCount = _selectedUnit == 'kg' ? count : 0;
+
     setState(() {
       _addedItems.add(
         PurchaseItem(
           item: _selectedItem!,
-          count: count,
+          count: finalCount,
           quantity: qty,
-          pricePerKg: pricePerKg,
+          pricePerUnit: pricePerKg,
+          unit: _selectedUnit,
         ),
       );
 
@@ -136,10 +148,15 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
           final qty = e.quantity
               .toStringAsFixed(1)
               .replaceAll(RegExp(r'\.0$'), '');
-          // Format: "2 Items, 5.0 Kg Rubber @ 150.0 = 750.0" (using a distinct separator pattern helps)
-          // We'll use a specific format that our regex can easily find, or continue using the loose text and parse it out.
-          // Let's use: "{count} Items, {qty} Kg {name} (Rate: {rate}, Total: {total})"
-          return "${e.count} Items, $qty Kg ${e.item.name} (Rate: ${e.pricePerKg.toStringAsFixed(2)}, Total: ${e.total.toStringAsFixed(2)})";
+
+          if (e.unit == 'kg') {
+            return "${e.count} Items, $qty Kg ${e.item.name} (Rate: ${e.pricePerUnit.toStringAsFixed(2)}, Total: ${e.total.toStringAsFixed(2)})";
+          } else {
+            // For Box, Piece, Liter
+            String unitLabel = e.unit;
+            if (e.quantity > 1) unitLabel += "s"; // pluralize roughly
+            return "$qty $unitLabel ${e.item.name} (Rate: ${e.pricePerUnit.toStringAsFixed(2)}, Total: ${e.total.toStringAsFixed(2)})";
+          }
         })
         .join(", ");
   }
@@ -213,6 +230,27 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             details: 'Payment made for purchase',
           );
           await repository.addTransaction(paymentTransaction);
+        }
+      }
+
+      // 3. Update Inventory Stock
+      print(
+        'Debug: EntryMode: $_entryMode, AddedItems: ${_addedItems.length}',
+      ); // Debug log
+      if (_entryMode == 1 && _addedItems.isNotEmpty) {
+        final inventoryNotifier = ref.read(inventoryProvider.notifier);
+        for (final purchaseItem in _addedItems) {
+          final originalItem = purchaseItem.item;
+          final currentQty = originalItem.totalQuantity ?? 0;
+          final newQty = currentQty + purchaseItem.quantity;
+
+          print(
+            'Debug: Updating ${originalItem.name}. Current: $currentQty, Adding: ${purchaseItem.quantity}, New: $newQty',
+          ); // Debug log
+
+          final updatedItem = originalItem.copyWith(totalQuantity: newQty);
+          await inventoryNotifier.updateItem(updatedItem);
+          print('Debug: Update complete for ${originalItem.name}'); // Debug log
         }
       }
 
@@ -731,6 +769,15 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                   onChanged: (val) {
                     setState(() {
                       _selectedItem = val;
+                      // Logic to auto-select unit based on item if needed
+                      if (_selectedItem != null) {
+                        if (_selectedItem!.unit == 'pcs') {
+                          _selectedUnit = 'piece';
+                        } else {
+                          // Default or 'kg'
+                          _selectedUnit = 'kg';
+                        }
+                      }
                     });
                   },
                 ),
@@ -742,34 +789,72 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
 
           const SizedBox(height: 16),
 
+          // Unit Dropdown
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedUnit,
+                isExpanded: true,
+                hint: const Text('Select Unit'),
+                items: _unitOptions.map((u) {
+                  String label = u[0].toUpperCase() + u.substring(1);
+                  if (u == 'liter') label = 'Liter (l)';
+                  if (u == 'kg') label = 'Kilogram (kg)';
+                  return DropdownMenuItem(
+                    value: u,
+                    child: Text(
+                      label,
+                      style: GoogleFonts.inter(color: Colors.black87),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedUnit = val!;
+                  });
+                },
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // Number of Items and Quantity Row
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _countController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    labelText: 'No. Items',
-                    labelStyle: TextStyle(color: Colors.grey[600]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
+              if (_selectedUnit == 'kg') ...[
+                Expanded(
+                  child: TextField(
+                    controller: _countController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      labelText: 'No. Items',
+                      labelStyle: TextStyle(color: Colors.grey[600]),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: TextField(
                   controller: _quantityController,
@@ -779,7 +864,9 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    labelText: 'Quantity (Kg)',
+                    labelText: _selectedUnit == 'kg'
+                        ? 'Quantity (Kg)'
+                        : 'Quantity (${_selectedUnit[0].toUpperCase()}${_selectedUnit.substring(1)})',
                     labelStyle: TextStyle(color: Colors.grey[600]),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -808,7 +895,8 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
-              labelText: 'Price / Kg',
+              labelText:
+                  'Price / ${_selectedUnit == 'liter' ? 'ltr' : _selectedUnit}',
               labelStyle: TextStyle(color: Colors.grey[600]),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -924,7 +1012,10 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                       final qty = item.quantity
                           .toStringAsFixed(1)
                           .replaceAll(RegExp(r'\.0$'), '');
-                      final rate = item.pricePerKg.toStringAsFixed(0);
+                      String unitSuffix = item.unit;
+                      if (item.unit == 'liter') unitSuffix = 'l';
+
+                      final rate = item.pricePerUnit.toStringAsFixed(0);
                       final total = item.total.toStringAsFixed(0);
                       return Padding(
                         padding: const EdgeInsets.symmetric(
@@ -959,7 +1050,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                             Expanded(
                               flex: 4,
                               child: Text(
-                                "$qty Kg x ₹$rate",
+                                "$qty $unitSuffix x ₹$rate",
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: Colors.grey[700],
