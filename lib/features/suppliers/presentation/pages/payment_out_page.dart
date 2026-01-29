@@ -22,15 +22,32 @@ class PaymentOutPage extends ConsumerStatefulWidget {
 
 class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
   final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _outstandingBalanceController =
+      TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _dateController = TextEditingController(
     text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
   );
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
+  double _enteredAmount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController.addListener(_updateAmount);
+  }
+
+  void _updateAmount() {
+    setState(() {
+      _enteredAmount = double.tryParse(_amountController.text) ?? 0;
+    });
+  }
 
   @override
   void dispose() {
+    _amountController.removeListener(_updateAmount);
+    _outstandingBalanceController.dispose();
     _amountController.dispose();
     _detailsController.dispose();
     _dateController.dispose();
@@ -143,6 +160,45 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
               ),
             ),
             const SizedBox(height: 24),
+
+            // Balance Info
+            Consumer(
+              builder: (context, ref, child) {
+                final stats = ref.watch(
+                  supplierStatsProvider(widget.supplier.id!),
+                );
+                final outstanding = stats.outstandingBalance;
+                final remaining = outstanding - _enteredAmount;
+
+                // Update controller text if different to avoid infinite loops
+                // (though less risky here as it's not the active field)
+                final newText = remaining.toStringAsFixed(2);
+                if (_outstandingBalanceController.text != newText) {
+                  // Schedule update to avoid build-phase modification errors
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _outstandingBalanceController.text = newText;
+                    }
+                  });
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: _buildTextField(
+                    label: 'Outstanding Balance',
+                    hint: '0.00',
+                    controller: _outstandingBalanceController,
+                    isBold: true,
+                    fontSize: 18,
+                    prefixText: '₹ ',
+                    readOnly: true,
+                    textColor: remaining < 0
+                        ? AppColors.primary
+                        : AppColors.textDark,
+                  ),
+                );
+              },
+            ),
 
             // Amount
             _buildTextField(
@@ -269,6 +325,8 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
     bool isBold = false,
     double fontSize = 16,
     String? prefixText,
+    bool readOnly = false,
+    Color? textColor,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,9 +344,11 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          readOnly: readOnly,
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            color: textColor ?? AppColors.textDark,
           ),
           decoration: InputDecoration(
             hintText: hint,
