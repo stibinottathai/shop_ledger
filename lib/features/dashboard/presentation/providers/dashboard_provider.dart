@@ -45,96 +45,111 @@ class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
   }
 
   Future<DashboardStats> _calculateStats() async {
-    final repository = ref.read(transactionRepositoryProvider);
-    final transactions = await repository.getTransactions().timeout(
-      const Duration(seconds: 10),
-      onTimeout: () {
-        throw const SocketException('Connection timed out');
-      },
-    );
+    print('DashboardStatsNotifier: _calculateStats started');
+    try {
+      final repository = ref.read(transactionRepositoryProvider);
+      print('DashboardStatsNotifier: Fetching transactions...');
 
-    double todaysSale = 0;
-    double todaysCollection = 0;
-    double todaysPurchase = 0;
-    double todaysPaymentOut = 0;
-    double totalSales = 0;
-    double totalPurchases = 0;
-    double totalPaymentIn = 0;
-    double totalPaymentOut = 0;
+      final transactions = await repository.getTransactions().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print('DashboardStatsNotifier: Timeout fetching transactions');
+          throw const SocketException('Connection timed out');
+        },
+      );
+      print(
+        'DashboardStatsNotifier: Fetched ${transactions.length} transactions',
+      );
 
-    final now = DateTime.now();
+      double todaysSale = 0;
+      double todaysCollection = 0;
+      double todaysPurchase = 0;
+      double todaysPaymentOut = 0;
+      double totalSales = 0;
+      double totalPurchases = 0;
+      double totalPaymentIn = 0;
+      double totalPaymentOut = 0;
 
-    final settings = ref.watch(settingsProvider);
-    final creditLimit = settings.maxCreditLimit;
+      final now = DateTime.now();
 
-    // Calculate customer balances
-    final customerBalances = <String, double>{};
+      final settings = ref.read(settingsProvider);
+      final creditLimit = settings.maxCreditLimit;
 
-    for (var t in transactions) {
-      final isToday =
-          t.date.year == now.year &&
-          t.date.month == now.month &&
-          t.date.day == now.day;
+      // Calculate customer balances
+      final customerBalances = <String, double>{};
 
-      if (isToday) {
-        if (t.type == TransactionType.sale) {
-          todaysSale += t.amount;
-        } else if (t.type == TransactionType.paymentIn) {
-          todaysCollection += t.amount;
-        } else if (t.type == TransactionType.purchase) {
-          todaysPurchase += t.amount;
-        } else if (t.type == TransactionType.paymentOut) {
-          todaysPaymentOut += t.amount;
+      print('DashboardStatsNotifier: Processing transactions...');
+      for (var t in transactions) {
+        final isToday =
+            t.date.year == now.year &&
+            t.date.month == now.month &&
+            t.date.day == now.day;
+
+        if (isToday) {
+          if (t.type == TransactionType.sale) {
+            todaysSale += t.amount;
+          } else if (t.type == TransactionType.paymentIn) {
+            todaysCollection += t.amount;
+          } else if (t.type == TransactionType.purchase) {
+            todaysPurchase += t.amount;
+          } else if (t.type == TransactionType.paymentOut) {
+            todaysPaymentOut += t.amount;
+          }
+        }
+
+        // Aggregates
+        switch (t.type) {
+          case TransactionType.sale:
+            totalSales += t.amount;
+            if (t.customerId != null) {
+              customerBalances.update(
+                t.customerId!,
+                (value) => value + t.amount,
+                ifAbsent: () => t.amount,
+              );
+            }
+            break;
+          case TransactionType.purchase:
+            totalPurchases += t.amount;
+            break;
+          case TransactionType.paymentIn:
+            totalPaymentIn += t.amount;
+            if (t.customerId != null) {
+              customerBalances.update(
+                t.customerId!,
+                (value) => value - t.amount,
+                ifAbsent: () => -t.amount,
+              );
+            }
+            break;
+          case TransactionType.paymentOut:
+            totalPaymentOut += t.amount;
+            break;
         }
       }
 
-      // Aggregates
-      switch (t.type) {
-        case TransactionType.sale:
-          totalSales += t.amount;
-          if (t.customerId != null) {
-            customerBalances.update(
-              t.customerId!,
-              (value) => value + t.amount,
-              ifAbsent: () => t.amount,
-            );
-          }
-          break;
-        case TransactionType.purchase:
-          totalPurchases += t.amount;
-          break;
-        case TransactionType.paymentIn:
-          totalPaymentIn += t.amount;
-          if (t.customerId != null) {
-            customerBalances.update(
-              t.customerId!,
-              (value) => value - t.amount,
-              ifAbsent: () => -t.amount,
-            );
-          }
-          break;
-        case TransactionType.paymentOut:
-          totalPaymentOut += t.amount;
-          break;
-      }
+      final highDueCustomerCount = customerBalances.values
+          .where((balance) => balance > creditLimit)
+          .length;
+
+      print('DashboardStatsNotifier: Stats calculation complete');
+      return DashboardStats(
+        todaysSale: todaysSale,
+        todaysCollection: todaysCollection,
+        todaysPurchase: todaysPurchase,
+        todaysPaymentOut: todaysPaymentOut,
+        totalSales: totalSales,
+        totalPurchases: totalPurchases,
+        toGet: totalSales - totalPaymentIn,
+        toGive: totalPurchases - totalPaymentOut,
+        highDueCustomerCount: highDueCustomerCount,
+        creditLimit: creditLimit,
+      );
+    } catch (e, stack) {
+      print('DashboardStatsNotifier: Error calculating stats: $e');
+      print(stack);
+      rethrow;
     }
-
-    final highDueCustomerCount = customerBalances.values
-        .where((balance) => balance > creditLimit)
-        .length;
-
-    return DashboardStats(
-      todaysSale: todaysSale,
-      todaysCollection: todaysCollection,
-      todaysPurchase: todaysPurchase,
-      todaysPaymentOut: todaysPaymentOut,
-      totalSales: totalSales,
-      totalPurchases: totalPurchases,
-      toGet: totalSales - totalPaymentIn,
-      toGive: totalPurchases - totalPaymentOut,
-      highDueCustomerCount: highDueCustomerCount,
-      creditLimit: creditLimit,
-    );
   }
 
   Future<void> refresh() async {

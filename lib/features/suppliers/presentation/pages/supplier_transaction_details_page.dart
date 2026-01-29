@@ -12,7 +12,7 @@ import 'package:shop_ledger/features/reports/presentation/providers/reports_prov
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
 import 'package:shop_ledger/core/services/pdf_service.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:native_share/native_share.dart';
 
 class SupplierTransactionDetailsPage extends ConsumerStatefulWidget {
   final Transaction transaction;
@@ -179,20 +179,12 @@ class _SupplierTransactionDetailsPageState
         isSingleReceipt: true,
       );
 
-      try {
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [XFile(file.path)],
-            text:
-                'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
-          ),
-        );
-      } catch (shareError) {
-        final errorStr = shareError.toString().toLowerCase();
-        if (!errorStr.contains('late') && !errorStr.contains('result')) {
-          rethrow;
-        }
-      }
+      // Share using native share
+      await NativeShare.shareFiles(
+        filePaths: [file.path],
+        text:
+            'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

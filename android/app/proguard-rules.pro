@@ -5,3 +5,6 @@
 -keep class io.flutter.view.**  { *; }
 -keep class io.flutter.**  { *; }
 -keep class io.flutter.plugins.**  { *; }
+
+# Share Plus
+-keep class dev.fluttercommunity.plus.share.** { *; }

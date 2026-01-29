@@ -2,12 +2,15 @@ PODS:
   - app_links (6.4.1):
     - Flutter
   - Flutter (1.0.0)
+  - gal (1.0.0):
+    - Flutter
+    - FlutterMacOS
   - mobile_scanner (7.0.0):
     - Flutter
     - FlutterMacOS
-  - open_file_ios (1.0.3):
+  - native_share (1.0.0):
     - Flutter
-  - share_plus (0.0.1):
+  - open_file_ios (1.0.3):
     - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
@@ -18,9 +21,10 @@ PODS:
 DEPENDENCIES:
   - app_links (from `.symlinks/plugins/app_links/ios`)
   - Flutter (from `Flutter`)
+  - gal (from `.symlinks/plugins/gal/darwin`)
   - mobile_scanner (from `.symlinks/plugins/mobile_scanner/darwin`)
+  - native_share (from `.symlinks/plugins/native_share/ios`)
   - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
-  - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
@@ -29,12 +33,14 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/app_links/ios"
   Flutter:
     :path: Flutter
+  gal:
+    :path: ".symlinks/plugins/gal/darwin"
   mobile_scanner:
     :path: ".symlinks/plugins/mobile_scanner/darwin"
+  native_share:
+    :path: ".symlinks/plugins/native_share/ios"
   open_file_ios:
     :path: ".symlinks/plugins/open_file_ios/ios"
-  share_plus:
-    :path: ".symlinks/plugins/share_plus/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   url_launcher_ios:
@@ -43,9 +49,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   app_links: 3dbc685f76b1693c66a6d9dd1e9ab6f73d97dc0a
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  gal: baecd024ebfd13c441269ca7404792a7152fde89
   mobile_scanner: 9157936403f5a0644ca3779a38ff8404c5434a93
+  native_share: 845768bea22836012b82d5b3c6c64f53b5319bf6
   open_file_ios: 46184d802ee7959203f6392abcfa0dd49fdb5be0
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
 

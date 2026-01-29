@@ -9,7 +9,7 @@ import 'package:gal/gal.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:native_share/native_share.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 
@@ -108,22 +108,49 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
     setState(() => _isSharing = true);
 
     try {
-      // Small delay to ensure UI is rendered
-      await Future.delayed(const Duration(milliseconds: 100));
+      print("BusinessCardSheet: _captureAndShare started");
+      print("BusinessCardSheet: 1. Waiting for delay...");
+      // Increased delay to ensure UI is fully rendered and animation is complete
+      await Future.delayed(const Duration(milliseconds: 300));
+      print(
+        "BusinessCardSheet: 2. finished delay. context: ${_globalKey.currentContext}",
+      );
 
-      final boundary =
-          _globalKey.currentContext?.findRenderObject()
-              as RenderRepaintBoundary?;
+      final boundaryContext = _globalKey.currentContext;
+      if (boundaryContext == null) {
+        print("BusinessCardSheet: Context is null!");
+      }
+
+      print("BusinessCardSheet: 3. Finding render object...");
+      final renderObject = boundaryContext?.findRenderObject();
+      print("BusinessCardSheet: 4. Render object found: $renderObject");
+
+      final boundary = renderObject as RenderRepaintBoundary?;
+      print("BusinessCardSheet: 5. Boundary cast: $boundary");
 
       if (boundary == null) {
+        print("BusinessCardSheet: Boundary is null (exception coming)");
         throw Exception("Could not find boundary");
       }
 
-      if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 50));
+      print("BusinessCardSheet: 6. Boundary is valid.");
+
+      // Removed debugNeedsPaint check as it might be causing issues in release mode
+      // and is intended for debugging/testing.
+
+      print("BusinessCardSheet: 7. Calling boundary.toImage...");
+      ui.Image image;
+      try {
+        // Reduced pixel ratio for better stability in release builds
+        image = await boundary.toImage(pixelRatio: 2.0);
+        print("BusinessCardSheet: 8. Image captured: $image");
+      } catch (e, stack) {
+        print("BusinessCardSheet: CRASH in toImage: $e");
+        print(stack);
+        rethrow;
       }
 
-      final image = await boundary.toImage(pixelRatio: 3.0);
+      print("BusinessCardSheet: 9. Converting to byte data...");
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
       if (byteData == null) {
@@ -132,35 +159,28 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
 
       final pngBytes = byteData.buffer.asUint8List();
 
+      print("BusinessCardSheet: Getting temp directory...");
       final directory = await getTemporaryDirectory();
       final imagePath = '${directory.path}/business_card.png';
+      print("BusinessCardSheet: Saving to $imagePath");
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(pngBytes);
 
-      // Share with robust error handling for release builds
-      // The late initialization error can occur in release mode when accessing result
+      // Share using native share
       bool shareSuccess = false;
       try {
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [XFile(imagePath)],
-            text: 'Check out my business card!',
-          ),
+        print("BusinessCardSheet: Calling NativeShare.shareFiles...");
+        shareSuccess = await NativeShare.shareFiles(
+          filePaths: [imagePath],
+          text: 'Check out my business card!',
         );
-        shareSuccess = true;
+        print(
+          "BusinessCardSheet: NativeShare completed. Success: $shareSuccess",
+        );
       } catch (shareError) {
+        print("BusinessCardSheet: Error in native share block: $shareError");
         print("Checking the error $shareError");
-        // In release builds, share_plus may throw LateInitializationError
-        // The share dialog was shown, we just can't track the result
-        final errorStr = shareError.toString().toLowerCase();
-        if (errorStr.contains('lateinitializationerror') ||
-            errorStr.contains('late') ||
-            errorStr.contains('result')) {
-          // Share was likely successful, just couldn't get result
-          shareSuccess = true;
-        } else {
-          rethrow;
-        }
+        shareSuccess = false;
       }
 
       // Show success message
@@ -191,7 +211,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
 
     try {
       // Logic to capture the image
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 300));
 
       final boundary =
           _globalKey.currentContext?.findRenderObject()
@@ -203,7 +223,8 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
         await Future.delayed(const Duration(milliseconds: 50));
       }
 
-      final image = await boundary.toImage(pixelRatio: 3.0);
+      // Reduced pixel ratio for better stability
+      final image = await boundary.toImage(pixelRatio: 2.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
       if (byteData == null) throw Exception("Failed to convert image");

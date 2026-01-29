@@ -1,0 +1,21 @@
+name: native_share
+description: A Flutter plugin for native file sharing using method channels.
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.10.7
+  flutter: ">=3.3.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.shopled.native_share
+        pluginClass: NativeSharePlugin
+      ios:
+        pluginClass: NativeSharePlugin

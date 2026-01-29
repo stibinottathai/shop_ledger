@@ -35,7 +35,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
           'Expense Reports',
@@ -45,7 +45,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
             color: AppColors.textDark,
           ),
         ),
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
         toolbarHeight: 80,
@@ -149,7 +149,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                                   style: GoogleFonts.inter(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textDark,
+                                    color: AppColors.textMain,
                                   ),
                                 ),
                                 TextButton(
@@ -270,12 +270,13 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)), // Slate 200
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Color.fromRGBO(0, 0, 0, 0.05),
+              offset: Offset(0, 1),
+              blurRadius: 3,
             ),
           ],
         ),
@@ -356,49 +357,60 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
   }
 
   Widget _buildTotalExpenseCard(AsyncValue<double> totalAsync) {
-    // We can show loading state or data
     final total = totalAsync.value ?? 0.0;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFF016B61),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)), // Slate 200
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0xFF016B61).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            offset: Offset(0, 1),
+            blurRadius: 3,
           ),
         ],
       ),
       child: Column(
         children: [
           Text(
-            'Total Expense',
+            'TOTAL EXPENSE',
             style: GoogleFonts.inter(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+              color: AppColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           if (totalAsync.isLoading)
             const SizedBox(
-              height: 48,
-              width: 48,
-              child: CircularProgressIndicator(color: Colors.white),
+              height: 32,
+              width: 32,
+              child: CircularProgressIndicator(strokeWidth: 2),
             )
           else
             Text(
               '₹ ${NumberFormat("##,##0.00").format(total)}',
               style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+                fontSize: 36,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -1.0,
               ),
             ),
+          const SizedBox(height: 8),
+          Text(
+            'Current Period',
+            style: GoogleFonts.inter(
+              color: AppColors.textMain,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );

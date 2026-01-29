@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:native_share/native_share.dart';
 import 'package:shop_ledger/core/services/pdf_service.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
@@ -38,32 +38,22 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
 
       final pdfService = PdfService();
       // Use existing service but passing only this transaction
+      final stats = ref.read(customerStatsProvider(widget.customer.id!));
       final file = await pdfService.generateTransactionPdf(
         name: widget.customer.name,
         phone: widget.customer.phone,
         transactions: [widget.transaction],
-        outstandingBalance: 0,
+        outstandingBalance: stats.outstandingBalance,
         shopName: shopName,
         isSingleReceipt: true,
       );
 
-      // Share with robust error handling for release builds
-      try {
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [XFile(file.path)],
-            text:
-                'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
-          ),
-        );
-      } catch (shareError) {
-        // In release builds, share_plus may throw LateInitializationError
-        // The share dialog was shown, we just can't track the result
-        final errorStr = shareError.toString().toLowerCase();
-        if (!errorStr.contains('late') && !errorStr.contains('result')) {
-          rethrow;
-        }
-      }
+      // Share using native share
+      await NativeShare.shareFiles(
+        filePaths: [file.path],
+        text:
+            'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

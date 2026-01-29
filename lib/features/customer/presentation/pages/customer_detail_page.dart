@@ -12,7 +12,7 @@ import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:native_share/native_share.dart';
 import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class CustomerDetailPage extends ConsumerWidget {
@@ -608,23 +608,12 @@ class CustomerDetailPage extends ConsumerWidget {
         finalNumber = '91$cleanNumber';
       }
 
-      // Share with robust error handling for release builds
-      try {
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [XFile(file.path)],
-            text:
-                'Hello ${customer.name}, please find your account statement attached. Outstanding Balance: ₹${amount.toStringAsFixed(2)}',
-          ),
-        );
-      } catch (shareError) {
-        // In release builds, share_plus may throw LateInitializationError
-        // The share dialog was shown, we just can't track the result
-        final errorStr = shareError.toString().toLowerCase();
-        if (!errorStr.contains('late') && !errorStr.contains('result')) {
-          rethrow;
-        }
-      }
+      // Share using native share
+      await NativeShare.shareFiles(
+        filePaths: [file.path],
+        text:
+            'Hello ${customer.name}, please find your account statement attached. Outstanding Balance: ₹${amount.toStringAsFixed(2)}',
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -28,6 +28,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   late TextEditingController _emailController;
   late TextEditingController _phoneController; // If we have it
+  late TextEditingController _gstController;
 
   bool _isLoading = false;
 
@@ -43,6 +44,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _usernameController = TextEditingController();
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
+    _gstController = TextEditingController();
     _loadUserData();
   }
 
@@ -56,6 +58,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (metadata != null) {
         _shopNameController.text = metadata['shop_name']?.toString() ?? '';
         _usernameController.text = metadata['username']?.toString() ?? '';
+        _gstController.text = metadata['gst_number']?.toString() ?? '';
         final metaPhone = metadata['phone']?.toString();
 
         _phoneController.text = (user.phone?.isNotEmpty == true)
@@ -73,6 +76,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _usernameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _gstController.dispose();
     super.dispose();
   }
 
@@ -80,6 +84,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     String shopName,
     String username,
     String phone,
+    String gstNumber,
   ) async {
     setState(() => _isLoading = true);
 
@@ -95,7 +100,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final supabase = Supabase.instance.client;
       await supabase.auth.updateUser(
         UserAttributes(
-          data: {'shop_name': shopName, 'username': username, 'phone': phone},
+          data: {
+            'shop_name': shopName,
+            'username': username,
+            'phone': phone,
+            'gst_number': gstNumber,
+          },
         ),
       );
 
@@ -103,6 +113,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       _shopNameController.text = shopName;
       _usernameController.text = username;
       _phoneController.text = phone;
+      _gstController.text = gstNumber;
 
       setState(() => _isLoading = false);
 
@@ -131,6 +142,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final editPhoneController = TextEditingController(
       text: _phoneController.text,
     );
+    final editGstController = TextEditingController(text: _gstController.text);
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -158,6 +170,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     'Phone Number',
                     editPhoneController,
                     isPhone: true,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDialogTextField(
+                    'GST Number',
+                    editGstController,
+                    isRequired: false,
                   ),
                 ],
               ),
@@ -194,6 +212,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   editShopNameController.text.trim(),
                   editUsernameController.text.trim(),
                   editPhoneController.text.trim(),
+                  editGstController.text.trim(),
                 );
               }
             },
@@ -219,6 +238,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     String label,
     TextEditingController controller, {
     bool isPhone = false,
+    bool isRequired = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,7 +255,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         TextFormField(
           controller: controller,
           keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
-          validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+          validator: (val) {
+            if (isRequired && (val == null || val.isEmpty)) {
+              return 'Required';
+            }
+            return null;
+          },
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
             color: _textMain,
@@ -457,26 +482,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   ),
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.slate100),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color.fromRGBO(0, 0, 0, 0.05),
-                                      blurRadius: 4,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  size: 20,
-                                  color: AppColors.primary,
-                                ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -584,16 +589,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               controller: _shopNameController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
-                            // Static GST for now as per design request, passing a controller with dummy data
-                            _buildInfoItem(
-                              icon: Icons.receipt_long,
-                              label: 'GST Number',
-                              controller: TextEditingController(
-                                text: '22ABCDE1234F1Z5',
+                            if (_gstController.text.isNotEmpty) ...[
+                              const Divider(height: 1, color: _borderColor),
+                              _buildInfoItem(
+                                icon: Icons.receipt_long,
+                                label: 'GST Number',
+                                controller: _gstController,
+                                readOnly: true,
                               ),
-                              readOnly: true,
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -625,7 +629,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : Text(
                           'Edit Profile',
                           style: GoogleFonts.inter(
