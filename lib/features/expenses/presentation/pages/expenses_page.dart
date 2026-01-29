@@ -283,15 +283,18 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Color(0xFF016B61),
-                shape: BoxShape.circle,
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.slate50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.slate100),
               ),
+              alignment: Alignment.center,
               child: Icon(
                 _getCategoryIcon(expense.category),
-                color: Colors.white,
-                size: 20,
+                color: AppColors.primary,
+                size: 24,
               ),
             ),
             const SizedBox(width: 16),

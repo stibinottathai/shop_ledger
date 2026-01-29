@@ -402,16 +402,8 @@ class CustomerListItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(customerStatsProvider(customer.id!));
 
-    // Determine avatar color logic (cycling through branding colors)
-    final colors = [
-      AppColors.emerald500,
-      AppColors.teal600,
-      AppColors.indigo500,
-      AppColors.orange400,
-    ];
-    // Simple hash for consistent color
-    final colorIndex = customer.name.length % colors.length;
-    final avatarColor = colors[colorIndex];
+    // Use consistent primary color for all avatars
+    final avatarColor = AppColors.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -446,12 +438,12 @@ class CustomerListItem extends ConsumerWidget {
               children: [
                 // Avatar
                 Container(
-                  height: 48, // Increased size for better visual
+                  height: 48,
                   width: 48,
                   decoration: BoxDecoration(
-                    color: avatarColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: avatarColor.withOpacity(0.2)),
+                    color: AppColors.slate50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.slate100),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -461,8 +453,8 @@ class CustomerListItem extends ConsumerWidget {
                               .toUpperCase()
                         : '?',
                     style: GoogleFonts.inter(
-                      color: avatarColor, // Colored text on light bg (elegant)
-                      fontSize: 16,
+                      color: avatarColor,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

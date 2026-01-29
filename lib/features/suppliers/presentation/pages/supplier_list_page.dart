@@ -397,16 +397,8 @@ class SupplierListItem extends ConsumerWidget {
           outstandingBalance: 0,
         );
 
-    // Determine avatar color logic (cycling through branding colors)
-    final colors = [
-      AppColors.emerald500,
-      AppColors.teal600,
-      AppColors.indigo500,
-      AppColors.orange400,
-    ];
-    // Simple hash for consistent color
-    final colorIndex = supplier.name.length % colors.length;
-    final avatarColor = colors[colorIndex];
+    // Use consistent primary color for all avatars
+    final avatarColor = AppColors.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -444,9 +436,9 @@ class SupplierListItem extends ConsumerWidget {
                   height: 48,
                   width: 48,
                   decoration: BoxDecoration(
-                    color: avatarColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: avatarColor.withOpacity(0.2)),
+                    color: AppColors.slate50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.slate100),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -457,7 +449,7 @@ class SupplierListItem extends ConsumerWidget {
                         : '?',
                     style: GoogleFonts.inter(
                       color: avatarColor,
-                      fontSize: 16,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
