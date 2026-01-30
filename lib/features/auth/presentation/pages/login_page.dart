@@ -74,15 +74,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     // Design Colors mapped from HTML request
     final Color primaryColor = AppColors.primary;
     final Color bgLight = const Color(0xFFF6F8F6);
-    final Color bgDark = const Color(0xFF141E15);
+    final Color bgDark = AppColors.backgroundDark;
     final Color cardLight = const Color(0xFFFFFFFF);
-    final Color cardDark = const Color(0xFF1C261D);
+    final Color cardDark = AppColors.cardDark;
     final Color textMainLight = const Color(0xFF121613);
     final Color textMainDark = Colors.white;
     final Color textMutedLight = const Color(0xFF6A816C);
     final Color textMutedDark = Colors.grey[400]!;
     final Color borderLight = const Color(0xFFDDE3DE);
-    final Color borderDark = Colors.grey[700]!;
+    final Color borderDark = AppColors.slate600;
 
     return Scaffold(
       backgroundColor: isDark ? bgDark : bgLight,
@@ -350,7 +350,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 child: Text(
                                   'OR',
                                   style: GoogleFonts.inter(
-                                    color: textMutedLight,
+                                    color: isDark
+                                        ? textMutedDark
+                                        : textMutedLight,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
