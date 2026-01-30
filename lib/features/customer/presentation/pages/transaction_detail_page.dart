@@ -29,6 +29,7 @@ class TransactionDetailPage extends ConsumerStatefulWidget {
 class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
   bool _isSharing = false;
   bool _isDeleting = false;
+  double? _cachedOutstandingBalance;
 
   Future<void> _shareTransaction() async {
     setState(() => _isSharing = true);
@@ -37,13 +38,13 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
       final shopName = user?.userMetadata?['shop_name'] as String?;
 
       final pdfService = PdfService();
-      // Use existing service but passing only this transaction
-      final stats = ref.read(customerStatsProvider(widget.customer.id!));
+      // Use the cached outstanding balance from the last build
+      final outstandingBalance = _cachedOutstandingBalance ?? 0.0;
       final file = await pdfService.generateTransactionPdf(
         name: widget.customer.name,
         phone: widget.customer.phone,
         transactions: [widget.transaction],
-        outstandingBalance: stats.outstandingBalance,
+        outstandingBalance: outstandingBalance,
         shopName: shopName,
         isSingleReceipt: true,
       );
@@ -155,6 +156,8 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
   @override
   Widget build(BuildContext context) {
     final stats = ref.watch(customerStatsProvider(widget.customer.id!));
+    // Cache the outstanding balance for PDF generation
+    _cachedOutstandingBalance = stats.outstandingBalance;
     final isSale = widget.transaction.type == TransactionType.sale;
 
     // Parse items if it's a sale and has details

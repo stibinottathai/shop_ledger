@@ -358,6 +358,39 @@ class CustomerDetailPage extends ConsumerWidget {
                         ],
                       ),
                     ),
+
+                    // Send Reminder Button (only show if outstanding balance > 0)
+                    if (stats.outstandingBalance > 0)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _sendSmsReminder(
+                              context,
+                              ref,
+                              currentCustomer,
+                              stats.outstandingBalance,
+                            ),
+                            icon: const Icon(
+                              Icons.message,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            label: const Text('Send Payment Reminder'),
+                            style: ElevatedButton.styleFrom(
+                              textStyle: const TextStyle(fontSize: 16),
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 4,
+                            ),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -618,6 +651,57 @@ class CustomerDetailPage extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error generating/sharing PDF: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendSmsReminder(
+    BuildContext context,
+    WidgetRef ref,
+    Customer customer,
+    double amount,
+  ) async {
+    if (customer.phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No phone number available')),
+      );
+      return;
+    }
+
+    try {
+      // Get shop name from user metadata
+      final user = ref.read(authRepositoryProvider).getCurrentUser();
+      final shopName =
+          user?.userMetadata?['shop_name'] as String? ?? 'Our Shop';
+
+      // Compose the SMS message
+      final message =
+          'This message is from $shopName. This is a reminder that you have a due of ₹${amount.toStringAsFixed(2)}. Please clear your dues at the earliest. Thank you!';
+
+      // Clean phone number
+      final cleanNumber = customer.phone.replaceAll(RegExp(r'[^\d]'), '');
+
+      // Create SMS URI with pre-filled message
+      final Uri smsUri = Uri(
+        scheme: 'sms',
+        path: cleanNumber,
+        queryParameters: {'body': message},
+      );
+
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open messaging app')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error opening messaging app: $e')),
         );
       }
     }

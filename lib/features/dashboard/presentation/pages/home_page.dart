@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
+import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/core/widgets/common_error_widget.dart';
@@ -22,8 +23,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
+    // Eagerly load transactions in the background to warm up the cache
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(dashboardStatsProvider.notifier).refresh();
+      ref.read(allTransactionsProvider);
     });
   }
 
