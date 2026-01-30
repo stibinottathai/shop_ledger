@@ -106,7 +106,7 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
     final expenseListAsync = ref.watch(expenseListProvider);
 
     return Scaffold(
-      backgroundColor: context.background,
+      backgroundColor: context.appBarBackground,
       appBar: AppBar(
         title: Text(
           'Transactions',
@@ -119,6 +119,7 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
         centerTitle: true,
         backgroundColor: context.appBarBackground,
         elevation: 0,
+        scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: context.textPrimary),
       ),
       body: Column(
@@ -270,33 +271,37 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: context.cardColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
+          border: Border.all(color: context.borderColor),
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Color.fromRGBO(0, 0, 0, 0.05),
+              offset: Offset(0, 1),
+              blurRadius: 3,
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: context.isDarkMode
-                    ? const Color(0xFF15803D).withOpacity(0.2)
-                    : const Color(0xFFF0FDF4),
-                shape: BoxShape.circle,
+                    ? AppColors.surfaceDark
+                    : AppColors.slate50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.borderColor),
               ),
+              alignment: Alignment.center,
               child: Icon(
                 _getCategoryIcon(expense.category),
-                color: const Color(0xFF15803D),
-                size: 20,
+                color: AppColors.primary,
+                size: 24,
               ),
             ),
             const SizedBox(width: 16),
@@ -308,27 +313,52 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
                     expense.category,
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                      fontSize: 16,
                       color: context.textPrimary,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     DateFormat('d MMM yyyy, hh:mm a').format(expense.date),
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: context.textMuted,
+                      color: AppColors.textMuted,
                     ),
                   ),
+                  if (expense.notes != null && expense.notes!.isNotEmpty)
+                    Text(
+                      expense.notes!,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                 ],
               ),
             ),
-            Text(
-              '- ₹${NumberFormat("##,##0").format(expense.amount)}',
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-                color: const Color(0xFFB91C1C),
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '- ₹${NumberFormat("##,##0").format(expense.amount)}',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: const Color(0xFFB91C1C),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  expense.paymentMethod.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textMuted,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

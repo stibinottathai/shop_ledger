@@ -158,7 +158,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
     // Design Colors (Matching LoginPage)
     final Color primaryColor = AppColors.primary;
-    final Color bgLight = const Color(0xFFF6F8F6);
+    final Color bgLight = Colors.white;
     final Color bgDark = AppColors.backgroundDark;
     final Color cardLight = const Color(0xFFFFFFFF);
     final Color cardDark = AppColors.cardDark;

@@ -44,7 +44,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final dateStr = DateFormat('EEE, d MMM').format(DateTime.now());
 
     return Scaffold(
-      backgroundColor: context.background,
+      backgroundColor: context.appBarBackground,
       body: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) {
@@ -69,12 +69,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   20,
                   16,
                 ),
-                decoration: BoxDecoration(
-                  color: context.appBarBackground,
-                  border: Border(
-                    bottom: BorderSide(color: context.borderColor),
-                  ),
-                ),
+                decoration: BoxDecoration(color: context.appBarBackground),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

@@ -31,7 +31,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final customerListAsync = ref.watch(customerListProvider);
 
     return Scaffold(
-      backgroundColor: context.background,
+      backgroundColor: context.appBarBackground,
       body: Column(
         children: [
           // Header
@@ -42,10 +42,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               20,
               16,
             ),
-            decoration: BoxDecoration(
-              color: context.appBarBackground,
-              border: Border(bottom: BorderSide(color: context.borderColor)),
-            ),
+            decoration: BoxDecoration(color: context.appBarBackground),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

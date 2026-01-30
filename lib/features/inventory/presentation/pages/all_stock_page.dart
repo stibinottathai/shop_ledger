@@ -125,7 +125,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
     final itemsAsync = ref.watch(inventoryProvider);
 
     return Scaffold(
-      backgroundColor: context.background,
+      backgroundColor: context.appBarBackground,
       body: Column(
         children: [
           Container(
@@ -135,10 +135,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
               20,
               16,
             ),
-            decoration: BoxDecoration(
-              color: context.appBarBackground,
-              border: Border(bottom: BorderSide(color: context.borderColor)),
-            ),
+            decoration: BoxDecoration(color: context.appBarBackground),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

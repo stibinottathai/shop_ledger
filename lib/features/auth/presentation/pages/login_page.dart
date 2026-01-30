@@ -73,7 +73,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     // Design Colors mapped from HTML request
     final Color primaryColor = AppColors.primary;
-    final Color bgLight = const Color(0xFFF6F8F6);
+    final Color bgLight = Colors.white;
     final Color bgDark = AppColors.backgroundDark;
     final Color cardLight = const Color(0xFFFFFFFF);
     final Color cardDark = AppColors.cardDark;

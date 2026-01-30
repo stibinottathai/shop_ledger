@@ -26,7 +26,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     final reportsAsync = ref.watch(reportsProvider);
 
     return Scaffold(
-      backgroundColor: context.background,
+      backgroundColor: context.appBarBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -546,10 +546,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   Widget _buildAppBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: context.appBarBackground,
-        border: Border(bottom: BorderSide(color: context.borderColor)),
-      ),
+      decoration: BoxDecoration(color: context.appBarBackground),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

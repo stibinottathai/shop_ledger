@@ -623,7 +623,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     final itemsAsync = ref.watch(inventoryProvider);
 
     return Scaffold(
-      backgroundColor: context.background,
+      backgroundColor: context.appBarBackground,
       body: Column(
         children: [
           // Header
@@ -634,10 +634,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
               20,
               16,
             ),
-            decoration: BoxDecoration(
-              color: context.appBarBackground,
-              border: Border(bottom: BorderSide(color: context.borderColor)),
-            ),
+            decoration: BoxDecoration(color: context.appBarBackground),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -1107,20 +1104,14 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            const Color(0xFF028D81), // Slightly lighter teal
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
+        border: Border.all(color: context.borderColor),
+        boxShadow: const [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            offset: const Offset(0, 8),
-            blurRadius: 20,
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            offset: Offset(0, 1),
+            blurRadius: 3,
           ),
         ],
       ),
@@ -1130,7 +1121,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
           Text(
             'TOTAL STOCK VALUE',
             style: GoogleFonts.inter(
-              color: Colors.white.withOpacity(0.7),
+              color: context.textMuted,
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.0,
@@ -1140,7 +1131,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
           Text(
             '₹ ${totalValue.toStringAsFixed(0)}',
             style: GoogleFonts.inter(
-              color: Colors.white,
+              color: context.isDarkMode ? Colors.white : AppColors.primary,
               fontSize: 32,
               fontWeight: FontWeight.bold,
               letterSpacing: -1.0,
@@ -1152,13 +1143,13 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
               _buildCompactStat(
                 Icons.inventory_2_outlined,
                 '$totalItems Items',
-                Colors.white,
+                context.textPrimary,
               ),
               const SizedBox(width: 24),
               _buildCompactStat(
                 Icons.warning_amber_rounded,
                 '$lowStock Low Stock',
-                const Color(0xFFFFD54F),
+                AppColors.accentOrange,
               ),
             ],
           ),

@@ -17,7 +17,7 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.background,
+      backgroundColor: context.appBarBackground,
       body: navigationShell,
       bottomNavigationBar: _buildBottomNav(context),
     );

@@ -36,7 +36,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.background,
+      backgroundColor: context.appBarBackground,
       body: Column(
         children: [
           // Custom Header
@@ -47,10 +47,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
               20,
               0,
             ),
-            decoration: BoxDecoration(
-              color: context.appBarBackground,
-              border: Border(bottom: BorderSide(color: context.borderColor)),
-            ),
+            decoration: BoxDecoration(color: context.appBarBackground),
             child: Column(
               children: [
                 // Title Row
@@ -80,6 +77,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                   indicatorColor: context.isDarkMode
                       ? AppColors.primary
                       : const Color(0xFF016B61),
+                  dividerColor: Colors.transparent,
                   indicatorWeight: 3,
                   labelStyle: GoogleFonts.inter(
                     fontWeight: FontWeight.w600,
@@ -147,6 +145,13 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
 
     return Column(
       children: [
+        // Fixed Total Expense Card
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+          child: _buildTotalExpenseCard(totalExpenseAsync),
+        ),
+
+        // Scrollable List
         Expanded(
           child: expenseListAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -171,8 +176,6 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const SizedBox(height: 24),
-                            _buildTotalExpenseCard(totalExpenseAsync),
                             const SizedBox(height: 32),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -222,14 +225,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final expense = expenses[index];
-                            return _buildExpenseItem(expense);
-                          },
-                          childCount:
-                              expenses.length, // Already limited by provider
-                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final expense = expenses[index];
+                          return _buildExpenseItem(expense);
+                        }, childCount: expenses.length),
                       ),
                     ),
                     const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -450,7 +449,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
             Text(
               '₹ ${NumberFormat("##,##0.00").format(total)}',
               style: GoogleFonts.inter(
-                color: AppColors.primary,
+                color: context.isDarkMode ? Colors.white : AppColors.primary,
                 fontSize: 36,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -1.0,
