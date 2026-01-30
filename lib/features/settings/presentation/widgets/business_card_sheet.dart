@@ -300,9 +300,9 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -311,7 +311,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: context.borderColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -321,7 +321,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 24),
@@ -555,7 +555,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.primary
-                              : AppColors.slate100,
+                              : context.subtleBackground,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -563,7 +563,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
                           style: _fonts[index].copyWith(
                             color: isSelected
                                 ? Colors.white
-                                : AppColors.textMain,
+                                : context.textPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -595,7 +595,7 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.primary
-                                : Colors.grey[300]!,
+                                : context.borderColor,
                             width: isSelected ? 3 : 1,
                           ),
                         ),
@@ -687,12 +687,14 @@ class _BusinessCardSheetState extends ConsumerState<BusinessCardSheet> {
   }
 
   Widget _buildSectionLabel(String label) {
-    return Text(
-      label,
-      style: GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: AppColors.slate500,
+    return Builder(
+      builder: (context) => Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: context.textMuted,
+        ),
       ),
     );
   }

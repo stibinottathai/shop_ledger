@@ -36,7 +36,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.background,
       body: Column(
         children: [
           // Custom Header
@@ -47,9 +47,9 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
               20,
               0,
             ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+            decoration: BoxDecoration(
+              color: context.appBarBackground,
+              border: Border(bottom: BorderSide(color: context.borderColor)),
             ),
             child: Column(
               children: [
@@ -60,7 +60,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                     Text(
                       'Expense Reports',
                       style: GoogleFonts.inter(
-                        color: AppColors.textMain,
+                        color: context.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         height: 1.25,
@@ -73,9 +73,13 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                 // TabBar
                 TabBar(
                   controller: _tabController,
-                  labelColor: const Color(0xFF016B61),
-                  unselectedLabelColor: AppColors.textMuted,
-                  indicatorColor: const Color(0xFF016B61),
+                  labelColor: context.isDarkMode
+                      ? AppColors.primary
+                      : const Color(0xFF016B61),
+                  unselectedLabelColor: context.textMuted,
+                  indicatorColor: context.isDarkMode
+                      ? AppColors.primary
+                      : const Color(0xFF016B61),
                   indicatorWeight: 3,
                   labelStyle: GoogleFonts.inter(
                     fontWeight: FontWeight.w600,
@@ -101,7 +105,6 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 24, right: 24),
         child: SizedBox(
-          width: 56,
           height: 56,
           child: FloatingActionButton(
             heroTag: 'expense_add_fab',
@@ -123,16 +126,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.05),
+                    color: Color.fromRGBO(0, 0, 0, 0.2),
                     offset: Offset(0, 10),
                     blurRadius: 15,
                     spreadRadius: -3,
-                  ),
-                  BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.025),
-                    offset: Offset(0, 4),
-                    blurRadius: 6,
-                    spreadRadius: -4,
                   ),
                 ],
               ),
@@ -185,7 +182,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                                   style: GoogleFonts.inter(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textMain,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                                 TextButton(
@@ -280,14 +277,14 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
               ),
               content: Text(
                 'Are you sure you want to delete this transaction?',
-                style: GoogleFonts.inter(color: AppColors.textMain),
+                style: GoogleFonts.inter(color: context.textPrimary),
               ),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   child: Text(
                     'Cancel',
-                    style: GoogleFonts.inter(color: AppColors.textMuted),
+                    style: GoogleFonts.inter(color: context.textMuted),
                   ),
                 ),
                 TextButton(
@@ -321,9 +318,9 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)), // Slate 200
+          border: Border.all(color: context.borderColor), // Theme aware border
           boxShadow: const [
             BoxShadow(
               color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -338,9 +335,11 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.slate50,
+                color: context.isDarkMode
+                    ? AppColors.surfaceDark
+                    : AppColors.slate50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.slate100),
+                border: Border.all(color: context.borderColor),
               ),
               alignment: Alignment.center,
               child: Icon(
@@ -359,7 +358,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -418,9 +417,9 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)), // Slate 200
+        border: Border.all(color: context.borderColor), // Theme aware border
         boxShadow: const [
           BoxShadow(
             color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -434,7 +433,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
           Text(
             'TOTAL EXPENSE',
             style: GoogleFonts.inter(
-              color: AppColors.textMuted,
+              color: context.textMuted,
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.0,
@@ -461,7 +460,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage>
           Text(
             'Current Period',
             style: GoogleFonts.inter(
-              color: AppColors.textMain,
+              color: context.textMuted,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),

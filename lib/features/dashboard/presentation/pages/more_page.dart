@@ -20,14 +20,14 @@ class MorePage extends ConsumerWidget {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        title: const Text('More'),
+        title: Text('More', style: TextStyle(color: context.textPrimary)),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
-        titleTextStyle: const TextStyle(
-          color: AppColors.textDark,
+        titleTextStyle: TextStyle(
+          color: context.textPrimary,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
@@ -37,9 +37,9 @@ class MorePage extends ConsumerWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: context.borderColor),
             ),
             child: ListTile(
               leading: Container(

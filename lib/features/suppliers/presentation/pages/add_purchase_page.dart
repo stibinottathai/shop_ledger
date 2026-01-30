@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shop_ledger/core/theme/app_colors.dart';
 
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
@@ -286,21 +287,25 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
     final inventoryAsync = ref.watch(inventoryProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: context.background,
       appBar: AppBar(
         title: Text(
           'Add Purchase',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: Colors.black,
+            color: context.textPrimary,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: context.textPrimary,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
       ),
@@ -313,7 +318,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
               padding: const EdgeInsets.all(16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: context.subtleBackground,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(4),
@@ -330,7 +335,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: const Color(0xFFE8F5E9),
+              color: AppColors.primary.withOpacity(0.1),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -338,7 +343,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     'Supplier',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: const Color(0xFF2E7D32),
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -347,7 +352,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: context.textPrimary,
                     ),
                   ),
                 ],
@@ -372,7 +377,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -386,20 +391,20 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                       style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey[800],
+                        color: context.textPrimary,
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: context.cardColor,
                         hintText: '0.00',
-                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        hintStyle: TextStyle(color: context.textMuted),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: context.borderColor),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: context.borderColor),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -415,16 +420,16 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                         vertical: 16,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: context.subtleBackground,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: context.borderColor),
                       ),
                       child: Text(
                         "₹${_calculatedTotal.toStringAsFixed(2)}",
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: context.textPrimary,
                         ),
                       ),
                     ),
@@ -436,13 +441,14 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _dateController,
                     readOnly: true,
+                    style: TextStyle(color: context.textPrimary),
                     onTap: () async {
                       final picked = await showDatePicker(
                         context: context,
@@ -461,19 +467,19 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     },
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
-                      suffixIcon: const Icon(
+                      fillColor: context.cardColor,
+                      suffixIcon: Icon(
                         Icons.calendar_today_outlined,
                         size: 20,
-                        color: Colors.grey,
+                        color: context.textMuted,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -501,7 +507,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: context.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -514,21 +520,25 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                            color: context.textPrimary,
                           ),
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: context.cardColor,
                             hintText: '0.00',
                             prefixText: '₹ ',
-                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            hintStyle: TextStyle(color: context.textMuted),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
+                              ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -550,7 +560,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: context.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -668,7 +678,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? context.cardColor : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           boxShadow: isSelected
               ? [
@@ -685,7 +695,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
           label,
           style: GoogleFonts.inter(
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? Colors.black87 : Colors.grey[600],
+            color: isSelected ? context.textPrimary : context.textMuted,
             fontSize: 14,
           ),
         ),
@@ -704,25 +714,26 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _manualDetailsController,
             maxLines: 3,
+            style: TextStyle(color: context.textPrimary),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white,
+              fillColor: context.cardColor,
               hintText: 'Enter purchase details...',
-              hintStyle: TextStyle(color: Colors.grey[400]),
+              hintStyle: TextStyle(color: context.textMuted),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: context.borderColor),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: context.borderColor),
               ),
             ),
           ),
@@ -745,24 +756,25 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             data: (items) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: context.borderColor),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<Item>(
                   value: _selectedItem,
                   isExpanded: true,
+                  dropdownColor: context.cardColor,
                   hint: Text(
                     'Select Item',
-                    style: GoogleFonts.inter(color: Colors.grey[600]),
+                    style: GoogleFonts.inter(color: context.textMuted),
                   ),
                   items: items.map((item) {
                     return DropdownMenuItem(
                       value: item,
                       child: Text(
                         item.name,
-                        style: GoogleFonts.inter(color: Colors.black87),
+                        style: GoogleFonts.inter(color: context.textPrimary),
                       ),
                     );
                   }).toList(),
@@ -793,15 +805,19 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: context.borderColor),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedUnit,
                 isExpanded: true,
-                hint: const Text('Select Unit'),
+                dropdownColor: context.cardColor,
+                hint: Text(
+                  'Select Unit',
+                  style: TextStyle(color: context.textMuted),
+                ),
                 items: _unitOptions.map((u) {
                   String label = u[0].toUpperCase() + u.substring(1);
                   if (u == 'liter') label = 'Liter (l)';
@@ -810,7 +826,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     value: u,
                     child: Text(
                       label,
-                      style: GoogleFonts.inter(color: Colors.black87),
+                      style: GoogleFonts.inter(color: context.textPrimary),
                     ),
                   );
                 }).toList(),
@@ -833,18 +849,19 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                   child: TextField(
                     controller: _countController,
                     keyboardType: TextInputType.number,
+                    style: TextStyle(color: context.textPrimary),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: context.cardColor,
                       labelText: 'No. Items',
-                      labelStyle: TextStyle(color: Colors.grey[600]),
+                      labelStyle: TextStyle(color: context.textMuted),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -861,20 +878,21 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  style: TextStyle(color: context.textPrimary),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: context.cardColor,
                     labelText: _selectedUnit == 'kg'
                         ? 'Quantity (Kg)'
                         : 'Quantity (${_selectedUnit[0].toUpperCase()}${_selectedUnit.substring(1)})',
-                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    labelStyle: TextStyle(color: context.textMuted),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -892,19 +910,20 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
           TextField(
             controller: _priceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(color: context.textPrimary),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white,
+              fillColor: context.cardColor,
               labelText:
                   'Price / ${_selectedUnit == 'liter' ? 'ltr' : _selectedUnit}',
-              labelStyle: TextStyle(color: Colors.grey[600]),
+              labelStyle: TextStyle(color: context.textMuted),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: context.borderColor),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: context.borderColor),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -943,9 +962,9 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: context.borderColor),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -968,7 +987,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: context.textMuted,
                             ),
                           ),
                         ),
@@ -979,7 +998,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: context.textMuted,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -991,7 +1010,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: context.textMuted,
                             ),
                             textAlign: TextAlign.right,
                           ),
@@ -1034,6 +1053,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                                     style: GoogleFonts.inter(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                   if (item.count > 0)
@@ -1041,7 +1061,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                                       "${item.count} Items",
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
-                                        color: Colors.grey[600],
+                                        color: context.textMuted,
                                       ),
                                     ),
                                 ],
@@ -1053,7 +1073,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                                 "$qty $unitSuffix x ₹$rate",
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
-                                  color: Colors.grey[700],
+                                  color: context.textMuted,
                                 ),
                                 textAlign: TextAlign.center,
                               ),

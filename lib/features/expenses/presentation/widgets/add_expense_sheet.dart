@@ -120,9 +120,9 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.fromLTRB(
         24,
@@ -146,7 +146,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                     style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textMain,
+                      color: context.textPrimary,
                     ),
                   ),
                   IconButton(
@@ -165,7 +165,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.slate600,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 8),
@@ -177,18 +177,18 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
                 decoration: InputDecoration(
                   prefixText: '₹ ',
                   prefixStyle: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: context.textPrimary,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    borderSide: BorderSide(color: context.borderColor),
                   ),
                   contentPadding: const EdgeInsets.all(16),
                 ),
@@ -217,7 +217,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.slate600,
+                            color: context.textMuted,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -230,11 +230,15 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: AppColors.slate200),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: AppColors.slate200),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -273,7 +277,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.slate600,
+                            color: context.textMuted,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -286,11 +290,15 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: AppColors.slate200),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: AppColors.slate200),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -329,7 +337,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.slate600,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 8),
@@ -341,7 +349,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    border: Border.all(color: context.borderColor),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -352,12 +360,12 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.calendar_today,
-                        color: AppColors.greyText,
+                        color: context.textMuted,
                         size: 20,
                       ),
                     ],
@@ -373,7 +381,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.slate600,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 8),
@@ -386,11 +394,11 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.slate200),
+                    borderSide: BorderSide(color: context.borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.slate200),
+                    borderSide: BorderSide(color: context.borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -421,7 +429,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.slate600,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 8),
@@ -432,7 +440,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                   hintText: 'Add a note...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    borderSide: BorderSide(color: context.borderColor),
                   ),
                 ),
               ),

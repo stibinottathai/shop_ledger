@@ -202,18 +202,18 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Transaction Details',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -279,8 +279,9 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.borderColor),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -301,7 +302,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                         Text(
                           isSale ? 'SALE RECEIPT' : 'PAYMENT RECEIPT',
                           style: TextStyle(
-                            color: Colors.grey[500],
+                            color: context.textMuted,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
@@ -312,8 +313,8 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                           DateFormat(
                             'dd MMMM yyyy, hh:mm a',
                           ).format(widget.transaction.date), // Detailed date
-                          style: const TextStyle(
-                            color: AppColors.textDark,
+                          style: TextStyle(
+                            color: context.textPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -387,9 +388,9 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                   children: [
                                     Text(
                                       item['item']!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.textDark,
+                                        color: context.textPrimary,
                                         fontSize: 14,
                                       ),
                                     ),
@@ -397,7 +398,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                       Text(
                                         item['price']!,
                                         style: TextStyle(
-                                          color: Colors.grey[500],
+                                          color: context.textMuted,
                                           fontSize: 11,
                                         ),
                                       ),
@@ -408,7 +409,10 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                 flex: 2,
                                 child: Text(
                                   quantityDisplay,
-                                  style: const TextStyle(fontSize: 14),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: context.textPrimary,
+                                  ),
                                 ),
                               ),
                               Expanded(
@@ -418,7 +422,10 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                     ' Nos',
                                     '',
                                   ), // Just show number
-                                  style: const TextStyle(fontSize: 14),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: context.textPrimary,
+                                  ),
                                 ),
                               ),
                               Expanded(
@@ -426,9 +433,10 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                 child: Text(
                                   '₹${item['total']}',
                                   textAlign: TextAlign.right,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                               ),
@@ -447,7 +455,11 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                             : (isSale
                                   ? 'Item details not available'
                                   : 'Payment Received'),
-                        style: const TextStyle(fontSize: 16, height: 1.5),
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 1.5,
+                          color: context.textPrimary,
+                        ),
                       ),
                     ),
                   ],
@@ -460,12 +472,13 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'TOTAL AMOUNT',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             letterSpacing: 1.0,
+                            color: context.textPrimary,
                           ), // Text style
                         ), // Text
                         Text(
@@ -474,7 +487,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                             fontWeight: FontWeight.bold,
                             fontSize: 24,
                             color: isSale
-                                ? AppColors.textDark
+                                ? context.textPrimary
                                 : AppColors.primary,
                           ),
                         ),
@@ -486,17 +499,17 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                       widget.transaction.receivedAmount! > 0) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Divider(color: Colors.grey[100]),
+                      child: Divider(color: context.borderColor),
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'RECEIVED AMOUNT',
                             style: TextStyle(
-                              color: AppColors.greyText,
+                              color: context.textMuted,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               letterSpacing: 0.5,
@@ -514,7 +527,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                       ),
                     ),
                     Container(
-                      color: Colors.grey[50],
+                      color: context.subtleBackground,
                       padding: const EdgeInsets.all(24),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -583,7 +596,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
       text,
       textAlign: align,
       style: TextStyle(
-        color: Colors.grey[500],
+        color: context.textMuted,
         fontSize: 11,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.0,

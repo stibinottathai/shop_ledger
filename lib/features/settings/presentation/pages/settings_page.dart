@@ -16,18 +16,18 @@ class SettingsPage extends ConsumerWidget {
     final notifier = ref.read(settingsProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Settings',
           style: GoogleFonts.inter(
-            color: AppColors.textDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -40,7 +40,7 @@ class SettingsPage extends ConsumerWidget {
           // Privacy Mode Toggle
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -75,13 +75,80 @@ class SettingsPage extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
               ),
               subtitle: Text(
                 'Hide sensitive amounts on dashboard',
-                style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 13),
+                style: GoogleFonts.inter(
+                  color: context.textMuted,
+                  fontSize: 13,
+                ),
               ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Theme Selector
+          Container(
+            decoration: BoxDecoration(
+              color: context.cardColor,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  offset: const Offset(0, 1),
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Appearance',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: context.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: context.subtleBackground,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildThemeOption(
+                        context,
+                        label: 'System',
+                        icon: Icons.brightness_auto,
+                        isSelected: settingsState.themeMode == ThemeMode.system,
+                        onTap: () => notifier.updateThemeMode(ThemeMode.system),
+                      ),
+                      _buildThemeOption(
+                        context,
+                        label: 'Light',
+                        icon: Icons.light_mode,
+                        isSelected: settingsState.themeMode == ThemeMode.light,
+                        onTap: () => notifier.updateThemeMode(ThemeMode.light),
+                      ),
+                      _buildThemeOption(
+                        context,
+                        label: 'Dark',
+                        icon: Icons.dark_mode,
+                        isSelected: settingsState.themeMode == ThemeMode.dark,
+                        onTap: () => notifier.updateThemeMode(ThemeMode.dark),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -99,30 +166,53 @@ class SettingsPage extends ConsumerWidget {
               );
               showDialog(
                 context: context,
-                builder: (context) => AlertDialog(
+                builder: (dialogContext) => AlertDialog(
+                  backgroundColor: dialogContext.cardColor,
                   title: Text(
                     'Set Credit Limit',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: dialogContext.textPrimary,
                     ),
                   ),
                   content: TextField(
                     controller: controller,
                     keyboardType: TextInputType.number,
+                    style: TextStyle(color: dialogContext.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Amount (₹)',
+                      labelStyle: TextStyle(color: dialogContext.textMuted),
+                      filled: true,
+                      fillColor: dialogContext.subtleBackground,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: dialogContext.borderColor,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: dialogContext.borderColor,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
                   actions: [
                     TextButton(
-                      onPressed: () => context.pop(),
+                      onPressed: () => dialogContext.pop(),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.inter(color: AppColors.textMuted),
+                        style: GoogleFonts.inter(
+                          color: dialogContext.textMuted,
+                        ),
                       ),
                     ),
                     TextButton(
@@ -130,7 +220,7 @@ class SettingsPage extends ConsumerWidget {
                         final value = double.tryParse(controller.text);
                         if (value != null) {
                           notifier.updateMaxCreditLimit(value);
-                          context.pop();
+                          dialogContext.pop();
                         }
                       },
                       child: Text(
@@ -199,7 +289,7 @@ class SettingsPage extends ConsumerWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -225,14 +315,66 @@ class SettingsPage extends ConsumerWidget {
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: AppColors.textDark,
+            color: context.textPrimary,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 13),
+          style: GoogleFonts.inter(color: context.textMuted, fontSize: 13),
         ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        trailing: Icon(Icons.chevron_right, color: context.textMuted),
+      ),
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final isDark = context.isDarkMode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark ? AppColors.surfaceDark : Colors.white)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: isSelected ? context.textPrimary : context.textMuted,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected ? context.textPrimary : context.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

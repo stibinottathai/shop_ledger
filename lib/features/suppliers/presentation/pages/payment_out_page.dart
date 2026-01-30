@@ -112,14 +112,17 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        title: const Text('Payment Out'),
+        title: Text(
+          'Payment Out',
+          style: TextStyle(color: context.textPrimary),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
@@ -138,21 +141,21 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Paying To',
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.greyText,
+                      color: context.textMuted,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     widget.supplier.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                 ],
@@ -193,7 +196,7 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
                     readOnly: true,
                     textColor: remaining < 0
                         ? AppColors.primary
-                        : AppColors.textDark,
+                        : context.textPrimary,
                   ),
                 );
               },
@@ -210,12 +213,12 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Amount Paid',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: AppColors.textDark,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -230,28 +233,29 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
                             style: GoogleFonts.inter(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textDark,
+                              color: context.textPrimary,
                             ),
                             decoration: InputDecoration(
                               hintText: '0.00',
+                              hintStyle: TextStyle(color: context.textMuted),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: context.cardColor,
                               prefixText: '₹ ',
                               prefixStyle: GoogleFonts.inter(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textDark,
+                                color: context.textPrimary,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
-                                  color: Colors.grey[300]!,
+                                  color: context.borderColor,
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
-                                  color: Colors.grey[300]!,
+                                  color: context.borderColor,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -303,18 +307,19 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Date',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: AppColors.textDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _dateController,
                   readOnly: true,
+                  style: TextStyle(color: context.textPrimary),
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
@@ -333,15 +338,17 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
                   },
                   decoration: InputDecoration(
                     hintText: 'Select Date',
+                    hintStyle: TextStyle(color: context.textMuted),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: context.cardColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.inputBorder,
-                      ),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
-                    suffixIcon: const Icon(Icons.calendar_today),
+                    suffixIcon: Icon(
+                      Icons.calendar_today,
+                      color: context.textMuted,
+                    ),
                   ),
                 ),
               ],
@@ -418,10 +425,10 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: AppColors.textDark,
+            color: context.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -433,25 +440,26 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: textColor ?? AppColors.textDark,
+            color: textColor ?? context.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: hint,
+            hintStyle: TextStyle(color: context.textMuted),
             prefixText: prefixText,
             prefixStyle: TextStyle(
               fontSize: fontSize,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: context.cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder),
+              borderSide: BorderSide(color: context.borderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder),
+              borderSide: BorderSide(color: context.borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

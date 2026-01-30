@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,16 +13,23 @@ final sharedPreferencesProvider = FutureProvider<SharedPreferences>((
 class SettingsState {
   final bool hideSensitiveData;
   final double maxCreditLimit;
+  final ThemeMode themeMode;
 
   const SettingsState({
     this.hideSensitiveData = false,
     this.maxCreditLimit = 5000.0,
+    this.themeMode = ThemeMode.system,
   });
 
-  SettingsState copyWith({bool? hideSensitiveData, double? maxCreditLimit}) {
+  SettingsState copyWith({
+    bool? hideSensitiveData,
+    double? maxCreditLimit,
+    ThemeMode? themeMode,
+  }) {
     return SettingsState(
       hideSensitiveData: hideSensitiveData ?? this.hideSensitiveData,
       maxCreditLimit: maxCreditLimit ?? this.maxCreditLimit,
+      themeMode: themeMode ?? this.themeMode,
     );
   }
 }
@@ -38,7 +46,18 @@ class SettingsNotifier extends Notifier<SettingsState> {
     final prefs = await ref.watch(sharedPreferencesProvider.future);
     final hide = prefs.getBool('hide_sensitive_data') ?? false;
     final limit = prefs.getDouble('max_credit_limit') ?? 5000.0;
-    state = state.copyWith(hideSensitiveData: hide, maxCreditLimit: limit);
+
+    final themeIndex =
+        prefs.getInt('theme_mode') ?? 0; // 0: system, 1: light, 2: dark
+    final themeMode = ThemeMode.values.length > themeIndex
+        ? ThemeMode.values[themeIndex]
+        : ThemeMode.system;
+
+    state = state.copyWith(
+      hideSensitiveData: hide,
+      maxCreditLimit: limit,
+      themeMode: themeMode,
+    );
   }
 
   Future<void> toggleHideSensitiveData(bool value) async {
@@ -51,6 +70,12 @@ class SettingsNotifier extends Notifier<SettingsState> {
     state = state.copyWith(maxCreditLimit: value);
     final prefs = await ref.read(sharedPreferencesProvider.future);
     await prefs.setDouble('max_credit_limit', value);
+  }
+
+  Future<void> updateThemeMode(ThemeMode mode) async {
+    state = state.copyWith(themeMode: mode);
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    await prefs.setInt('theme_mode', mode.index);
   }
 }
 

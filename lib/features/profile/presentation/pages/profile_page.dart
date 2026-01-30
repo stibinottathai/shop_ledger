@@ -32,11 +32,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   bool _isLoading = false;
 
-  // New Design Colors
-  static const _textMain = Color(0xFF0F172A);
-  static const _textMuted = Color(0xFF64748B);
-  static const _borderColor = Color(0xFFF1F5F9);
-
   @override
   void initState() {
     super.initState();
@@ -147,90 +142,105 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Edit Profile',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildDialogTextField('Shop Name', editShopNameController),
-                  const SizedBox(height: 16),
-                  _buildDialogTextField('Owner Name', editUsernameController),
-                  const SizedBox(height: 16),
-                  _buildDialogTextField(
-                    'Phone Number',
-                    editPhoneController,
-                    isPhone: true,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDialogTextField(
-                    'GST Number',
-                    editGstController,
-                    isRequired: false,
-                  ),
-                ],
+      builder: (dialogContext) {
+        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Edit Profile',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.textDarkTheme : AppColors.textDark,
+            ),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDialogTextField('Shop Name', editShopNameController),
+                    const SizedBox(height: 16),
+                    _buildDialogTextField('Owner Name', editUsernameController),
+                    const SizedBox(height: 16),
+                    _buildDialogTextField(
+                      'Phone Number',
+                      editPhoneController,
+                      isPhone: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDialogTextField(
+                      'GST Number',
+                      editGstController,
+                      isRequired: false,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 24,
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              side: BorderSide(color: Colors.grey[300]!),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.inter(
-                color: _textMain,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
           ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context); // Close dialog first
-                await _updateProfileData(
-                  editShopNameController.text.trim(),
-                  editUsernameController.text.trim(),
-                  editPhoneController.text.trim(),
-                  editGstController.text.trim(),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                side: BorderSide(color: Colors.grey[300]!),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(
+                  color: isDark ? AppColors.textDarkTheme : AppColors.textDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            child: Text(
-              'Update',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(dialogContext); // Close dialog first
+                  await _updateProfileData(
+                    editShopNameController.text.trim(),
+                    editUsernameController.text.trim(),
+                    editPhoneController.text.trim(),
+                    editGstController.text.trim(),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+              child: Text(
+                'Update',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -240,51 +250,66 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     bool isPhone = false,
     bool isRequired = true,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: _textMuted,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
-          validator: (val) {
-            if (isRequired && (val == null || val.isEmpty)) {
-              return 'Required';
-            }
-            return null;
-          },
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            color: _textMain,
-          ),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final textMain = isDark ? AppColors.textDarkTheme : AppColors.textDark;
+        final textMuted = isDark
+            ? AppColors.textMutedDark
+            : AppColors.textMuted;
+        final borderCol = isDark
+            ? Colors.white.withOpacity(0.1)
+            : const Color(0xFFF1F5F9);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+              ),
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _borderColor),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: controller,
+              keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+              validator: (val) {
+                if (isRequired && (val == null || val.isEmpty)) {
+                  return 'Required';
+                }
+                return null;
+              },
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                color: textMain,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: isDark ? AppColors.surfaceDark : Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: borderCol),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: borderCol),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.primary),
+                ),
+              ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary),
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -312,7 +337,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
             content: Text(
               'Are you sure you want to log out of your account?',
-              style: GoogleFonts.inter(fontSize: 14, color: _textMain),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: context.textPrimary,
+              ),
             ),
             actionsPadding: const EdgeInsets.symmetric(
               horizontal: 24,
@@ -334,7 +362,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 child: Text(
                   'Cancel',
                   style: GoogleFonts.inter(
-                    color: _textMain,
+                    color: context.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -416,12 +444,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: _textMain, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: context.textPrimary,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -492,7 +524,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             style: GoogleFonts.inter(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: _textMain,
+                              color: context.textPrimary,
                               letterSpacing: -0.5,
                             ),
                           ),
@@ -513,7 +545,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: _textMuted,
+                                  color: context.textMuted,
                                 ),
                               ),
                             ],
@@ -523,13 +555,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       const SizedBox(height: 32),
 
                       // Account Details Section
-                      _buildSectionHeader('ACCOUNT DETAILS'),
+                      _buildSectionHeader(context, 'ACCOUNT DETAILS'),
                       const SizedBox(height: 12),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _borderColor),
+                          border: Border.all(color: context.borderColor),
                           boxShadow: const [
                             BoxShadow(
                               color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -541,20 +573,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         child: Column(
                           children: [
                             _buildInfoItem(
+                              context,
                               icon: Icons.person,
                               label: 'Owner Name',
                               controller: _usernameController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
+                            Divider(height: 1, color: context.borderColor),
                             _buildInfoItem(
+                              context,
                               icon: Icons.mail,
                               label: 'Email Address',
                               controller: _emailController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
+                            Divider(height: 1, color: context.borderColor),
                             _buildInfoItem(
+                              context,
                               icon: Icons.call,
                               label: 'Phone Number',
                               controller: _phoneController,
@@ -566,13 +601,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       const SizedBox(height: 24),
 
                       // Shop Information Section
-                      _buildSectionHeader('SHOP INFORMATION'),
+                      _buildSectionHeader(context, 'SHOP INFORMATION'),
                       const SizedBox(height: 12),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _borderColor),
+                          border: Border.all(color: context.borderColor),
                           boxShadow: const [
                             BoxShadow(
                               color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -584,14 +619,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         child: Column(
                           children: [
                             _buildInfoItem(
+                              context,
                               icon: Icons.storefront,
                               label: 'Shop Name',
                               controller: _shopNameController,
                               readOnly: true,
                             ),
                             if (_gstController.text.isNotEmpty) ...[
-                              const Divider(height: 1, color: _borderColor),
+                              Divider(height: 1, color: context.borderColor),
                               _buildInfoItem(
+                                context,
                                 icon: Icons.receipt_long,
                                 label: 'GST Number',
                                 controller: _gstController,
@@ -610,9 +647,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             // Bottom Action Button
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFF8FAFC))),
+              decoration: BoxDecoration(
+                color: context.cardColor,
+                border: Border(top: BorderSide(color: context.borderColor)),
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -653,7 +690,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
@@ -663,7 +700,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: _textMuted,
+            color: context.textMuted,
             letterSpacing: 1.2,
           ),
         ),
@@ -671,12 +708,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  Widget _buildInfoItem({
+  Widget _buildInfoItem(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required TextEditingController controller,
     bool readOnly = false,
   }) {
+    final isDark = context.isDarkMode;
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -685,11 +724,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: isDark ? AppColors.surfaceDark : const Color(0xFFF8FAFC),
               shape: BoxShape.circle,
-              border: Border.all(color: _borderColor),
+              border: Border.all(color: context.borderColor),
             ),
-            child: Icon(icon, color: const Color(0xFF64748B), size: 20),
+            child: Icon(icon, color: context.textMuted, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -701,7 +740,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: _textMuted,
+                    color: context.textMuted,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -712,8 +751,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: controller.text.isNotEmpty
-                        ? _textMain
-                        : _textMuted.withOpacity(0.5),
+                        ? context.textPrimary
+                        : context.textMuted.withOpacity(0.5),
                     fontStyle: controller.text.isNotEmpty
                         ? FontStyle.normal
                         : FontStyle.italic,

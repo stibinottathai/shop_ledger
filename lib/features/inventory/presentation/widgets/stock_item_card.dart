@@ -11,15 +11,16 @@ class StockItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDarkMode;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.slate100),
-        boxShadow: const [
+        border: Border.all(color: context.borderColor),
+        boxShadow: [
           BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.05),
-            offset: Offset(0, 1),
+            color: Color.fromRGBO(0, 0, 0, isDark ? 0.2 : 0.05),
+            offset: const Offset(0, 1),
             blurRadius: 3,
           ),
         ],
@@ -39,9 +40,9 @@ class StockItemCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: isDark ? AppColors.surfaceDark : AppColors.slate50,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: context.borderColor),
                   ),
                   child: Center(
                     child: Text(
@@ -66,7 +67,7 @@ class StockItemCard extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: AppColors.textMain,
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -75,12 +76,12 @@ class StockItemCard extends StatelessWidget {
                           Icon(
                             Icons.currency_rupee,
                             size: 14,
-                            color: AppColors.slate500,
+                            color: context.textMuted,
                           ),
                           Text(
                             '${item.pricePerKg.toStringAsFixed(2)} / ${item.unit == 'pcs' ? 'pc' : item.unit}',
                             style: GoogleFonts.inter(
-                              color: AppColors.slate500,
+                              color: context.textMuted,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -99,10 +100,12 @@ class StockItemCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.emerald50,
+                      color: isDark
+                          ? AppColors.emerald600.withAlpha(38)
+                          : AppColors.emerald50,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: AppColors.emerald200.withOpacity(0.5),
+                        color: AppColors.emerald200.withAlpha(128),
                       ),
                     ),
                     child: Column(

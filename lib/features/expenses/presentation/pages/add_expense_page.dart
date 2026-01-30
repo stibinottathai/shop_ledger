@@ -114,19 +114,19 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.background,
       appBar: AppBar(
         title: Text(
           'Add Expense',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
+            color: context.textPrimary,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
@@ -142,7 +142,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                 'Amount',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.greyText,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 8),
@@ -191,7 +191,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                           'Category',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.greyText,
+                            color: context.textMuted,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -200,8 +200,8 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
                               ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -232,7 +232,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                           'Payment',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.greyText,
+                            color: context.textMuted,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -241,8 +241,8 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
                               ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -274,7 +274,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                 'Date',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.greyText,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 8),
@@ -297,12 +297,12 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textDark,
+                          color: context.textPrimary,
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.calendar_today,
-                        color: AppColors.greyText,
+                        color: context.textMuted,
                         size: 20,
                       ),
                     ],
@@ -317,7 +317,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                 'Recurring',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.greyText,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 8),

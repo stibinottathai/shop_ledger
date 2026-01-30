@@ -31,7 +31,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final customerListAsync = ref.watch(customerListProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.background,
       body: Column(
         children: [
           // Header
@@ -42,9 +42,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               20,
               16,
             ),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFFFFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+            decoration: BoxDecoration(
+              color: context.appBarBackground,
+              border: Border(bottom: BorderSide(color: context.borderColor)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -58,7 +58,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         child: Text(
                           'Customers',
                           style: GoogleFonts.inter(
-                            color: AppColors.textMain,
+                            color: context.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             height: 1.25,
@@ -73,9 +73,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   height: 36,
                   width: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: context.subtleBackground,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: context.borderColor),
                     boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -161,7 +161,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                       Container(
                         height: 48, // Consistent height for search bars usually
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
@@ -186,19 +186,19 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                               .searchCustomers(value);
                         },
                         style: GoogleFonts.inter(
-                          color: AppColors.textMain,
+                          color: context.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: AppColors.slate400,
+                            color: context.textMuted,
                             size: 20,
                           ),
                           hintText: 'Search customers...',
                           hintStyle: GoogleFonts.inter(
-                            color: AppColors.slate400,
+                            color: context.textMuted,
                           ),
                           border: InputBorder.none,
                           focusedBorder: OutlineInputBorder(
@@ -210,8 +210,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.slate200,
+                            borderSide: BorderSide(
+                              color: context.borderColor,
                               width: 1.5,
                             ),
                           ),
@@ -238,7 +238,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                 Text(
                                   'ALL CUSTOMERS (${customers.length})',
                                   style: GoogleFonts.inter(
-                                    color: AppColors.slate400,
+                                    color: context.textMuted,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.5,
@@ -255,7 +255,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                       child: Text(
                                         'No customers found',
                                         style: GoogleFonts.inter(
-                                          color: AppColors.slate400,
+                                          color: context.textMuted,
                                         ),
                                       ),
                                     )
@@ -378,7 +378,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
           Text(
             label,
             style: GoogleFonts.inter(
-              color: isSelected ? AppColors.primary : AppColors.textMain,
+              color: isSelected ? AppColors.primary : context.textPrimary,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               fontSize: 14,
             ),
@@ -407,9 +407,9 @@ class CustomerListItem extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.slate100),
+        border: Border.all(color: context.borderColor),
         boxShadow: const [
           BoxShadow(
             color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -431,7 +431,7 @@ class CustomerListItem extends ConsumerWidget {
             context.go('/customers/${customer.id}', extra: customer);
           },
           borderRadius: BorderRadius.circular(16),
-          hoverColor: AppColors.slate50,
+          hoverColor: context.subtleBackground,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -441,9 +441,9 @@ class CustomerListItem extends ConsumerWidget {
                   height: 48,
                   width: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: context.subtleBackground,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: context.borderColor),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -469,7 +469,7 @@ class CustomerListItem extends ConsumerWidget {
                       Text(
                         customer.name,
                         style: GoogleFonts.inter(
-                          color: AppColors.textMain,
+                          color: context.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -478,7 +478,7 @@ class CustomerListItem extends ConsumerWidget {
                       Text(
                         customer.phone,
                         style: GoogleFonts.inter(
-                          color: AppColors.slate500,
+                          color: context.textMuted,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -502,7 +502,7 @@ class CustomerListItem extends ConsumerWidget {
                                 ? AppColors.danger
                                 : stats.outstandingBalance < 0
                                 ? AppColors.emerald500
-                                : AppColors.textMain,
+                                : context.textPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
@@ -527,9 +527,9 @@ class CustomerListItem extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(width: 12),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right,
-                      color: AppColors.slate300,
+                      color: context.textMuted,
                       size: 20,
                     ),
                   ],

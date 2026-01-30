@@ -34,11 +34,11 @@ class ExpenseStatisticsView extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             children: [
-              _buildStatsTotalCard(total),
+              _buildStatsTotalCard(context, total),
               const SizedBox(height: 24),
-              _buildCategoryPieChart(categoryData),
+              _buildCategoryPieChart(context, categoryData),
               const SizedBox(height: 24),
-              _buildWeeklyBarChart(weeklyData),
+              _buildWeeklyBarChart(context, weeklyData),
               const SizedBox(height: 80),
             ],
           ),
@@ -79,25 +79,19 @@ class ExpenseStatisticsView extends ConsumerWidget {
     return data;
   }
 
-  Widget _buildStatsTotalCard(double total) {
+  Widget _buildStatsTotalCard(BuildContext context, double total) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.slate100),
+        border: Border.all(color: context.borderColor),
         boxShadow: const [
           BoxShadow(
             color: Color.fromRGBO(0, 0, 0, 0.05),
             offset: Offset(0, 1),
             blurRadius: 3,
-          ),
-          BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.01),
-            offset: Offset(0, 1),
-            blurRadius: 2,
-            spreadRadius: -1,
           ),
         ],
       ),
@@ -112,7 +106,7 @@ class ExpenseStatisticsView extends ConsumerWidget {
                   Text(
                     'TOTAL EXPENDITURE',
                     style: GoogleFonts.inter(
-                      color: AppColors.slate400,
+                      color: Colors.white.withOpacity(0.7),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -122,7 +116,7 @@ class ExpenseStatisticsView extends ConsumerWidget {
                   Text(
                     '₹ ${NumberFormat("##,##0.00").format(total)}',
                     style: GoogleFonts.inter(
-                      color: AppColors.textMain,
+                      color: Colors.white,
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1,
@@ -133,13 +127,18 @@ class ExpenseStatisticsView extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2), // Red 50
+                  color: context.isDarkMode
+                      ? AppColors.danger.withOpacity(0.2)
+                      : const Color(0xFFFEF2F2),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFFEE2E2)),
+                  border: Border.all(
+                    color: context.isDarkMode
+                        ? AppColors.danger.withOpacity(0.3)
+                        : const Color(0xFFFEE2E2),
+                  ),
                 ),
                 child: const Icon(
-                  Icons
-                      .trending_down, // Trending down implies money leaving? Or show_chart.
+                  Icons.trending_down,
                   color: AppColors.danger,
                   size: 24,
                 ),
@@ -151,7 +150,10 @@ class ExpenseStatisticsView extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoryPieChart(Map<String, double> data) {
+  Widget _buildCategoryPieChart(
+    BuildContext context,
+    Map<String, double> data,
+  ) {
     if (data.isEmpty) return const SizedBox.shrink();
 
     final total = data.values.fold<double>(0, (sum, v) => sum + v);
@@ -171,8 +173,9 @@ class ExpenseStatisticsView extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -191,7 +194,7 @@ class ExpenseStatisticsView extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
               ),
               Container(
@@ -200,7 +203,9 @@ class ExpenseStatisticsView extends ConsumerWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDE9FE), // Light purple
+                  color: context.isDarkMode
+                      ? const Color(0xFF8B5CF6).withOpacity(0.2)
+                      : const Color(0xFFEDE9FE),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -266,7 +271,7 @@ class ExpenseStatisticsView extends ConsumerWidget {
                   Text(
                     item.key,
                     style: GoogleFonts.inter(
-                      color: AppColors.textMuted,
+                      color: context.textMuted,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -280,7 +285,10 @@ class ExpenseStatisticsView extends ConsumerWidget {
     );
   }
 
-  Widget _buildWeeklyBarChart(Map<int, double> weeklyData) {
+  Widget _buildWeeklyBarChart(
+    BuildContext context,
+    Map<int, double> weeklyData,
+  ) {
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final maxVal = weeklyData.values.isEmpty
         ? 100.0
@@ -289,8 +297,9 @@ class ExpenseStatisticsView extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -309,7 +318,7 @@ class ExpenseStatisticsView extends ConsumerWidget {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
               ),
               Container(
@@ -318,7 +327,9 @@ class ExpenseStatisticsView extends ConsumerWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0F2FE), // Light blue
+                  color: context.isDarkMode
+                      ? const Color(0xFF0284C7).withOpacity(0.2)
+                      : const Color(0xFFE0F2FE),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -370,7 +381,7 @@ class ExpenseStatisticsView extends ConsumerWidget {
                           child: Text(
                             days[value.toInt()],
                             style: GoogleFonts.inter(
-                              color: AppColors.textMuted,
+                              color: context.textMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),

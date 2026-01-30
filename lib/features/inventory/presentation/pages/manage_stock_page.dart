@@ -123,7 +123,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: context.isDarkMode ? AppColors.cardDark : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -149,7 +149,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                         style: GoogleFonts.inter(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textMain,
+                          color: context.textPrimary,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -173,11 +173,17 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                             icon: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: AppColors.slate50,
+                                color: context.isDarkMode
+                                    ? AppColors.surfaceDark
+                                    : AppColors.slate50,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.slate200),
+                                border: Border.all(color: context.borderColor),
                               ),
-                              child: const Icon(Icons.close, size: 18),
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: context.textPrimary,
+                              ),
                             ),
                             onPressed: () => Navigator.pop(context),
                           ),
@@ -222,7 +228,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.slate600,
+                            color: context.textMuted,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -450,7 +456,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.slate600,
+            color: context.textMuted,
           ),
         ),
         const SizedBox(height: 8),
@@ -459,12 +465,12 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
           keyboardType: inputType,
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w500,
-            color: AppColors.textMain,
+            color: context.textPrimary,
           ),
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.inter(color: AppColors.slate400),
+            hintStyle: GoogleFonts.inter(color: context.textMuted),
             suffixIcon: suffix,
           ),
         ),
@@ -519,15 +525,21 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   }
 
   void _showDeleteAllConfirm() {
+    final isDark = context.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.cardDark : Colors.white,
         title: Text(
           'Delete All Stock?',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: context.textPrimary,
+          ),
         ),
-        content: const Text(
+        content: Text(
           'This will permanently delete ALL items from your inventory. This action cannot be undone.',
+          style: TextStyle(color: context.textMuted),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
@@ -536,7 +548,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
             child: Text(
               'Cancel',
               style: GoogleFonts.inter(
-                color: AppColors.slate500,
+                color: context.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -560,14 +572,22 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   }
 
   void _showDeleteConfirm(Item item) {
+    final isDark = context.isDarkMode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.cardDark : Colors.white,
         title: Text(
           'Delete Item',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: context.textPrimary,
+          ),
         ),
-        content: Text('Are you sure you want to delete "${item.name}"?'),
+        content: Text(
+          'Are you sure you want to delete "${item.name}"?',
+          style: TextStyle(color: context.textMuted),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
@@ -575,7 +595,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
             child: Text(
               'Cancel',
               style: GoogleFonts.inter(
-                color: AppColors.slate500,
+                color: context.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -603,7 +623,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     final itemsAsync = ref.watch(inventoryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.background,
       body: Column(
         children: [
           // Header
@@ -614,9 +634,9 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
               20,
               16,
             ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+            decoration: BoxDecoration(
+              color: context.appBarBackground,
+              border: Border(bottom: BorderSide(color: context.borderColor)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -630,7 +650,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                         child: Text(
                           'Inventory',
                           style: GoogleFonts.inter(
-                            color: AppColors.textMain,
+                            color: context.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             height: 1.25,
@@ -645,9 +665,11 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                   height: 36,
                   width: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: context.isDarkMode
+                        ? AppColors.surfaceDark
+                        : AppColors.slate50,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: context.borderColor),
                     boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -658,13 +680,13 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                   ),
                   child: PopupMenuButton<String>(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.more_vert,
-                      color: AppColors.textMain,
+                      color: context.textPrimary,
                       size: 20,
                     ),
                     elevation: 4,
-                    color: Colors.white,
+                    color: context.cardColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -686,7 +708,9 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: hasItems
-                                      ? AppColors.danger.withOpacity(0.1)
+                                      ? AppColors.danger.withAlpha(26)
+                                      : this.context.isDarkMode
+                                      ? AppColors.surfaceDark
                                       : AppColors.slate100,
                                   shape: BoxShape.circle,
                                 ),
@@ -694,7 +718,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                   Icons.delete_forever,
                                   color: hasItems
                                       ? AppColors.danger
-                                      : AppColors.slate400,
+                                      : this.context.textMuted,
                                   size: 20,
                                 ),
                               ),
@@ -703,8 +727,8 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                 'Delete All Stock',
                                 style: GoogleFonts.inter(
                                   color: hasItems
-                                      ? AppColors.textMain
-                                      : AppColors.slate400,
+                                      ? this.context.textPrimary
+                                      : this.context.textMuted,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
                                 ),
@@ -732,7 +756,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                       Container(
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
@@ -757,19 +781,19 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                           });
                         },
                         style: GoogleFonts.inter(
-                          color: AppColors.textMain,
+                          color: context.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: AppColors.slate400,
+                            color: context.textMuted,
                             size: 20,
                           ),
                           hintText: 'Search items...',
                           hintStyle: GoogleFonts.inter(
-                            color: AppColors.slate400,
+                            color: context.textMuted,
                           ),
                           border: InputBorder.none,
                           focusedBorder: OutlineInputBorder(
@@ -781,8 +805,8 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.slate200,
+                            borderSide: BorderSide(
+                              color: context.borderColor,
                               width: 1.5,
                             ),
                           ),
@@ -852,7 +876,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.slate500,
+                                        color: context.textMuted,
                                       ),
                                     ),
                                   ],
@@ -870,7 +894,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                       style: GoogleFonts.inter(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.textMain,
+                                        color: context.textPrimary,
                                       ),
                                     ),
                                     TextButton(

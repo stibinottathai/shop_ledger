@@ -87,18 +87,18 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
           widget.customerToEdit != null ? 'Edit Customer' : 'Add New Customer',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -106,7 +106,7 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: Colors.grey[100], height: 1.0),
+          child: Container(color: context.borderColor, height: 1.0),
         ),
       ),
       body: SingleChildScrollView(
@@ -141,18 +141,18 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'New Entry',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
-                              color: AppColors.textDark,
+                              color: context.textPrimary,
                             ),
                           ),
                           Text(
                             'Fill in the details for the ledger',
                             style: TextStyle(
-                              color: Colors.grey[500],
+                              color: context.textMuted,
                               fontSize: 12,
                             ),
                           ),
@@ -266,10 +266,10 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -280,14 +280,14 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
             validator: validator,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Colors.grey),
+              hintStyle: TextStyle(color: context.textMuted),
               prefixIcon: prefixText != null
                   ? Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
                         prefixText,
-                        style: const TextStyle(
-                          color: Colors.grey,
+                        style: TextStyle(
+                          color: context.textMuted,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -295,14 +295,14 @@ class _AddCustomerPageState extends ConsumerState<AddCustomerPage> {
                     )
                   : null,
               filled: true,
-              fillColor: Colors.white,
+              fillColor: context.cardColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.inputBorder),
+                borderSide: BorderSide(color: context.borderColor),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.inputBorder),
+                borderSide: BorderSide(color: context.borderColor),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

@@ -373,18 +373,18 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Add Sale',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -392,7 +392,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: Colors.grey[100], height: 1.0),
+          child: Container(color: context.borderColor, height: 1.0),
         ),
       ),
       body: SingleChildScrollView(
@@ -403,7 +403,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: context.subtleBackground,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -418,7 +418,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: _isManualMode
-                              ? Colors.white
+                              ? context.cardColor
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: _isManualMode
@@ -437,8 +437,8 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: _isManualMode
-                                ? AppColors.textDark
-                                : Colors.grey[600],
+                                ? context.textPrimary
+                                : context.textMuted,
                           ),
                         ),
                       ),
@@ -451,7 +451,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: !_isManualMode
-                              ? Colors.white
+                              ? context.cardColor
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: !_isManualMode
@@ -470,8 +470,8 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: !_isManualMode
-                                ? AppColors.textDark
-                                : Colors.grey[600],
+                                ? context.textPrimary
+                                : context.textMuted,
                           ),
                         ),
                       ),
@@ -489,10 +489,10 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Customer',
                     style: TextStyle(
-                      color: AppColors.greyText,
+                      color: context.textMuted,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -500,8 +500,8 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                   const SizedBox(height: 4),
                   Text(
                     widget.customer.name,
-                    style: const TextStyle(
-                      color: AppColors.textDark,
+                    style: TextStyle(
+                      color: context.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -530,10 +530,17 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                   child: DropdownButtonFormField<Item>(
                                     value: _selectedInventoryItem,
                                     isExpanded: true,
+                                    dropdownColor: context.cardColor,
+                                    style: TextStyle(
+                                      color: context.textPrimary,
+                                    ),
                                     decoration: InputDecoration(
                                       labelText: 'Select Item',
+                                      labelStyle: TextStyle(
+                                        color: context.textMuted,
+                                      ),
                                       filled: true,
-                                      fillColor: Colors.white,
+                                      fillColor: context.cardColor,
                                       contentPadding:
                                           const EdgeInsets.symmetric(
                                             horizontal: 12,
@@ -541,6 +548,15 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                           ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: context.borderColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: context.borderColor,
+                                        ),
                                       ),
                                     ),
                                     items: items.map((item) {
@@ -594,13 +610,28 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                           decimal: true,
                                         ),
                                     onChanged: (_) => setState(() {}),
+                                    style: TextStyle(
+                                      color: context.textPrimary,
+                                    ),
                                     decoration: InputDecoration(
                                       labelText:
                                           'Quantity (${_selectedInventoryItem?.unit ?? 'Units'})',
+                                      labelStyle: TextStyle(
+                                        color: context.textMuted,
+                                      ),
                                       filled: true,
-                                      fillColor: Colors.white,
+                                      fillColor: context.cardColor,
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: context.borderColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: context.borderColor,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -613,16 +644,19 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                       horizontal: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: context.cardColor,
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.grey),
+                                      border: Border.all(
+                                        color: context.borderColor,
+                                      ),
                                     ),
                                     child: Row(
                                       children: [
                                         IconButton(
-                                          icon: const Icon(
+                                          icon: Icon(
                                             Icons.remove,
                                             size: 20,
+                                            color: context.textPrimary,
                                           ),
                                           onPressed: _decrementCount,
                                           constraints: const BoxConstraints(),
@@ -639,13 +673,18 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                               isDense: true,
                                               contentPadding: EdgeInsets.zero,
                                             ),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.bold,
+                                              color: context.textPrimary,
                                             ),
                                           ),
                                         ),
                                         IconButton(
-                                          icon: const Icon(Icons.add, size: 20),
+                                          icon: Icon(
+                                            Icons.add,
+                                            size: 20,
+                                            color: context.textPrimary,
+                                          ),
                                           onPressed: _incrementCount,
                                           constraints: const BoxConstraints(),
                                           padding: const EdgeInsets.all(8),
@@ -669,6 +708,10 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                      color: context.borderColor,
+                                      width: 1,
+                                    ),
                                   ),
                                 ),
                                 child: Text(
@@ -705,14 +748,17 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       elevation: 0,
-                      color: Colors.grey[50],
+                      color: context.subtleBackground,
                       shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Colors.grey[200]!),
+                        side: BorderSide(color: context.borderColor),
                       ),
                       child: ListTile(
                         title: Text(
                           sItem.item.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: context.textPrimary,
+                          ),
                         ),
                         subtitle: Text(
                           '${sItem.quantity} ${sItem.item.unit}${sItem.item.unit == 'kg' ? ' (${sItem.count} Nos)' : ''} x ₹${sItem.item.pricePerKg}/${(sItem.item.unit == 'ml'
@@ -720,14 +766,16 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                               : sItem.item.unit == 'mg'
                               ? 'g'
                               : sItem.item.unit)}',
+                          style: TextStyle(color: context.textMuted),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               '₹${sItem.totalPrice.toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
                               ),
                             ),
                             IconButton(
@@ -791,12 +839,12 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Balance',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: AppColors.textDark,
+                            color: context.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -839,36 +887,34 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Transaction Date',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _dateController,
+                    style: TextStyle(color: context.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Select Date',
-                      suffixIcon: const Icon(
+                      hintStyle: TextStyle(color: context.textMuted),
+                      suffixIcon: Icon(
                         Icons.calendar_today,
-                        color: Colors.grey,
+                        color: context.textMuted,
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: context.cardColor,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppColors.inputBorder,
-                        ),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppColors.inputBorder,
-                        ),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -917,8 +963,8 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.grey[100]!)),
+          color: context.cardColor,
+          border: Border(top: BorderSide(color: context.borderColor)),
         ),
         child: SizedBox(
           height: 56,
@@ -976,10 +1022,10 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: AppColors.textDark,
+            color: context.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -992,7 +1038,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: AppColors.textDark,
+            color: context.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -1000,18 +1046,18 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
             prefixStyle: TextStyle(
               fontSize: fontSize,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
-            hintStyle: const TextStyle(color: Colors.grey),
+            hintStyle: TextStyle(color: context.textMuted),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: context.cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder),
+              borderSide: BorderSide(color: context.borderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder),
+              borderSide: BorderSide(color: context.borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

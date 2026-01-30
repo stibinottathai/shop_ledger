@@ -72,15 +72,23 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
   }
 
   void _showDeleteAllConfirm() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.cardDark : Colors.white,
         title: Text(
           'Delete All Stock?',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.textDarkTheme : AppColors.textDark,
+          ),
         ),
-        content: const Text(
+        content: Text(
           'This will permanently delete ALL items from your inventory. This action cannot be undone.',
+          style: TextStyle(
+            color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+          ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
@@ -89,7 +97,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
             child: Text(
               'Cancel',
               style: GoogleFonts.inter(
-                color: AppColors.slate500,
+                color: context.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -117,7 +125,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
     final itemsAsync = ref.watch(inventoryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.background,
       body: Column(
         children: [
           Container(
@@ -127,9 +135,9 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
               20,
               16,
             ),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFFFFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
+            decoration: BoxDecoration(
+              color: context.appBarBackground,
+              border: Border(bottom: BorderSide(color: context.borderColor)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,13 +150,15 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.slate50,
+                          color: context.isDarkMode
+                              ? AppColors.surfaceDark
+                              : AppColors.slate50,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.slate100),
+                          border: Border.all(color: context.borderColor),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_back_ios_new,
-                          color: AppColors.textMain,
+                          color: context.textPrimary,
                           size: 18,
                         ),
                       ),
@@ -157,7 +167,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                     Text(
                       'All Items',
                       style: GoogleFonts.inter(
-                        color: AppColors.textMain,
+                        color: context.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         height: 1.25,
@@ -170,9 +180,11 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                   height: 36,
                   width: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: context.isDarkMode
+                        ? AppColors.surfaceDark
+                        : AppColors.slate50,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: context.borderColor),
                     boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -183,13 +195,13 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                   ),
                   child: PopupMenuButton<String>(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.more_vert,
-                      color: AppColors.textMain,
+                      color: context.textPrimary,
                       size: 20,
                     ),
                     elevation: 4,
-                    color: Colors.white,
+                    color: context.cardColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -211,7 +223,9 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: hasItems
-                                      ? AppColors.danger.withOpacity(0.1)
+                                      ? AppColors.danger.withAlpha(26)
+                                      : context.isDarkMode
+                                      ? AppColors.surfaceDark
                                       : AppColors.slate100,
                                   shape: BoxShape.circle,
                                 ),
@@ -219,7 +233,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                                   Icons.delete_forever,
                                   color: hasItems
                                       ? AppColors.danger
-                                      : AppColors.slate400,
+                                      : context.textMuted,
                                   size: 20,
                                 ),
                               ),
@@ -228,8 +242,8 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                                 'Delete All Stock',
                                 style: GoogleFonts.inter(
                                   color: hasItems
-                                      ? AppColors.textMain
-                                      : AppColors.slate400,
+                                      ? context.textPrimary
+                                      : context.textMuted,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
                                 ),
@@ -255,7 +269,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                       Container(
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
@@ -280,32 +294,32 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                           });
                         },
                         style: GoogleFonts.inter(
-                          color: AppColors.textMain,
+                          color: context.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: AppColors.slate400,
+                            color: context.textMuted,
                             size: 20,
                           ),
                           hintText: 'Search items...',
                           hintStyle: GoogleFonts.inter(
-                            color: AppColors.slate400,
+                            color: context.textMuted,
                           ),
                           border: InputBorder.none,
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: AppColors.primary.withOpacity(0.2),
+                              color: AppColors.primary.withAlpha(51),
                               width: 2.5,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.slate200,
+                            borderSide: BorderSide(
+                              color: context.borderColor,
                               width: 1.5,
                             ),
                           ),
@@ -394,7 +408,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.slate500,
+                                        color: context.textMuted,
                                       ),
                                     ),
                                   ],
@@ -407,7 +421,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                                       child: Text(
                                         'No items found',
                                         style: GoogleFonts.inter(
-                                          color: AppColors.slate500,
+                                          color: context.textMuted,
                                         ),
                                       ),
                                     )
@@ -447,6 +461,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
   }
 
   Widget _buildItemWithDismiss(Item item) {
+    final isDark = context.isDarkMode;
     return Dismissible(
       key: Key(item.id ?? item.name),
       direction: DismissDirection.endToStart,
@@ -463,11 +478,18 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
         return await showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
+            backgroundColor: isDark ? AppColors.cardDark : Colors.white,
             title: Text(
               'Delete Item',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                color: context.textPrimary,
+              ),
             ),
-            content: Text('Are you sure you want to delete "${item.name}"?'),
+            content: Text(
+              'Are you sure you want to delete "${item.name}"?',
+              style: TextStyle(color: context.textMuted),
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -477,7 +499,7 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                 child: Text(
                   'Cancel',
                   style: GoogleFonts.inter(
-                    color: AppColors.slate500,
+                    color: context.textMuted,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -518,20 +540,21 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
     bool isWarning = false,
     bool isDanger = false,
   }) {
+    final isDark = context.isDarkMode;
     final isSelected =
         _selectedFilter == (label == 'All Items' ? 'All' : label);
     Color getBgColor() {
       if (isSelected) return AppColors.primary;
-      if (isDanger) return AppColors.danger.withOpacity(0.1);
-      if (isWarning) return AppColors.orange400.withOpacity(0.1);
-      return AppColors.slate50;
+      if (isDanger) return AppColors.danger.withAlpha(26);
+      if (isWarning) return AppColors.orange400.withAlpha(26);
+      return isDark ? AppColors.surfaceDark : AppColors.slate50;
     }
 
     Color getTextColor() {
       if (isSelected) return Colors.white;
       if (isDanger) return AppColors.danger;
       if (isWarning) return AppColors.orange400;
-      return AppColors.slate600;
+      return isDark ? AppColors.textMutedDark : AppColors.slate600;
     }
 
     return GestureDetector(
@@ -549,8 +572,8 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
             color: isSelected
                 ? Colors.transparent
                 : (isDanger
-                      ? AppColors.danger.withOpacity(0.2)
-                      : AppColors.slate200),
+                      ? AppColors.danger.withAlpha(51)
+                      : context.borderColor),
           ),
         ),
         child: Row(
@@ -569,8 +592,8 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? Colors.white.withOpacity(0.2)
-                      : Colors.white,
+                      ? Colors.white.withAlpha(51)
+                      : (isDark ? AppColors.surfaceDark : Colors.white),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(

@@ -26,7 +26,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     final reportsAsync = ref.watch(reportsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -49,7 +49,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildTabs(),
-                      const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                      const Divider(height: 1),
 
                       // Chips
                       Padding(
@@ -106,21 +106,32 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDateRange: _selectedDateRange,
-      builder: (context, child) {
+      builder: (pickerContext, child) {
+        final isDark = pickerContext.isDarkMode;
         return Theme(
-          data: Theme.of(context).copyWith(
-            scaffoldBackgroundColor: Colors.white,
+          data: Theme.of(pickerContext).copyWith(
+            scaffoldBackgroundColor: isDark
+                ? AppColors.backgroundDark
+                : Colors.white,
             appBarTheme: const AppBarTheme(
               backgroundColor: AppColors.primary,
               iconTheme: IconThemeData(color: Colors.white),
             ),
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textDark,
-              secondary: AppColors.primary,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: AppColors.surfaceDark,
+                    onSurface: Colors.white,
+                    secondary: AppColors.primary,
+                  )
+                : const ColorScheme.light(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: AppColors.textDark,
+                    secondary: AppColors.primary,
+                  ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(foregroundColor: AppColors.primary),
             ),
@@ -239,10 +250,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Top Performers',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
         ),
@@ -311,10 +322,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Spending Insights',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
         ),
@@ -384,10 +395,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Business Highlights',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
         ),
@@ -453,9 +464,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -474,8 +485,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppColors.greyText,
+                    style: TextStyle(
+                      color: context.textMuted,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -483,9 +494,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                   const SizedBox(height: 4),
                   Text(
                     amount,
-                    style: const TextStyle(
-                      color: AppColors.textDark,
-                      fontSize: 24, // Reduced slightly to fit huge numbers
+                    style: TextStyle(
+                      color: context.textPrimary,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -535,23 +546,23 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   Widget _buildAppBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+      decoration: BoxDecoration(
+        color: context.appBarBackground,
+        border: Border(bottom: BorderSide(color: context.borderColor)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+            icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           ),
-          const Text(
+          Text(
             'Reports & Analytics',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(
@@ -564,7 +575,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
   Widget _buildTabs() {
     return Container(
-      color: Colors.white,
+      color: context.appBarBackground,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
@@ -602,7 +613,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: isSelected ? activeColor : AppColors.greyText,
+              color: isSelected ? activeColor : context.textMuted,
             ),
           ),
         ),
@@ -625,12 +636,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor.withOpacity(0.1) : Colors.white,
+          color: isSelected ? activeColor.withOpacity(0.1) : context.cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? activeColor.withOpacity(0.2)
-                : const Color(0xFFE5E7EB),
+                : context.borderColor,
           ),
         ),
         child: Row(
@@ -638,7 +649,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? activeColor : Colors.grey[600],
+              color: isSelected ? activeColor : context.textMuted,
             ),
             const SizedBox(width: 8),
             Text(
@@ -646,7 +657,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? activeColor : Colors.grey[600],
+                color: isSelected ? activeColor : context.textMuted,
               ),
             ),
           ],
@@ -699,7 +710,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: isColored ? color : Colors.grey[400],
+            color: isColored ? color : context.textMuted,
           ),
         ),
       ],
@@ -718,9 +729,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -737,19 +748,19 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.greyText,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),

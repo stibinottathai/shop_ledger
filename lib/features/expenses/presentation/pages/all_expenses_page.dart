@@ -60,14 +60,31 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
       context: context,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
-      builder: (context, child) {
+      builder: (pickerContext, child) {
+        final isDark = pickerContext.isDarkMode;
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              onSurface: AppColors.textDark,
+          data: Theme.of(pickerContext).copyWith(
+            scaffoldBackgroundColor: isDark
+                ? AppColors.backgroundDark
+                : Colors.white,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppColors.primary,
+              iconTheme: IconThemeData(color: Colors.white),
             ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: AppColors.surfaceDark,
+                    onSurface: Colors.white,
+                    secondary: AppColors.primary,
+                  )
+                : const ColorScheme.light(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: AppColors.textDark,
+                  ),
           ),
           child: child!,
         );
@@ -89,20 +106,20 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
     final expenseListAsync = ref.watch(expenseListProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: context.background,
       appBar: AppBar(
         title: Text(
           'Transactions',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
             fontSize: 20,
-            color: AppColors.textMain,
+            color: context.textPrimary,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textMain),
+        iconTheme: IconThemeData(color: context.textPrimary),
       ),
       body: Column(
         children: [
@@ -119,7 +136,7 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
                   return Center(
                     child: Text(
                       "No transactions found",
-                      style: GoogleFonts.inter(color: AppColors.textMuted),
+                      style: GoogleFonts.inter(color: context.textMuted),
                     ),
                   );
                 }
@@ -139,7 +156,7 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
 
   Widget _buildFilterTabs() {
     return Container(
-      color: Colors.white,
+      color: context.isDarkMode ? AppColors.backgroundDark : Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -165,13 +182,17 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF016B61) : const Color(0xFFF1F5F9),
+          color: isSelected
+              ? const Color(0xFF016B61)
+              : (context.isDarkMode
+                    ? AppColors.surfaceDark
+                    : const Color(0xFFF1F5F9)),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: GoogleFonts.inter(
-            color: isSelected ? Colors.white : AppColors.textMain,
+            color: isSelected ? Colors.white : context.textPrimary,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             fontSize: 13,
           ),
@@ -201,23 +222,24 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
+              backgroundColor: context.cardColor,
               title: Text(
                 'Delete Transaction?',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textMain,
+                  color: context.textPrimary,
                 ),
               ),
               content: Text(
                 'Are you sure you want to delete this transaction?',
-                style: GoogleFonts.inter(color: AppColors.textMain),
+                style: GoogleFonts.inter(color: context.textPrimary),
               ),
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   child: Text(
                     'Cancel',
-                    style: GoogleFonts.inter(color: AppColors.textMuted),
+                    style: GoogleFonts.inter(color: context.textMuted),
                   ),
                 ),
                 TextButton(
@@ -251,7 +273,7 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -266,7 +288,9 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
+                color: context.isDarkMode
+                    ? const Color(0xFF15803D).withOpacity(0.2)
+                    : const Color(0xFFF0FDF4),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -285,14 +309,14 @@ class _AllExpensesPageState extends ConsumerState<AllExpensesPage> {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
-                      color: AppColors.textMain,
+                      color: context.textPrimary,
                     ),
                   ),
                   Text(
                     DateFormat('d MMM yyyy, hh:mm a').format(expense.date),
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: AppColors.textMuted,
+                      color: context.textMuted,
                     ),
                   ),
                 ],
