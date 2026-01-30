@@ -106,7 +106,7 @@ class ExpenseStatisticsView extends ConsumerWidget {
                   Text(
                     'TOTAL EXPENDITURE',
                     style: GoogleFonts.inter(
-                      color: Colors.white.withOpacity(0.7),
+                      color: context.textMuted,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -116,7 +116,9 @@ class ExpenseStatisticsView extends ConsumerWidget {
                   Text(
                     '₹ ${NumberFormat("##,##0.00").format(total)}',
                     style: GoogleFonts.inter(
-                      color: Colors.white,
+                      color: context.isDarkMode
+                          ? Colors.white
+                          : AppColors.primary,
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1,

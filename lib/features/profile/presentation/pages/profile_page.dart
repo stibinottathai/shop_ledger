@@ -446,7 +446,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Scaffold(
       backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: context.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
