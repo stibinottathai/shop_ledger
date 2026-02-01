@@ -214,6 +214,7 @@ class SupplierTransactionListNotifier extends AsyncNotifier<List<Transaction>> {
   @override
   Future<List<Transaction>> build() async {
     ref.watch(authStateProvider);
+    ref.watch(transactionUpdateProvider);
     return _fetchTransactions();
   }
 
@@ -270,3 +271,42 @@ class SupplierStats {
     required this.outstandingBalance,
   });
 }
+
+// Supplier Overview Stats Provider (Bulk fetch for list view)
+final supplierOverviewStatsProvider =
+    FutureProvider<Map<String, SupplierStats>>((ref) async {
+      // Watch for updates
+      ref.watch(transactionUpdateProvider);
+
+      final transactionRepo = ref.read(transactionRepositoryProvider);
+      final transactions = await transactionRepo.getAllTransactions();
+
+      final Map<String, List<Transaction>> supplierTransactions = {};
+      for (var tx in transactions) {
+        if (tx.supplierId != null) {
+          supplierTransactions.putIfAbsent(tx.supplierId!, () => []).add(tx);
+        }
+      }
+
+      final Map<String, SupplierStats> stats = {};
+      supplierTransactions.forEach((id, txs) {
+        double totalPurchased = 0;
+        double totalPaid = 0;
+
+        for (var t in txs) {
+          if (t.type == TransactionType.purchase) {
+            totalPurchased += t.amount;
+          } else if (t.type == TransactionType.paymentOut) {
+            totalPaid += t.amount;
+          }
+        }
+
+        stats[id] = SupplierStats(
+          totalPurchased: totalPurchased,
+          totalPaid: totalPaid,
+          outstandingBalance: totalPurchased - totalPaid,
+        );
+      });
+
+      return stats;
+    });

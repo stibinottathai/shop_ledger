@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart'; // Assuming standard font used
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/core/error/failures.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -27,13 +28,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   late TextEditingController _emailController;
   late TextEditingController _phoneController; // If we have it
+  late TextEditingController _gstController;
 
   bool _isLoading = false;
-
-  // New Design Colors
-  static const _textMain = Color(0xFF0F172A);
-  static const _textMuted = Color(0xFF64748B);
-  static const _borderColor = Color(0xFFF1F5F9);
 
   @override
   void initState() {
@@ -42,6 +39,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _usernameController = TextEditingController();
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
+    _gstController = TextEditingController();
     _loadUserData();
   }
 
@@ -55,6 +53,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (metadata != null) {
         _shopNameController.text = metadata['shop_name']?.toString() ?? '';
         _usernameController.text = metadata['username']?.toString() ?? '';
+        _gstController.text = metadata['gst_number']?.toString() ?? '';
         final metaPhone = metadata['phone']?.toString();
 
         _phoneController.text = (user.phone?.isNotEmpty == true)
@@ -72,6 +71,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _usernameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _gstController.dispose();
     super.dispose();
   }
 
@@ -79,6 +79,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     String shopName,
     String username,
     String phone,
+    String gstNumber,
   ) async {
     setState(() => _isLoading = true);
 
@@ -94,7 +95,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final supabase = Supabase.instance.client;
       await supabase.auth.updateUser(
         UserAttributes(
-          data: {'shop_name': shopName, 'username': username, 'phone': phone},
+          data: {
+            'shop_name': shopName,
+            'username': username,
+            'phone': phone,
+            'gst_number': gstNumber,
+          },
         ),
       );
 
@@ -102,15 +108,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       _shopNameController.text = shopName;
       _usernameController.text = username;
       _phoneController.text = phone;
+      _gstController.text = gstNumber;
 
       setState(() => _isLoading = false);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
-            backgroundColor: AppColors.primary,
-          ),
+          const SnackBar(content: Text('Profile updated successfully')),
         );
       }
     } catch (e) {
@@ -133,87 +137,110 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final editPhoneController = TextEditingController(
       text: _phoneController.text,
     );
+    final editGstController = TextEditingController(text: _gstController.text);
     final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Edit Profile',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildDialogTextField('Shop Name', editShopNameController),
-                  const SizedBox(height: 16),
-                  _buildDialogTextField('Owner Name', editUsernameController),
-                  const SizedBox(height: 16),
-                  _buildDialogTextField(
-                    'Phone Number',
-                    editPhoneController,
-                    isPhone: true,
-                  ),
-                ],
+      builder: (dialogContext) {
+        final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Edit Profile',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.textDarkTheme : AppColors.textDark,
+            ),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDialogTextField('Shop Name', editShopNameController),
+                    const SizedBox(height: 16),
+                    _buildDialogTextField('Owner Name', editUsernameController),
+                    const SizedBox(height: 16),
+                    _buildDialogTextField(
+                      'Phone Number',
+                      editPhoneController,
+                      isPhone: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDialogTextField(
+                      'GST Number',
+                      editGstController,
+                      isRequired: false,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 24,
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              side: BorderSide(color: Colors.grey[300]!),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.inter(
-                color: _textMain,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
           ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context); // Close dialog first
-                await _updateProfileData(
-                  editShopNameController.text.trim(),
-                  editUsernameController.text.trim(),
-                  editPhoneController.text.trim(),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                side: BorderSide(color: Colors.grey[300]!),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.inter(
+                  color: isDark ? AppColors.textDarkTheme : AppColors.textDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            child: Text(
-              'Update',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(dialogContext); // Close dialog first
+                  await _updateProfileData(
+                    editShopNameController.text.trim(),
+                    editUsernameController.text.trim(),
+                    editPhoneController.text.trim(),
+                    editGstController.text.trim(),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+              child: Text(
+                'Update',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -221,118 +248,195 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     String label,
     TextEditingController controller, {
     bool isPhone = false,
+    bool isRequired = true,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: _textMuted,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
-          validator: (val) => val == null || val.isEmpty ? 'Required' : null,
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            color: _textMain,
-          ),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _borderColor),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final textMain = isDark ? AppColors.textDarkTheme : AppColors.textDark;
+        final textMuted = isDark
+            ? AppColors.textMutedDark
+            : AppColors.textMuted;
+        final borderCol = isDark
+            ? Colors.white.withOpacity(0.1)
+            : const Color(0xFFF1F5F9);
 
-  Future<void> _performLogout() async {
-    await ref.read(authControllerProvider.notifier).signOut();
-    if (mounted) {
-      // Clear navigation stack and go to login
-      context.go('/login');
-    }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: controller,
+              keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+              validator: (val) {
+                if (isRequired && (val == null || val.isEmpty)) {
+                  return 'Required';
+                }
+                return null;
+              },
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                color: textMain,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: isDark ? AppColors.surfaceDark : Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: borderCol),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: borderCol),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.primary),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.power_settings_new_rounded, color: Colors.red),
-            const SizedBox(width: 12),
-            Text(
-              'Logout',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          bool isLoading = false;
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to log out of your account?',
-          style: GoogleFonts.inter(fontSize: 14, color: _textMain),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 24,
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              side: BorderSide(color: Colors.grey[300]!),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            title: Row(
+              children: [
+                const Icon(Icons.power_settings_new_rounded, color: Colors.red),
+                const SizedBox(width: 12),
+                Text(
+                  'Logout',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
-            child: Text(
-              'Cancel',
+            content: Text(
+              'Are you sure you want to log out of your account?',
               style: GoogleFonts.inter(
-                color: _textMain,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: context.textPrimary,
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _performLogout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            actionsPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 24,
+            ),
+            actions: [
+              OutlinedButton(
+                onPressed: isLoading ? null : () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(color: Colors.grey[300]!),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: GoogleFonts.inter(
+                    color: context.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              'Logout',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() => isLoading = true);
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .signOut();
+
+                        // Check for errors
+                        final state = ref.read(authControllerProvider);
+                        if (state.hasError) {
+                          final error = state.error;
+                          final message = error is Failure
+                              ? error.message
+                              : error.toString();
+
+                          if (mounted) {
+                            setState(() => isLoading = false);
+                            Navigator.pop(context); // Close dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(message),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } else {
+                          if (mounted) {
+                            Navigator.pop(context); // Close dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Logged out successfully'),
+                                backgroundColor:
+                                    Colors.black, // Consistent with theme
+                              ),
+                            );
+                            // Clear navigation stack and go to login
+                            context.go('/login');
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        'Logout',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -340,12 +444,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: context.background,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: _textMain, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: context.textPrimary,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -406,26 +515,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   ),
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.slate100),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color.fromRGBO(0, 0, 0, 0.05),
-                                      blurRadius: 4,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  size: 20,
-                                  color: AppColors.primary,
-                                ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -436,7 +525,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             style: GoogleFonts.inter(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: _textMain,
+                              color: context.textPrimary,
                               letterSpacing: -0.5,
                             ),
                           ),
@@ -457,7 +546,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: _textMuted,
+                                  color: context.textMuted,
                                 ),
                               ),
                             ],
@@ -467,13 +556,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       const SizedBox(height: 32),
 
                       // Account Details Section
-                      _buildSectionHeader('ACCOUNT DETAILS'),
+                      _buildSectionHeader(context, 'ACCOUNT DETAILS'),
                       const SizedBox(height: 12),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _borderColor),
+                          border: Border.all(color: context.borderColor),
                           boxShadow: const [
                             BoxShadow(
                               color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -485,20 +574,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         child: Column(
                           children: [
                             _buildInfoItem(
+                              context,
                               icon: Icons.person,
                               label: 'Owner Name',
                               controller: _usernameController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
+                            Divider(height: 1, color: context.borderColor),
                             _buildInfoItem(
+                              context,
                               icon: Icons.mail,
                               label: 'Email Address',
                               controller: _emailController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
+                            Divider(height: 1, color: context.borderColor),
                             _buildInfoItem(
+                              context,
                               icon: Icons.call,
                               label: 'Phone Number',
                               controller: _phoneController,
@@ -510,13 +602,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       const SizedBox(height: 24),
 
                       // Shop Information Section
-                      _buildSectionHeader('SHOP INFORMATION'),
+                      _buildSectionHeader(context, 'SHOP INFORMATION'),
                       const SizedBox(height: 12),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _borderColor),
+                          border: Border.all(color: context.borderColor),
                           boxShadow: const [
                             BoxShadow(
                               color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -528,21 +620,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         child: Column(
                           children: [
                             _buildInfoItem(
+                              context,
                               icon: Icons.storefront,
                               label: 'Shop Name',
                               controller: _shopNameController,
                               readOnly: true,
                             ),
-                            const Divider(height: 1, color: _borderColor),
-                            // Static GST for now as per design request, passing a controller with dummy data
-                            _buildInfoItem(
-                              icon: Icons.receipt_long,
-                              label: 'GST Number',
-                              controller: TextEditingController(
-                                text: '22ABCDE1234F1Z5',
+                            if (_gstController.text.isNotEmpty) ...[
+                              Divider(height: 1, color: context.borderColor),
+                              _buildInfoItem(
+                                context,
+                                icon: Icons.receipt_long,
+                                label: 'GST Number',
+                                controller: _gstController,
+                                readOnly: true,
                               ),
-                              readOnly: true,
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -555,9 +648,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             // Bottom Action Button
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFF8FAFC))),
+              decoration: BoxDecoration(
+                color: context.cardColor,
+                border: Border(top: BorderSide(color: context.borderColor)),
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -574,7 +667,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : Text(
                           'Edit Profile',
                           style: GoogleFonts.inter(
@@ -591,7 +691,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
@@ -601,7 +701,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: _textMuted,
+            color: context.textMuted,
             letterSpacing: 1.2,
           ),
         ),
@@ -609,12 +709,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  Widget _buildInfoItem({
+  Widget _buildInfoItem(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required TextEditingController controller,
     bool readOnly = false,
   }) {
+    final isDark = context.isDarkMode;
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -623,11 +725,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: isDark ? AppColors.surfaceDark : const Color(0xFFF8FAFC),
               shape: BoxShape.circle,
-              border: Border.all(color: _borderColor),
+              border: Border.all(color: context.borderColor),
             ),
-            child: Icon(icon, color: const Color(0xFF64748B), size: 20),
+            child: Icon(icon, color: context.textMuted, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -639,7 +741,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: _textMuted,
+                    color: context.textMuted,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -650,8 +752,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: controller.text.isNotEmpty
-                        ? _textMain
-                        : _textMuted.withOpacity(0.5),
+                        ? context.textPrimary
+                        : context.textMuted.withOpacity(0.5),
                     fontStyle: controller.text.isNotEmpty
                         ? FontStyle.normal
                         : FontStyle.italic,

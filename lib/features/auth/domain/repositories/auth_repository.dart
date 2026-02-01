@@ -21,4 +21,9 @@ abstract class AuthRepository {
   User? getCurrentUser();
 
   Stream<AuthState> get authStateChanges;
+
+  Future<Either<Failure, AuthResponse>> verifyOtp({
+    required String email,
+    required String token,
+  });
 }

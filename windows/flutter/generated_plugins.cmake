@@ -4,7 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
-  share_plus
+  gal
   url_launcher_windows
 )
 

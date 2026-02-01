@@ -12,7 +12,8 @@ import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:native_share/native_share.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class CustomerDetailPage extends ConsumerWidget {
   final Customer customer;
@@ -36,12 +37,12 @@ class CustomerDetailPage extends ConsumerWidget {
         );
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Column(
@@ -49,8 +50,8 @@ class CustomerDetailPage extends ConsumerWidget {
           children: [
             Text(
               currentCustomer.name,
-              style: const TextStyle(
-                color: AppColors.textDark,
+              style: TextStyle(
+                color: context.textPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
@@ -58,7 +59,7 @@ class CustomerDetailPage extends ConsumerWidget {
             Text(
               currentCustomer.phone,
               style: TextStyle(
-                color: Colors.grey[500],
+                color: context.textMuted,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -75,7 +76,7 @@ class CustomerDetailPage extends ConsumerWidget {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.call, color: AppColors.textDark, size: 20),
+              icon: Icon(Icons.call, color: context.textPrimary, size: 20),
               onPressed: () {
                 if (currentCustomer.phone.isNotEmpty) {
                   _makePhoneCall(context, currentCustomer.phone);
@@ -92,7 +93,7 @@ class CustomerDetailPage extends ConsumerWidget {
             height: 40,
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: context.subtleBackground,
               shape: BoxShape.circle,
             ),
             child: PopupMenuButton<String>(
@@ -103,11 +104,7 @@ class CustomerDetailPage extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              icon: const Icon(
-                Icons.more_vert,
-                color: AppColors.textDark,
-                size: 20,
-              ),
+              icon: Icon(Icons.more_vert, color: context.textPrimary, size: 20),
               onSelected: (value) {
                 if (value == 'delete') {
                   _showDeleteConfirmation(context, ref);
@@ -121,16 +118,12 @@ class CustomerDetailPage extends ConsumerWidget {
                     value: 'edit',
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.edit,
-                          color: AppColors.textMain,
-                          size: 18,
-                        ),
+                        Icon(Icons.edit, color: context.textPrimary, size: 18),
                         const SizedBox(width: 12),
                         Text(
                           'Edit Customer',
                           style: GoogleFonts.inter(
-                            color: AppColors.textMain,
+                            color: context.textPrimary,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
                           ),
@@ -179,8 +172,9 @@ class CustomerDetailPage extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: context.borderColor),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -195,10 +189,10 @@ class CustomerDetailPage extends ConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
+                                Text(
                                   'OUTSTANDING BALANCE',
                                   style: TextStyle(
-                                    color: AppColors.greyText,
+                                    color: context.textMuted,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.0,
@@ -232,13 +226,13 @@ class CustomerDetailPage extends ConsumerWidget {
                               style: TextStyle(
                                 color: stats.outstandingBalance > 0
                                     ? AppColors.accentRed
-                                    : AppColors.textDark,
+                                    : context.textPrimary,
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 16),
-                            Divider(color: Colors.grey[100]),
+                            Divider(color: context.borderColor),
                             const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -249,15 +243,15 @@ class CustomerDetailPage extends ConsumerWidget {
                                     Text(
                                       'Total Sales',
                                       style: TextStyle(
-                                        color: Colors.grey[400],
+                                        color: context.textMuted,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     Text(
                                       '₹${stats.totalSales.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        color: AppColors.textDark,
+                                      style: TextStyle(
+                                        color: context.textPrimary,
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -267,7 +261,7 @@ class CustomerDetailPage extends ConsumerWidget {
                                 Container(
                                   width: 1,
                                   height: 32,
-                                  color: Colors.grey[200],
+                                  color: context.borderColor,
                                 ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -275,7 +269,7 @@ class CustomerDetailPage extends ConsumerWidget {
                                     Text(
                                       'Total Paid',
                                       style: TextStyle(
-                                        color: Colors.grey[400],
+                                        color: context.textMuted,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -357,6 +351,39 @@ class CustomerDetailPage extends ConsumerWidget {
                         ],
                       ),
                     ),
+
+                    // Send Reminder Button (only show if outstanding balance > 0)
+                    if (stats.outstandingBalance > 0)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _sendSmsReminder(
+                              context,
+                              ref,
+                              currentCustomer,
+                              stats.outstandingBalance,
+                            ),
+                            icon: const Icon(
+                              Icons.message,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            label: const Text('Send Payment Reminder'),
+                            style: ElevatedButton.styleFrom(
+                              textStyle: const TextStyle(fontSize: 16),
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 4,
+                            ),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -367,13 +394,14 @@ class CustomerDetailPage extends ConsumerWidget {
                 delegate: _PersistentHeaderDelegate(
                   TabBar(
                     labelColor: AppColors.primary,
-                    unselectedLabelColor: Colors.grey,
+                    unselectedLabelColor: context.textMuted,
                     indicatorColor: AppColors.primary,
                     tabs: const [
                       Tab(text: 'Sales'),
                       Tab(text: 'Payments'),
                     ],
                   ),
+                  context,
                 ),
                 pinned: true,
               ),
@@ -390,13 +418,25 @@ class CustomerDetailPage extends ConsumerWidget {
 
               return TabBarView(
                 children: [
-                  _buildTransactionList(sales, isSale: true),
-                  _buildTransactionList(payments, isSale: false),
+                  _buildTransactionList(sales, isSale: true, context: context),
+                  _buildTransactionList(
+                    payments,
+                    isSale: false,
+                    context: context,
+                  ),
                 ],
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Center(child: Text('Error: $e')),
+            error: (e, s) => Center(
+              child: CommonErrorWidget(
+                error: e,
+                onRetry: () {
+                  ref.refresh(transactionListProvider(customer.id!));
+                },
+                fullScreen: false,
+              ),
+            ),
           ),
         ),
       ),
@@ -406,12 +446,13 @@ class CustomerDetailPage extends ConsumerWidget {
   Widget _buildTransactionList(
     List<Transaction> transactions, {
     required bool isSale,
+    required BuildContext context,
   }) {
     if (transactions.isEmpty) {
       return Center(
         child: Text(
           isSale ? 'No sales recorded' : 'No payments recorded',
-          style: const TextStyle(color: Colors.grey),
+          style: TextStyle(color: context.textMuted),
         ),
       );
     }
@@ -419,13 +460,14 @@ class CustomerDetailPage extends ConsumerWidget {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: transactions.length,
-      itemBuilder: (context, index) {
+      itemBuilder: (listContext, index) {
         final transaction = transactions[index];
         return _buildTransactionRow(
+          context,
           transaction,
           isShaded: index % 2 == 1,
           onTap: () {
-            context.push(
+            listContext.push(
               '/customers/${customer.id}/transaction',
               extra: {'customer': customer, 'transaction': transaction},
             );
@@ -436,6 +478,7 @@ class CustomerDetailPage extends ConsumerWidget {
   }
 
   Widget _buildTransactionRow(
+    BuildContext context,
     Transaction transaction, {
     required VoidCallback onTap,
     bool isShaded = false,
@@ -447,15 +490,17 @@ class CustomerDetailPage extends ConsumerWidget {
 
     final isPayment = transaction.type == TransactionType.paymentIn;
     final amount = '₹${transaction.amount.toStringAsFixed(2)}';
-    final amountColor = isPayment ? AppColors.primary : AppColors.textDark;
+    final amountColor = isPayment ? AppColors.primary : context.textPrimary;
 
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isShaded ? AppColors.primary.withOpacity(0.05) : Colors.white,
-          border: Border(bottom: BorderSide(color: Colors.grey[50]!)),
+          color: isShaded
+              ? AppColors.primary.withOpacity(0.05)
+              : context.cardColor,
+          border: Border(bottom: BorderSide(color: context.borderColor)),
         ),
         child: Row(
           children: [
@@ -465,10 +510,10 @@ class CustomerDetailPage extends ConsumerWidget {
                 children: [
                   Text(
                     date,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -501,7 +546,7 @@ class CustomerDetailPage extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Colors.grey[500],
+                            color: context.textMuted,
                             fontSize: 12,
                           ),
                         ),
@@ -586,7 +631,8 @@ class CustomerDetailPage extends ConsumerWidget {
       // Generate PDF
       final pdfService = PdfService();
       final file = await pdfService.generateTransactionPdf(
-        customer: customer,
+        name: customer.name,
+        phone: customer.phone,
         transactions: transactions,
         outstandingBalance: amount,
         shopName: shopName,
@@ -598,8 +644,9 @@ class CustomerDetailPage extends ConsumerWidget {
         finalNumber = '91$cleanNumber';
       }
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
+      // Share using native share
+      await NativeShare.shareFiles(
+        filePaths: [file.path],
         text:
             'Hello ${customer.name}, please find your account statement attached. Outstanding Balance: ₹${amount.toStringAsFixed(2)}',
       );
@@ -607,6 +654,57 @@ class CustomerDetailPage extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error generating/sharing PDF: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendSmsReminder(
+    BuildContext context,
+    WidgetRef ref,
+    Customer customer,
+    double amount,
+  ) async {
+    if (customer.phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No phone number available')),
+      );
+      return;
+    }
+
+    try {
+      // Get shop name from user metadata
+      final user = ref.read(authRepositoryProvider).getCurrentUser();
+      final shopName =
+          user?.userMetadata?['shop_name'] as String? ?? 'Our Shop';
+
+      // Compose the SMS message
+      final message =
+          'This message is from $shopName. This is a reminder that you have a due of ₹${amount.toStringAsFixed(2)}. Please clear your dues at the earliest. Thank you!';
+
+      // Clean phone number
+      final cleanNumber = customer.phone.replaceAll(RegExp(r'[^\d]'), '');
+
+      // Create SMS URI with pre-filled message
+      final Uri smsUri = Uri(
+        scheme: 'sms',
+        path: cleanNumber,
+        queryParameters: {'body': message},
+      );
+
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open messaging app')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error opening messaging app: $e')),
         );
       }
     }
@@ -639,8 +737,9 @@ class CustomerDetailPage extends ConsumerWidget {
 
 class _PersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
+  final BuildContext pageContext;
 
-  _PersistentHeaderDelegate(this.tabBar);
+  _PersistentHeaderDelegate(this.tabBar, this.pageContext);
 
   @override
   Widget build(
@@ -648,7 +747,7 @@ class _PersistentHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(color: AppColors.backgroundLight, child: tabBar);
+    return Container(color: pageContext.background, child: tabBar);
   }
 
   @override

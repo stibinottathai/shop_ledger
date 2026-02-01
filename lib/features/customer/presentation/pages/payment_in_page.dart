@@ -6,7 +6,6 @@ import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
-import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
 
 class PaymentInPage extends ConsumerStatefulWidget {
   final Customer customer;
@@ -85,18 +84,18 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Payment In',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -104,7 +103,7 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: Colors.grey[100], height: 1.0),
+          child: Container(color: context.borderColor, height: 1.0),
         ),
       ),
       body: SingleChildScrollView(
@@ -118,10 +117,10 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Received From',
                     style: TextStyle(
-                      color: AppColors.greyText,
+                      color: context.textMuted,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -129,8 +128,8 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
                   const SizedBox(height: 4),
                   Text(
                     widget.customer.name,
-                    style: const TextStyle(
-                      color: AppColors.textDark,
+                    style: TextStyle(
+                      color: context.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -163,12 +162,12 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Transaction Date',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -176,23 +175,19 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
                     controller: _dateController,
                     decoration: InputDecoration(
                       hintText: 'Select Date',
-                      suffixIcon: const Icon(
+                      suffixIcon: Icon(
                         Icons.calendar_today,
-                        color: Colors.grey,
+                        color: context.textMuted,
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: context.cardColor,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppColors.inputBorder,
-                        ),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: AppColors.inputBorder,
-                        ),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -241,8 +236,8 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.grey[100]!)),
+          color: context.cardColor,
+          border: Border(top: BorderSide(color: context.borderColor)),
         ),
         child: SizedBox(
           height: 56,
@@ -294,10 +289,10 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: AppColors.textDark,
+            color: context.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -308,7 +303,7 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: AppColors.textDark,
+            color: context.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -316,18 +311,18 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
             prefixStyle: TextStyle(
               fontSize: fontSize,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
-            hintStyle: const TextStyle(color: Colors.grey),
+            hintStyle: TextStyle(color: context.textMuted),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: context.cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder),
+              borderSide: BorderSide(color: context.borderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.inputBorder),
+              borderSide: BorderSide(color: context.borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

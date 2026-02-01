@@ -5,6 +5,8 @@ create table if not exists public.items (
   name text not null,
   price_per_kg numeric not null default 0,
   total_quantity numeric,
+  unit text default 'kg',
+  barcode text,
   created_at timestamptz default now()
 );
 

@@ -45,4 +45,24 @@ class ItemRepository {
   Future<void> deleteItem(String id) async {
     await _supabase.from('items').delete().eq('id', id);
   }
+
+  Future<void> deleteAllItems() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw Exception('User not authenticated');
+    await _supabase.from('items').delete().eq('user_id', user.id);
+  }
+
+  Future<Item?> getItemByBarcode(String barcode) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw Exception('User not authenticated');
+
+    final response = await _supabase
+        .from('items')
+        .select()
+        .eq('user_id', user.id)
+        .eq('barcode', barcode)
+        .maybeSingle();
+
+    return response != null ? Item.fromJson(response) : null;
+  }
 }

@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
-import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
+
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
+import 'package:shop_ledger/core/services/pdf_service.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:native_share/native_share.dart';
 
 class SupplierTransactionDetailsPage extends ConsumerStatefulWidget {
   final Transaction transaction;
@@ -24,6 +28,7 @@ class SupplierTransactionDetailsPage extends ConsumerStatefulWidget {
 class _SupplierTransactionDetailsPageState
     extends ConsumerState<SupplierTransactionDetailsPage> {
   bool _isLoading = false;
+  bool _isSharing = false;
 
   Future<void> _deleteTransaction() async {
     final confirmed = await showDialog<bool>(
@@ -143,6 +148,57 @@ class _SupplierTransactionDetailsPageState
     return items;
   }
 
+  Future<void> _shareTransaction() async {
+    setState(() => _isSharing = true);
+    try {
+      final user = ref.read(authRepositoryProvider).getCurrentUser();
+      final shopName = user?.userMetadata?['shop_name'] as String?;
+
+      // Find supplier details
+      String name = 'Supplier';
+      String phone = '';
+      if (widget.transaction.supplierId != null) {
+        final supplierList = ref.read(supplierListProvider).value;
+        if (supplierList != null) {
+          try {
+            final supplier = supplierList.firstWhere(
+              (s) => s.id == widget.transaction.supplierId,
+            );
+            name = supplier.name;
+            phone = supplier.phone;
+          } catch (_) {}
+        }
+      }
+
+      final pdfService = PdfService();
+      final file = await pdfService.generateTransactionPdf(
+        name: name,
+        phone: phone,
+        transactions: [widget.transaction],
+        outstandingBalance: 0,
+        shopName: shopName,
+        isSingleReceipt: true,
+      );
+
+      // Share using native share
+      await NativeShare.shareFiles(
+        filePaths: [file.path],
+        text:
+            'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error sharing: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSharing = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCredit = widget.transaction.type == TransactionType.purchase;
@@ -159,21 +215,25 @@ class _SupplierTransactionDetailsPageState
     final hasParsedItems = parsedItems.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: context.background,
       appBar: AppBar(
         title: Text(
           'Transaction Details',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: Colors.black,
+            color: context.textPrimary,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: context.textPrimary,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -229,7 +289,7 @@ class _SupplierTransactionDetailsPageState
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -244,7 +304,7 @@ class _SupplierTransactionDetailsPageState
                         Text(
                           typeLabel,
                           style: GoogleFonts.inter(
-                            color: Colors.grey[400],
+                            color: context.textMuted,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.0,
@@ -256,7 +316,7 @@ class _SupplierTransactionDetailsPageState
                             'dd MMMM yyyy, hh:mm a',
                           ).format(widget.transaction.date),
                           style: GoogleFonts.inter(
-                            color: Colors.black87,
+                            color: context.textPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -264,6 +324,66 @@ class _SupplierTransactionDetailsPageState
                       ],
                     ),
                   ),
+                  // Amount Paid & Balance (If applicable)
+                  if (widget.transaction.receivedAmount != null &&
+                      widget.transaction.receivedAmount! > 0) ...[
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "AMOUNT PAID",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            "₹${widget.transaction.receivedAmount!.toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: const Color(0xFF00695C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      color: Colors.red.withOpacity(0.05),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "BALANCE",
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                          Text(
+                            "₹${(widget.transaction.amount - widget.transaction.receivedAmount!).toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const Divider(height: 1),
 
                   // Table Header
@@ -300,7 +420,7 @@ class _SupplierTransactionDetailsPageState
                       padding: const EdgeInsets.symmetric(vertical: 0),
                       itemCount: parsedItems.length,
                       separatorBuilder: (context, index) =>
-                          Divider(height: 1, color: Colors.grey[100]),
+                          Divider(height: 1, color: context.borderColor),
                       itemBuilder: (context, index) {
                         final item = parsedItems[index];
                         return Padding(
@@ -319,7 +439,7 @@ class _SupplierTransactionDetailsPageState
                                       item['name']!,
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
+                                        color: context.textPrimary,
                                         fontSize: 14,
                                       ),
                                     ),
@@ -328,7 +448,7 @@ class _SupplierTransactionDetailsPageState
                                         "${item['qty']} Pack",
                                         style: GoogleFonts.inter(
                                           fontSize: 11,
-                                          color: Colors.grey[600],
+                                          color: context.textMuted,
                                         ),
                                       ),
                                   ],
@@ -339,7 +459,7 @@ class _SupplierTransactionDetailsPageState
                                 child: Text(
                                   item['weight']!,
                                   style: GoogleFonts.inter(
-                                    color: Colors.black87,
+                                    color: context.textPrimary,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -349,7 +469,7 @@ class _SupplierTransactionDetailsPageState
                                 child: Text(
                                   item['rate']!,
                                   style: GoogleFonts.inter(
-                                    color: Colors.black87,
+                                    color: context.textPrimary,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -363,7 +483,7 @@ class _SupplierTransactionDetailsPageState
                                   textAlign: TextAlign.right,
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                               ),
@@ -374,14 +494,13 @@ class _SupplierTransactionDetailsPageState
                     ),
                     const Divider(height: 1),
                   ] else ...[
-                    // Manual description or Payment
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: Text(
                         widget.transaction.details ?? "No details",
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          color: Colors.black87,
+                          color: context.textPrimary,
                           height: 1.5,
                         ),
                       ),
@@ -400,7 +519,7 @@ class _SupplierTransactionDetailsPageState
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: context.textPrimary,
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -409,12 +528,72 @@ class _SupplierTransactionDetailsPageState
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
-                            color: Colors.black,
+                            color: context.textPrimary,
                           ),
                         ),
                       ],
                     ),
                   ),
+                  // Amount Paid & Balance (If applicable)
+                  if (widget.transaction.receivedAmount != null &&
+                      widget.transaction.receivedAmount! > 0) ...[
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "AMOUNT PAID",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            "₹${widget.transaction.receivedAmount!.toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: const Color(0xFF00695C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      color: Colors.red.withOpacity(0.05),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "BALANCE",
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                          Text(
+                            "₹${(widget.transaction.amount - widget.transaction.receivedAmount!).toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -428,22 +607,25 @@ class _SupplierTransactionDetailsPageState
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Share Receipt feature coming soon'),
-                      ),
-                    );
-                  },
+                  onPressed: _isSharing ? null : _shareTransaction,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00695C),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  icon: const Icon(Icons.share, color: Colors.white, size: 20),
+                  icon: _isSharing
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.share, color: Colors.white, size: 20),
                   label: Text(
-                    "Share Receipt",
+                    _isSharing ? "Generating PDF..." : "Share Receipt",
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -461,14 +643,16 @@ class _SupplierTransactionDetailsPageState
   }
 
   Widget _tableHeader(String text, {TextAlign align = TextAlign.start}) {
-    return Text(
-      text,
-      textAlign: align,
-      style: GoogleFonts.inter(
-        color: Colors.grey[400],
-        fontSize: 11,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.0,
+    return Builder(
+      builder: (context) => Text(
+        text,
+        textAlign: align,
+        style: GoogleFonts.inter(
+          color: context.textMuted,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.0,
+        ),
       ),
     );
   }

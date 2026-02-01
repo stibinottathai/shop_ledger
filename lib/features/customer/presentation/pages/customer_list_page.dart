@@ -7,7 +7,8 @@ import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/customer/domain/entities/customer.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
-import 'package:shop_ledger/features/inventory/presentation/widgets/manage_items_sheet.dart';
+
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class CustomerListPage extends ConsumerStatefulWidget {
   const CustomerListPage({super.key});
@@ -30,7 +31,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final customerListAsync = ref.watch(customerListProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appBarBackground,
       body: Column(
         children: [
           // Header
@@ -41,10 +42,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               20,
               16,
             ),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFFFFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFF8FAFC))),
-            ),
+            decoration: BoxDecoration(color: context.appBarBackground),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -53,13 +51,11 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(
-                          left: 40,
-                        ), // Balance the right button
+                        padding: const EdgeInsets.only(left: 40),
                         child: Text(
                           'Customers',
                           style: GoogleFonts.inter(
-                            color: AppColors.textMain,
+                            color: context.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             height: 1.25,
@@ -74,9 +70,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   height: 36,
                   width: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.slate50,
+                    color: context.subtleBackground,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
+                    border: Border.all(color: context.borderColor),
                     boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(0, 0, 0, 0.05),
@@ -146,44 +142,6 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     },
                   ),
                 ),
-                const SizedBox(width: 12), // Spacing
-                Container(
-                  height: 36,
-                  width: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.slate50,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.slate100),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color.fromRGBO(0, 0, 0, 0.05),
-                        offset: Offset(0, 1),
-                        blurRadius: 3,
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.add,
-                      size: 20,
-                      color: AppColors.slate600,
-                    ),
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.white,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(20),
-                          ),
-                        ),
-                        builder: (context) => const ManageItemsSheet(),
-                      );
-                    },
-                  ),
-                ),
               ],
             ),
           ),
@@ -200,7 +158,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                       Container(
                         height: 48, // Consistent height for search bars usually
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
@@ -225,19 +183,19 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                               .searchCustomers(value);
                         },
                         style: GoogleFonts.inter(
-                          color: AppColors.textMain,
+                          color: context.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: AppColors.slate400,
+                            color: context.textMuted,
                             size: 20,
                           ),
                           hintText: 'Search customers...',
                           hintStyle: GoogleFonts.inter(
-                            color: AppColors.slate400,
+                            color: context.textMuted,
                           ),
                           border: InputBorder.none,
                           focusedBorder: OutlineInputBorder(
@@ -249,8 +207,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.slate200,
+                            borderSide: BorderSide(
+                              color: context.borderColor,
                               width: 1.5,
                             ),
                           ),
@@ -277,7 +235,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                 Text(
                                   'ALL CUSTOMERS (${customers.length})',
                                   style: GoogleFonts.inter(
-                                    color: AppColors.slate400,
+                                    color: context.textMuted,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.5,
@@ -294,54 +252,36 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                       child: Text(
                                         'No customers found',
                                         style: GoogleFonts.inter(
-                                          color: AppColors.slate400,
+                                          color: context.textMuted,
                                         ),
                                       ),
                                     )
-                                  : Container(
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: AppColors.slate100,
-                                        ),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Color.fromRGBO(
-                                              0,
-                                              0,
-                                              0,
-                                              0.05,
-                                            ),
-                                            offset: Offset(0, 1),
-                                            blurRadius: 3,
-                                          ),
-                                          BoxShadow(
-                                            color: Color.fromRGBO(
-                                              0,
-                                              0,
-                                              0,
-                                              0.01,
-                                            ),
-                                            offset: Offset(0, 1),
-                                            blurRadius: 2,
-                                            spreadRadius: -1,
-                                          ),
-                                        ],
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: ListView.separated(
+                                  : RefreshIndicator(
+                                      onRefresh: () async {
+                                        // Ignoring the return value is fine here as onRefresh expects a Future
+                                        // and ref.refresh returns the new state, but we just need to wait for it.
+                                        // However, ref.refresh is synchronous for providers.
+                                        // Ideally we invalidate and read to trigger rebuild.
+                                        // But invalidating generic providers is simpler.
+                                        // Actually `ref.refresh` re-executes the provider immediately and returns the result.
+                                        // If it returns a Future (for FutureProvider), we can await it.
+                                        // customerListProvider is likely a FutureProvider or similar.
+                                        // Let's assume it returns a generic async value or we can just invalidate.
+                                        return ref.refresh(
+                                          customerListProvider.future,
+                                        );
+                                      },
+                                      child: ListView.builder(
                                         padding: EdgeInsets.zero,
                                         itemCount: customers.length,
-                                        separatorBuilder: (context, index) =>
-                                            const Divider(
-                                              height: 1,
-                                              thickness: 1,
-                                              color: AppColors.slate50,
-                                            ),
                                         itemBuilder: (context, index) {
                                           final customer = customers[index];
-                                          return _buildCustomerItem(customer);
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            child: _buildCustomerItem(customer),
+                                          );
                                         },
                                       ),
                                     ),
@@ -356,8 +296,15 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     loading: () => const Expanded(
                       child: Center(child: CircularProgressIndicator()),
                     ),
-                    error: (error, stackTrace) =>
-                        Expanded(child: Center(child: Text('Error: $error'))),
+                    error: (error, stackTrace) => Expanded(
+                      child: CommonErrorWidget(
+                        error: error,
+                        onRetry: () {
+                          ref.refresh(customerListProvider);
+                        },
+                        fullScreen: false,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -428,7 +375,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
           Text(
             label,
             style: GoogleFonts.inter(
-              color: isSelected ? AppColors.primary : AppColors.textMain,
+              color: isSelected ? AppColors.primary : context.textPrimary,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               fontSize: 14,
             ),
@@ -452,133 +399,140 @@ class CustomerListItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(customerStatsProvider(customer.id!));
 
-    // Determine avatar color logic (cycling through branding colors)
-    final colors = [
-      AppColors.emerald500,
-      AppColors.teal600,
-      AppColors.indigo500,
-      AppColors.orange400,
-    ];
-    // Simple hash for consistent color
-    final colorIndex = customer.name.length % colors.length;
-    final avatarColor = colors[colorIndex];
+    // Use consistent primary color for all avatars
+    final avatarColor = AppColors.primary;
 
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        onTap: () {
-          context.go('/customers/${customer.id}', extra: customer);
-        },
-        hoverColor: AppColors.slate50,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Avatar
-              Container(
-                height: 40,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: avatarColor,
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.05),
-                      offset: Offset(0, 1),
-                      blurRadius: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.borderColor),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            offset: Offset(0, 1),
+            blurRadius: 3,
+          ),
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.01),
+            offset: Offset(0, 1),
+            blurRadius: 2,
+            spreadRadius: -1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            context.go('/customers/${customer.id}', extra: customer);
+          },
+          borderRadius: BorderRadius.circular(16),
+          hoverColor: context.subtleBackground,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Avatar
+                Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: context.subtleBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: context.borderColor),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    customer.name.isNotEmpty
+                        ? customer.name
+                              .substring(0, math.min(2, customer.name.length))
+                              .toUpperCase()
+                        : '?',
+                    style: GoogleFonts.inter(
+                      color: avatarColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  customer.name.isNotEmpty
-                      ? customer.name
-                            .substring(0, math.min(2, customer.name.length))
-                            .toUpperCase()
-                      : '?',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 16),
 
-              // Name & Phone
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      customer.name,
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMain,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      customer.phone,
-                      style: GoogleFonts.inter(
-                        color: AppColors.slate500,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Balance & Chevron
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                // Name & Phone
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "₹${stats.outstandingBalance.abs().toStringAsFixed(2)}",
+                        customer.name,
                         style: GoogleFonts.inter(
-                          color: stats.outstandingBalance > 0
-                              ? AppColors.danger
-                              : stats.outstandingBalance < 0
-                              ? AppColors
-                                    .emerald500 // Or textMain if 0? Design shows Paid as green/textMain structure
-                              : AppColors.textMain,
-                          fontSize: 14,
+                          color: context.textPrimary,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        stats.outstandingBalance > 0
-                            ? "DUE"
-                            : stats.outstandingBalance < 0
-                            ? "ADVANCE"
-                            : "PAID",
+                        customer.phone,
                         style: GoogleFonts.inter(
-                          color: stats.outstandingBalance > 0
-                              ? AppColors.danger
-                              : stats.outstandingBalance < 0
-                              ? AppColors.emerald500
-                              : AppColors.emerald500,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                          color: context.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 12),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.slate300,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ],
+                ),
+
+                const SizedBox(width: 12),
+
+                // Balance & Chevron
+                Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "₹${stats.outstandingBalance.abs().toStringAsFixed(2)}",
+                          style: GoogleFonts.inter(
+                            color: stats.outstandingBalance > 0
+                                ? AppColors.danger
+                                : stats.outstandingBalance < 0
+                                ? AppColors.emerald500
+                                : context.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          stats.outstandingBalance > 0
+                              ? "DUE"
+                              : stats.outstandingBalance < 0
+                              ? "ADVANCE"
+                              : "PAID",
+                          style: GoogleFonts.inter(
+                            color: stats.outstandingBalance > 0
+                                ? AppColors.danger
+                                : stats.outstandingBalance < 0
+                                ? AppColors.emerald500
+                                : AppColors.emerald500,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.chevron_right,
+                      color: context.textMuted,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:native_share/native_share.dart';
 import 'package:shop_ledger/core/services/pdf_service.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
@@ -29,6 +29,7 @@ class TransactionDetailPage extends ConsumerStatefulWidget {
 class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
   bool _isSharing = false;
   bool _isDeleting = false;
+  double? _cachedOutstandingBalance;
 
   Future<void> _shareTransaction() async {
     setState(() => _isSharing = true);
@@ -37,19 +38,20 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
       final shopName = user?.userMetadata?['shop_name'] as String?;
 
       final pdfService = PdfService();
-      // Use existing service but passing only this transaction
+      // Use the cached outstanding balance from the last build
+      final outstandingBalance = _cachedOutstandingBalance ?? 0.0;
       final file = await pdfService.generateTransactionPdf(
-        customer: widget.customer,
+        name: widget.customer.name,
+        phone: widget.customer.phone,
         transactions: [widget.transaction],
-        outstandingBalance:
-            0, // Not needed for single receipt ideally but required by signature
+        outstandingBalance: outstandingBalance,
         shopName: shopName,
-        isSingleReceipt:
-            true, // We might need to update PdfService to handle this flag if we want specific receipt format
+        isSingleReceipt: true,
       );
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
+      // Share using native share
+      await NativeShare.shareFiles(
+        filePaths: [file.path],
         text:
             'Receipt for transaction on ${DateFormat('dd MMM yyyy').format(widget.transaction.date)}',
       );
@@ -122,8 +124,8 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
 
     // Regex to match: ItemName (Price/kg) Weight [Count Nos] = Total
     // Example: Apple (100/kg) 2kg [5 Nos] = 200
-    // Updated regex to be more flexible
-    final regex = RegExp(r'^(.*?) \((.*?)\) (.*?) \[(.*?)\] = (.*?)$');
+    // Updated regex to be more flexible and make count optional
+    final regex = RegExp(r'^(.*?) \((.*?)\) (.*?)(?: \[(.*?)\])? = (.*?)$');
 
     for (var line in lines) {
       final match = regex.firstMatch(line);
@@ -154,6 +156,8 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
   @override
   Widget build(BuildContext context) {
     final stats = ref.watch(customerStatsProvider(widget.customer.id!));
+    // Cache the outstanding balance for PDF generation
+    _cachedOutstandingBalance = stats.outstandingBalance;
     final isSale = widget.transaction.type == TransactionType.sale;
 
     // Parse items if it's a sale and has details
@@ -161,19 +165,55 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
         ? _parseItems(widget.transaction.details!)
         : <Map<String, String>>[];
 
+    // Determine dominant unit
+    String unitHeader = 'QTY/WT';
+    String? commonUnit;
+    bool mixedUnits = false;
+
+    if (parsedItems.isNotEmpty) {
+      final firstUnit = parsedItems.first['weight']!
+          .replaceAll(RegExp(r'[0-9.]'), '')
+          .trim();
+      commonUnit = firstUnit;
+
+      for (var item in parsedItems) {
+        final currentUnit = item['weight']!
+            .replaceAll(RegExp(r'[0-9.]'), '')
+            .trim();
+        if (currentUnit != commonUnit) {
+          mixedUnits = true;
+          break;
+        }
+      }
+
+      if (!mixedUnits && commonUnit.isNotEmpty) {
+        if (commonUnit == 'kg') {
+          unitHeader = 'WEIGHT';
+        } else if (commonUnit == 'pcs') {
+          unitHeader = 'PIECES';
+        } else if (commonUnit == 'box') {
+          unitHeader = 'BOXES';
+        } else if (commonUnit == 'l') {
+          unitHeader = 'VOLUME';
+        } else {
+          unitHeader = commonUnit.toUpperCase();
+        }
+      }
+    }
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Transaction Details',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -239,8 +279,9 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.borderColor),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -261,7 +302,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                         Text(
                           isSale ? 'SALE RECEIPT' : 'PAYMENT RECEIPT',
                           style: TextStyle(
-                            color: Colors.grey[500],
+                            color: context.textMuted,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
@@ -272,8 +313,8 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                           DateFormat(
                             'dd MMMM yyyy, hh:mm a',
                           ).format(widget.transaction.date), // Detailed date
-                          style: const TextStyle(
-                            color: AppColors.textDark,
+                          style: TextStyle(
+                            color: context.textPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -293,7 +334,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                       child: Row(
                         children: [
                           Expanded(flex: 3, child: _tableHeader('ITEM')),
-                          Expanded(flex: 2, child: _tableHeader('WEIGHT')),
+                          Expanded(flex: 2, child: _tableHeader(unitHeader)),
                           Expanded(flex: 2, child: _tableHeader('QTY')),
                           Expanded(
                             flex: 2,
@@ -325,6 +366,14 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                           );
                         }
 
+                        // Format logic: if unified header, strip unit. If mixed, show unit.
+                        String quantityDisplay = item['weight']!;
+                        if (!mixedUnits && commonUnit != null) {
+                          quantityDisplay = quantityDisplay
+                              .replaceAll(commonUnit, '')
+                              .trim();
+                        }
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
@@ -339,9 +388,9 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                   children: [
                                     Text(
                                       item['item']!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.textDark,
+                                        color: context.textPrimary,
                                         fontSize: 14,
                                       ),
                                     ),
@@ -349,7 +398,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                       Text(
                                         item['price']!,
                                         style: TextStyle(
-                                          color: Colors.grey[500],
+                                          color: context.textMuted,
                                           fontSize: 11,
                                         ),
                                       ),
@@ -359,11 +408,11 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                               Expanded(
                                 flex: 2,
                                 child: Text(
-                                  item['weight']!.replaceAll(
-                                    'kg',
-                                    '',
-                                  ), // Just show number
-                                  style: const TextStyle(fontSize: 14),
+                                  quantityDisplay,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: context.textPrimary,
+                                  ),
                                 ),
                               ),
                               Expanded(
@@ -373,7 +422,10 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                     ' Nos',
                                     '',
                                   ), // Just show number
-                                  style: const TextStyle(fontSize: 14),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: context.textPrimary,
+                                  ),
                                 ),
                               ),
                               Expanded(
@@ -381,9 +433,10 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                                 child: Text(
                                   '₹${item['total']}',
                                   textAlign: TextAlign.right,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                               ),
@@ -402,7 +455,11 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                             : (isSale
                                   ? 'Item details not available'
                                   : 'Payment Received'),
-                        style: const TextStyle(fontSize: 16, height: 1.5),
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 1.5,
+                          color: context.textPrimary,
+                        ),
                       ),
                     ),
                   ],
@@ -415,27 +472,87 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'TOTAL AMOUNT',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             letterSpacing: 1.0,
-                          ),
-                        ),
+                            color: context.textPrimary,
+                          ), // Text style
+                        ), // Text
                         Text(
                           '₹${widget.transaction.amount.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 24,
                             color: isSale
-                                ? AppColors.textDark
+                                ? context.textPrimary
                                 : AppColors.primary,
                           ),
                         ),
                       ],
                     ),
                   ),
+                  if (isSale &&
+                      widget.transaction.receivedAmount != null &&
+                      widget.transaction.receivedAmount! > 0) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Divider(color: context.borderColor),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'RECEIVED AMOUNT',
+                            style: TextStyle(
+                              color: context.textMuted,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            '- ₹${widget.transaction.receivedAmount!.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      color: context.subtleBackground,
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'BALANCE',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          Text(
+                            '₹${(widget.transaction.amount - widget.transaction.receivedAmount!).toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -479,7 +596,7 @@ class _TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
       text,
       textAlign: align,
       style: TextStyle(
-        color: Colors.grey[500],
+        color: context.textMuted,
         fontSize: 11,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.0,

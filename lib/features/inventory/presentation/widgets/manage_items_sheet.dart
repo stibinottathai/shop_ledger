@@ -14,6 +14,7 @@ class ManageItemsSheet extends ConsumerStatefulWidget {
 
 class _ManageItemsSheetState extends ConsumerState<ManageItemsSheet> {
   bool _isAdding = false;
+  bool _isSaving = false;
 
   // Edit mode
   Item? _itemToEdit;
@@ -63,6 +64,8 @@ class _ManageItemsSheetState extends ConsumerState<ManageItemsSheet> {
         ? double.tryParse(_qtyController.text.trim())
         : null;
 
+    setState(() => _isSaving = true);
+
     try {
       if (_itemToEdit != null) {
         // Update
@@ -76,6 +79,17 @@ class _ManageItemsSheetState extends ConsumerState<ManageItemsSheet> {
         // Add
         await ref.read(inventoryProvider.notifier).addItem(name, price, qty);
       }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _itemToEdit != null
+                  ? 'Item updated successfully'
+                  : 'Item added successfully',
+            ),
+          ),
+        );
+      }
       _resetForm();
     } catch (e) {
       if (mounted) {
@@ -83,12 +97,21 @@ class _ManageItemsSheetState extends ConsumerState<ManageItemsSheet> {
           context,
         ).showSnackBar(SnackBar(content: Text('Error saving item: $e')));
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
   Future<void> _deleteItem(String id) async {
     try {
       await ref.read(inventoryProvider.notifier).deleteItem(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Item deleted successfully')),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -166,13 +189,23 @@ class _ManageItemsSheetState extends ConsumerState<ManageItemsSheet> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _saveItem,
+                  onPressed: _isSaving ? null : _saveItem,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
                   ),
-                  child: Text(
-                    _itemToEdit != null ? 'Update Item' : 'Save Item',
-                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(_itemToEdit != null ? 'Update Item' : 'Save Item'),
                 ),
               ],
             ),
@@ -220,7 +253,10 @@ class _ManageItemsSheetState extends ConsumerState<ManageItemsSheet> {
                     onPressed: _startAdd,
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text('Add Item'),
+
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,

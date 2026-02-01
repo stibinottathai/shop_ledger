@@ -56,7 +56,9 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
 
   Future<List<Transaction>> _fetchTransactions() async {
     final repository = ref.read(transactionRepositoryProvider);
-    return await repository.getTransactions(customerId: _customerId);
+    return await repository
+        .getTransactions(customerId: _customerId)
+        .timeout(const Duration(seconds: 10));
   }
 
   Future<void> addTransaction(Transaction transaction) async {
@@ -102,19 +104,54 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
   }
 }
 
-// Stats Provider (Dependent on Transaction List)
+// All Transactions Provider (Bulk fetch for optimizations)
+final allTransactionsProvider =
+    AsyncNotifierProvider<AllTransactionsNotifier, List<Transaction>>(
+      AllTransactionsNotifier.new,
+    );
+
+class AllTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
+  @override
+  Future<List<Transaction>> build() async {
+    // Watch transaction update signals for refresh
+    ref.watch(transactionUpdateProvider);
+
+    // Keep this provider alive to maintain cache
+    ref.keepAlive();
+
+    return _fetchAllTransactions();
+  }
+
+  Future<List<Transaction>> _fetchAllTransactions() async {
+    final repository = ref.read(transactionRepositoryProvider);
+    // Assuming repository has a getAllTransactions method.
+    // If not, we fall back to getTransactions without args which usually returns all.
+    // Based on previous file reads, repository.getAllTransactions() exists.
+    return await repository.getAllTransactions().timeout(
+      const Duration(seconds: 15),
+    );
+  }
+}
+
+// Stats Provider (Dependent on AllTransactions Provider - In Memory Filtering)
+// This solves the N+1 query problem and timeouts for individual customers
 final customerStatsProvider = Provider.family<CustomerStats, String>((
   ref,
   customerId,
 ) {
-  final transactionsAsync = ref.watch(transactionListProvider(customerId));
+  final allTransactionsAsync = ref.watch(allTransactionsProvider);
 
-  return transactionsAsync.maybeWhen(
-    data: (transactions) {
+  return allTransactionsAsync.maybeWhen(
+    data: (allTransactions) {
       double totalSales = 0;
       double totalPaid = 0;
 
-      for (var t in transactions) {
+      // Filter in memory - much faster than N DB calls
+      final customerTransactions = allTransactions.where(
+        (t) => t.customerId == customerId,
+      );
+
+      for (var t in customerTransactions) {
         if (t.type == TransactionType.sale) {
           totalSales += t.amount;
         } else {

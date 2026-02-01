@@ -19,12 +19,29 @@ abstract class AuthRemoteDataSource {
   User? getCurrentUser();
 
   Stream<AuthState> get authStateChanges;
+
+  Future<AuthResponse> verifyOtp({
+    required String email,
+    required String token,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final SupabaseClient supabaseClient;
 
   AuthRemoteDataSourceImpl(this.supabaseClient);
+
+  @override
+  Future<AuthResponse> verifyOtp({
+    required String email,
+    required String token,
+  }) async {
+    return await supabaseClient.auth.verifyOTP(
+      email: email,
+      token: token,
+      type: OtpType.signup,
+    );
+  }
 
   @override
   Future<AuthResponse> signIn({

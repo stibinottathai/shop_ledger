@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
 import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
+import 'package:shop_ledger/core/error/failures.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -39,7 +40,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
+    ref.listen<AsyncValue<AuthResponse?>>(authControllerProvider, (
+      previous,
+      next,
+    ) {
       next.when(
         data: (_) {
           final session = Supabase.instance.client.auth.currentSession;
@@ -48,9 +52,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           }
         },
         error: (e, stack) {
+          var message = e is Failure ? e.message : e.toString();
+          final lowerCaseError = message.toLowerCase();
+          if (lowerCaseError.contains('rate limit') ||
+              lowerCaseError.contains('too many requests') ||
+              lowerCaseError.contains('email rate exceeded')) {
+            message = 'Too many attempts. Please try again in a few minutes.';
+          }
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text(e.toString())));
+          ).showSnackBar(SnackBar(content: Text(message)));
         },
         loading: () {},
       );
@@ -62,16 +73,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     // Design Colors mapped from HTML request
     final Color primaryColor = AppColors.primary;
-    final Color bgLight = const Color(0xFFF6F8F6);
-    final Color bgDark = const Color(0xFF141E15);
+    final Color bgLight = Colors.white;
+    final Color bgDark = AppColors.backgroundDark;
     final Color cardLight = const Color(0xFFFFFFFF);
-    final Color cardDark = const Color(0xFF1C261D);
+    final Color cardDark = AppColors.cardDark;
     final Color textMainLight = const Color(0xFF121613);
     final Color textMainDark = Colors.white;
     final Color textMutedLight = const Color(0xFF6A816C);
     final Color textMutedDark = Colors.grey[400]!;
     final Color borderLight = const Color(0xFFDDE3DE);
-    final Color borderDark = Colors.grey[700]!;
+    final Color borderDark = AppColors.slate600;
 
     return Scaffold(
       backgroundColor: isDark ? bgDark : bgLight,
@@ -339,7 +350,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 child: Text(
                                   'OR',
                                   style: GoogleFonts.inter(
-                                    color: textMutedLight,
+                                    color: isDark
+                                        ? textMutedDark
+                                        : textMutedLight,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),

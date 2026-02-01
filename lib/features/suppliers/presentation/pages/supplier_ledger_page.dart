@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 
 class SupplierLedgerPage extends ConsumerWidget {
   final Supplier supplier;
@@ -20,21 +21,13 @@ class SupplierLedgerPage extends ConsumerWidget {
       supplierTransactionListProvider(supplier.id!),
     );
 
-    // Watch for supplier updates
-    final currentSupplier = ref
-        .watch(supplierListProvider)
-        .maybeWhen(
-          data: (suppliers) => suppliers.cast<Supplier>().firstWhere(
-            (s) => s.id == supplier.id,
-            orElse: () => supplier,
-          ),
-          orElse: () => supplier,
-        );
+    // Use the supplier passed in directly to avoid re-watching the whole list
+    final currentSupplier = supplier;
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF3F4F6),
+        backgroundColor: context.background,
         appBar: AppBar(
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,10 +37,10 @@ class SupplierLedgerPage extends ConsumerWidget {
                 children: [
                   Text(
                     currentSupplier.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                 ],
@@ -55,15 +48,15 @@ class SupplierLedgerPage extends ConsumerWidget {
               if (currentSupplier.phone.isNotEmpty)
                 Text(
                   currentSupplier.phone,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.greyText,
+                    color: context.textMuted,
                   ),
                 ),
             ],
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: context.appBarBackground,
           elevation: 0,
           actions: [
             Container(
@@ -71,7 +64,7 @@ class SupplierLedgerPage extends ConsumerWidget {
               height: 40,
               margin: const EdgeInsets.only(right: 16),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: context.subtleBackground,
                 shape: BoxShape.circle,
               ),
               child: PopupMenuButton<String>(
@@ -82,9 +75,9 @@ class SupplierLedgerPage extends ConsumerWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                icon: const Icon(
+                icon: Icon(
                   Icons.more_vert,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                   size: 20,
                 ),
                 onSelected: (value) {
@@ -100,16 +93,16 @@ class SupplierLedgerPage extends ConsumerWidget {
                       value: 'edit',
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.edit,
-                            color: AppColors.textMain,
+                            color: context.textPrimary,
                             size: 18,
                           ),
                           const SizedBox(width: 12),
                           Text(
                             'Edit Supplier',
                             style: GoogleFonts.inter(
-                              color: AppColors.textMain,
+                              color: context.textPrimary,
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
                             ),
@@ -144,7 +137,7 @@ class SupplierLedgerPage extends ConsumerWidget {
             ),
           ],
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark),
+            icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
             onPressed: () => context.pop(),
           ),
         ),
@@ -152,7 +145,7 @@ class SupplierLedgerPage extends ConsumerWidget {
         body: Column(
           children: [
             // Summary Card
-            _buildSummaryCard(supplier, ref),
+            _buildSummaryCard(context, supplier, ref),
 
             // Action Buttons
             Padding(
@@ -215,7 +208,7 @@ class SupplierLedgerPage extends ConsumerWidget {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -227,7 +220,7 @@ class SupplierLedgerPage extends ConsumerWidget {
               ),
               child: TabBar(
                 labelColor: AppColors.primary,
-                unselectedLabelColor: Colors.grey,
+                unselectedLabelColor: context.textMuted,
                 indicatorColor: AppColors.primary,
                 labelStyle: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
@@ -272,7 +265,17 @@ class SupplierLedgerPage extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, s) => Center(child: Text('Error: $e')),
+                error: (e, s) => Center(
+                  child: CommonErrorWidget(
+                    error: e,
+                    onRetry: () {
+                      ref.refresh(
+                        supplierTransactionListProvider(supplier.id!),
+                      );
+                    },
+                    fullScreen: false,
+                  ),
+                ),
               ),
             ),
           ],
@@ -290,7 +293,7 @@ class SupplierLedgerPage extends ConsumerWidget {
       return Center(
         child: Text(
           emptyMsg,
-          style: GoogleFonts.inter(color: Colors.grey[500]),
+          style: GoogleFonts.inter(color: context.textMuted),
         ),
       );
     }
@@ -308,17 +311,13 @@ class SupplierLedgerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildBottomAction(BuildContext context) {
-    return const SizedBox.shrink(); // Removing bottom action
-  }
-
   Widget _buildLedgerItem(
     BuildContext context, {
     required Transaction transaction,
     required int index,
   }) {
     final isCredit = transaction.type == TransactionType.purchase;
-    final amountColor = isCredit ? AppColors.textDark : Colors.red;
+    final amountColor = isCredit ? context.textPrimary : Colors.red;
 
     String title;
     if (transaction.type == TransactionType.purchase) {
@@ -338,7 +337,7 @@ class SupplierLedgerPage extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -357,18 +356,15 @@ class SupplierLedgerPage extends ConsumerWidget {
               children: [
                 Text(
                   DateFormat('dd MMM').format(transaction.date),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 Text(
                   DateFormat('hh:mm a').format(transaction.date),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.greyText,
-                  ),
+                  style: TextStyle(fontSize: 10, color: context.textMuted),
                 ),
               ],
             ),
@@ -396,20 +392,17 @@ class SupplierLedgerPage extends ConsumerWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+                      color: context.textPrimary,
                     ),
                   ),
                   if (transaction.details != null &&
                       transaction.details!.isNotEmpty)
                     Text(
                       transaction.details!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.greyText,
-                      ),
+                      style: TextStyle(fontSize: 12, color: context.textMuted),
                       maxLines: 1, // Limited to 1 line
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -432,7 +425,11 @@ class SupplierLedgerPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummaryCard(Supplier supplier, WidgetRef ref) {
+  Widget _buildSummaryCard(
+    BuildContext context,
+    Supplier supplier,
+    WidgetRef ref,
+  ) {
     final stats = ref.watch(supplierStatsProvider(supplier.id!));
 
     return Padding(
@@ -440,7 +437,7 @@ class SupplierLedgerPage extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -453,10 +450,10 @@ class SupplierLedgerPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'OUTSTANDING BALANCE',
               style: TextStyle(
-                color: AppColors.greyText,
+                color: context.textMuted,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.0,
@@ -467,14 +464,14 @@ class SupplierLedgerPage extends ConsumerWidget {
               '₹${stats.outstandingBalance.toStringAsFixed(2)}',
               style: TextStyle(
                 color: stats.outstandingBalance > 0
-                    ? AppColors.textDark
+                    ? context.textPrimary
                     : AppColors.primary,
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
-            Divider(color: Colors.grey[100]),
+            Divider(color: context.borderColor),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -485,36 +482,36 @@ class SupplierLedgerPage extends ConsumerWidget {
                     Text(
                       'Total Purchased',
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: context.textMuted,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       '₹${stats.totalPurchased.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: AppColors.textDark,
+                      style: TextStyle(
+                        color: context.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                Container(width: 1, height: 32, color: Colors.grey[200]),
+                Container(width: 1, height: 32, color: context.borderColor),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
                       'Total Paid',
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: context.textMuted,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       '₹${stats.totalPaid.toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.red,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

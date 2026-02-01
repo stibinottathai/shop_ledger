@@ -58,7 +58,9 @@ class CustomerListNotifier extends AsyncNotifier<List<Customer>> {
 
   Future<List<Customer>> _fetchAndSortCustomers({String? query}) async {
     final customerRepo = ref.read(customerRepositoryProvider);
-    var customers = await customerRepo.getCustomers(query: query);
+    var customers = await customerRepo
+        .getCustomers(query: query)
+        .timeout(const Duration(seconds: 10));
 
     // Apply Sorting
     if (_sortOption == CustomerSortOption.latestCreated) {
@@ -74,7 +76,9 @@ class CustomerListNotifier extends AsyncNotifier<List<Customer>> {
 
     // For other sorts, we need transaction data
     final transactionRepo = ref.read(transactionRepositoryProvider);
-    final transactions = await transactionRepo.getAllTransactions();
+    final transactions = await transactionRepo.getAllTransactions().timeout(
+      const Duration(seconds: 10),
+    );
 
     // Group transactions by customer
     final Map<String, List<Transaction>> customerTransactions = {};

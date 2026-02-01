@@ -8,6 +8,7 @@ import 'package:shop_ledger/features/auth/domain/usecases/get_current_user_useca
 import 'package:shop_ledger/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:shop_ledger/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:shop_ledger/features/auth/domain/usecases/sign_up_usecase.dart';
+import 'package:shop_ledger/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Data Sources
@@ -29,6 +30,10 @@ final signUpUseCaseProvider = Provider<SignUpUseCase>((ref) {
   return SignUpUseCase(ref.read(authRepositoryProvider));
 });
 
+final verifyOtpUseCaseProvider = Provider<VerifyOtpUseCase>((ref) {
+  return VerifyOtpUseCase(ref.read(authRepositoryProvider));
+});
+
 final signOutUseCaseProvider = Provider<SignOutUseCase>((ref) {
   return SignOutUseCase(ref.read(authRepositoryProvider));
 });
@@ -45,25 +50,29 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 
 // Auth Controller
 final authControllerProvider =
-    StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
+    StateNotifierProvider<AuthController, AsyncValue<AuthResponse?>>((ref) {
       return AuthController(
         signInUseCase: ref.read(signInUseCaseProvider),
         signUpUseCase: ref.read(signUpUseCaseProvider),
+        verifyOtpUseCase: ref.read(verifyOtpUseCaseProvider),
         signOutUseCase: ref.read(signOutUseCaseProvider),
       );
     });
 
-class AuthController extends StateNotifier<AsyncValue<void>> {
+class AuthController extends StateNotifier<AsyncValue<AuthResponse?>> {
   final SignInUseCase _signInUseCase;
   final SignUpUseCase _signUpUseCase;
+  final VerifyOtpUseCase _verifyOtpUseCase;
   final SignOutUseCase _signOutUseCase;
 
   AuthController({
     required SignInUseCase signInUseCase,
     required SignUpUseCase signUpUseCase,
+    required VerifyOtpUseCase verifyOtpUseCase,
     required SignOutUseCase signOutUseCase,
   }) : _signInUseCase = signInUseCase,
        _signUpUseCase = signUpUseCase,
+       _verifyOtpUseCase = verifyOtpUseCase,
        _signOutUseCase = signOutUseCase,
        super(const AsyncValue.data(null));
 
@@ -77,7 +86,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
         failure,
         StackTrace.current,
       ), // Assuming Failure has a message
-      (response) => state = const AsyncValue.data(null),
+      (response) => state = AsyncValue.data(response),
     );
   }
 
@@ -100,7 +109,18 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     );
     result.fold(
       (failure) => state = AsyncValue.error(failure, StackTrace.current),
-      (response) => state = const AsyncValue.data(null),
+      (response) => state = AsyncValue.data(response),
+    );
+  }
+
+  Future<void> verifyOtp({required String email, required String token}) async {
+    state = const AsyncValue.loading();
+    final result = await _verifyOtpUseCase(
+      VerifyOtpParams(email: email, token: token),
+    );
+    result.fold(
+      (failure) => state = AsyncValue.error(failure, StackTrace.current),
+      (response) => state = AsyncValue.data(response),
     );
   }
 

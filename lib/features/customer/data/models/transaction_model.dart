@@ -12,6 +12,7 @@ class TransactionModel extends Transaction {
     super.createdAt,
     super.customerName,
     super.supplierName,
+    super.receivedAmount,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -30,22 +31,30 @@ class TransactionModel extends Transaction {
       type = TransactionType.paymentIn;
     }
 
+    String dateStr = json['date'] as String;
+    if (!dateStr.endsWith('Z') && !dateStr.contains('+')) {
+      dateStr += 'Z'; // Assume UTC if no offset info
+    }
+
     return TransactionModel(
       id: json['id'] as String?,
       customerId: json['customer_id'] as String?,
       supplierId: json['supplier_id'] as String?,
       amount: (json['amount'] as num).toDouble(),
       type: type,
-      date: DateTime.parse(json['date'] as String),
+      date: DateTime.parse(dateStr).toLocal(),
       details: json['details'] as String?,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? DateTime.parse(json['created_at'] as String).toLocal()
           : null,
       customerName: json['customers'] != null
           ? json['customers']['name']
           : null,
       supplierName: json['suppliers'] != null
           ? json['suppliers']['name']
+          : null,
+      receivedAmount: json['received_amount'] != null
+          ? (json['received_amount'] as num).toDouble()
           : null,
     );
   }
@@ -72,9 +81,10 @@ class TransactionModel extends Transaction {
       'supplier_id': supplierId,
       'amount': amount,
       'type': typeStr,
-      'date': date.toIso8601String(),
+      'date': date.toUtc().toIso8601String(),
       'details': details,
       // 'created_at': createdAt?.toIso8601String(),
+      'received_amount': receivedAmount,
     };
   }
 
@@ -90,6 +100,7 @@ class TransactionModel extends Transaction {
       createdAt: transaction.createdAt,
       customerName: transaction.customerName,
       supplierName: transaction.supplierName,
+      receivedAmount: transaction.receivedAmount,
     );
   }
 }

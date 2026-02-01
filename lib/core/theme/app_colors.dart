@@ -39,11 +39,58 @@ class AppColors {
   static const Color accent = Color(0xFFEF4444);
 
   static const Color backgroundLight = Color(0xFFF6F8F6);
-  static const Color backgroundDark = Color(0xFF102215);
+  static const Color backgroundDark = Color(
+    0xFF1A1A2E,
+  ); // Requested dark theme brand color
   static const Color textDark = Color(0xFF111813);
   static const Color textLight = Color(0xFFFFFFFF);
   static const Color accentOrange = Color(0xFFF97316);
   static const Color accentRed = Color(0xFFEF4444);
   static const Color greyText = Color(0xFF61896B);
   static const Color inputBorder = Color(0xFFDBE6DF);
+
+  // Dark theme specific colors
+  static const Color surfaceDark = Color(0xFF252542);
+  static const Color cardDark = Color(0xFF252542);
+  static const Color textDarkTheme = Color(0xFFE2E8F0);
+  static const Color textMutedDark = Color(0xFF94A3B8);
+}
+
+/// Extension on BuildContext for easy theme-aware color access.
+/// Use `context.colors.background` instead of `AppColors.backgroundLight`.
+extension ThemeColors on BuildContext {
+  bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
+
+  /// Background color (scaffold)
+  Color get background =>
+      isDarkMode ? AppColors.backgroundDark : AppColors.backgroundLight;
+
+  /// Surface/card color
+  Color get surface => isDarkMode ? AppColors.surfaceDark : Colors.white;
+
+  /// Primary text color
+  Color get textPrimary =>
+      isDarkMode ? AppColors.textDarkTheme : AppColors.textDark;
+
+  /// Muted/secondary text color
+  Color get textMuted =>
+      isDarkMode ? AppColors.textMutedDark : AppColors.textMuted;
+
+  /// Card background color
+  Color get cardColor => isDarkMode ? AppColors.cardDark : Colors.white;
+
+  /// Border color
+  Color get borderColor =>
+      isDarkMode ? Colors.white.withOpacity(0.1) : AppColors.slate200;
+
+  /// Subtle background (for containers, chips, etc.)
+  Color get subtleBackground =>
+      isDarkMode ? AppColors.surfaceDark : AppColors.slate50;
+
+  /// AppBar background
+  Color get appBarBackground =>
+      isDarkMode ? AppColors.backgroundDark : Colors.white;
+
+  /// Icon color
+  Color get iconColor => isDarkMode ? Colors.white : AppColors.slate600;
 }

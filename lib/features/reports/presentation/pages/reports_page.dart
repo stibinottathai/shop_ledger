@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+import 'package:shop_ledger/core/widgets/common_error_widget.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
+import 'package:shop_ledger/features/expenses/presentation/widgets/expense_statistics_view.dart';
+import 'package:shop_ledger/features/expenses/presentation/providers/expense_provider.dart';
 
 class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
@@ -12,7 +16,7 @@ class ReportsPage extends ConsumerStatefulWidget {
 }
 
 class _ReportsPageState extends ConsumerState<ReportsPage> {
-  int _selectedTabIndex = 2; // Default to 'Summary' (2)
+  int _selectedTabIndex = 3; // Default to 'Summary' (3)
   int _selectedDateFilter = 0; // 0: Today, 1: This Week, 2: Range
   DateTimeRange? _selectedDateRange;
 
@@ -22,7 +26,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     final reportsAsync = ref.watch(reportsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: context.appBarBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -33,14 +37,19 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             Expanded(
               child: reportsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Center(child: Text('Error: $err')),
+                error: (err, stack) => CommonErrorWidget(
+                  error: err,
+                  onRetry: () {
+                    ref.refresh(reportsProvider);
+                  },
+                ),
                 data: (state) => SingleChildScrollView(
                   padding: const EdgeInsets.only(bottom: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildTabs(),
-                      const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                      const Divider(height: 1),
 
                       // Chips
                       Padding(
@@ -53,16 +62,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                 icon: Icons.calendar_today,
                                 label: 'Today',
                                 isSelected: _selectedDateFilter == 0,
-                                onTap: () =>
-                                    setState(() => _selectedDateFilter = 0),
+                                onTap: () => _onFilterChanged(0),
                               ),
                               const SizedBox(width: 12),
                               _buildChip(
                                 icon: Icons.calendar_month,
                                 label: 'This Week',
                                 isSelected: _selectedDateFilter == 1,
-                                onTap: () =>
-                                    setState(() => _selectedDateFilter = 1),
+                                onTap: () => _onFilterChanged(1),
                               ),
                               const SizedBox(width: 12),
                               _buildChip(
@@ -99,21 +106,32 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDateRange: _selectedDateRange,
-      builder: (context, child) {
+      builder: (pickerContext, child) {
+        final isDark = pickerContext.isDarkMode;
         return Theme(
-          data: Theme.of(context).copyWith(
-            scaffoldBackgroundColor: Colors.white,
+          data: Theme.of(pickerContext).copyWith(
+            scaffoldBackgroundColor: isDark
+                ? AppColors.backgroundDark
+                : Colors.white,
             appBarTheme: const AppBarTheme(
               backgroundColor: AppColors.primary,
               iconTheme: IconThemeData(color: Colors.white),
             ),
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.textDark,
-              secondary: AppColors.primary,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: AppColors.surfaceDark,
+                    onSurface: Colors.white,
+                    secondary: AppColors.primary,
+                  )
+                : const ColorScheme.light(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: AppColors.textDark,
+                    secondary: AppColors.primary,
+                  ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(foregroundColor: AppColors.primary),
             ),
@@ -128,14 +146,51 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         _selectedDateRange = picked;
         _selectedDateFilter = 2;
       });
+      _updateProviders(picked);
+    }
+  }
+
+  void _onFilterChanged(int index) {
+    setState(() => _selectedDateFilter = index);
+
+    DateTime now = DateTime.now();
+    DateTimeRange range;
+
+    if (index == 0) {
+      // Today
+      range = DateTimeRange(
+        start: DateTime(now.year, now.month, now.day),
+        end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+      );
+    } else if (index == 1) {
+      // This Week
+      // Monday start
+      final start = now.subtract(Duration(days: now.weekday - 1));
+      range = DateTimeRange(
+        start: DateTime(start.year, start.month, start.day),
+        end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+      );
     } else {
-      // If needed, handle cancellation or existing selection logic
-      if (_selectedDateFilter != 2 && _selectedDateRange != null) {
-        setState(() {
-          _selectedDateFilter = 2;
-        });
+      // Range (handled by picker, but if clicked without picker?)
+      // Should probably open picker or keep existing
+      if (_selectedDateRange != null) {
+        range = _selectedDateRange!;
+      } else {
+        return; // Wait for picker
       }
     }
+
+    _updateProviders(range);
+  }
+
+  void _updateProviders(DateTimeRange range) {
+    // Update Reports Filter
+    ref.read(reportsFilterProvider.notifier).setRange(range);
+
+    // Update Expenses Tab Filter (sync)
+    ref
+        .read(expenseFilterProvider.notifier)
+        .setFilter(ExpenseFilter(startDate: range.start, endDate: range.end));
   }
 
   Widget _buildTabContent(ReportsState state) {
@@ -145,6 +200,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       case 1:
         return _buildPurchasesView(state);
       case 2:
+        return const Padding(
+          padding: EdgeInsets.only(top: 16.0),
+          child: ExpenseStatisticsView(),
+        );
+      case 3:
       default:
         return _buildSummaryView(state);
     }
@@ -157,11 +217,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       decimalDigits: 2,
     );
 
-    // Normalize monthly sales for bar chart (0.0 to 1.0)
-    final maxSale = state.monthlySales.reduce(
-      (curr, next) => curr > next ? curr : next,
+    // Normalize sales for bar chart (0.0 to 1.0)
+    final maxSale = state.chartSales.fold<double>(
+      0,
+      (prev, curr) => curr > prev ? curr : prev,
     );
-    final normalizedBars = state.monthlySales
+
+    final normalizedBars = state.chartSales
         .map((e) => maxSale > 0 ? e / maxSale : 0.0)
         .toList();
 
@@ -171,7 +233,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
-            title: 'Total Sales',
+            title: 'Total Sales (${state.chartPeriod})',
             amount: formatter.format(state.totalSales),
             percentage: '+${state.salesGrowth.toStringAsFixed(1)}%',
             percentageColor: state.salesGrowth >= 0
@@ -179,6 +241,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 : Colors.red,
             primaryColor: AppColors.primary,
             bars: normalizedBars,
+            labels: state.chartLabels,
           ),
         ),
         const SizedBox(height: 24),
@@ -187,10 +250,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Top Performers',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
         ),
@@ -205,11 +268,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                   _buildSummaryCard(
                     title: 'Top Customer',
                     value: formatter.format(performer.amount),
-                    subtitle: performer
-                        .name, // Display Name as subtitle for now to match old design structure? Or swap?
-                    // Old design: Title: Top Customer, Value: Total, Subtitle: Name.
-                    // Let's swap: Title: Customer Name. Value: Amount. Subtitle: 'Top Customer'
-                    // Actually let's stick to design: Title "Top Customer", Value "Total: ...", Subtitle "Name"
+                    subtitle: performer.name,
                     icon: Icons.person,
                     iconColor: AppColors.primary,
                     iconBgColor: AppColors.primary.withOpacity(0.1),
@@ -231,10 +290,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       decimalDigits: 2,
     );
 
-    final maxPurchase = state.monthlyPurchases.reduce(
-      (curr, next) => curr > next ? curr : next,
+    final maxPurchase = state.chartPurchases.fold<double>(
+      0,
+      (prev, curr) => curr > prev ? curr : prev,
     );
-    final normalizedBars = state.monthlyPurchases
+
+    final normalizedBars = state.chartPurchases
         .map((e) => maxPurchase > 0 ? e / maxPurchase : 0.0)
         .toList();
 
@@ -244,15 +305,15 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
-            title: 'Total Purchases',
+            title: 'Total Purchases (${state.chartPeriod})',
             amount: formatter.format(state.totalPurchases),
             percentage: '+${state.purchaseGrowth.toStringAsFixed(1)}%',
             percentageColor: state.purchaseGrowth >= 0
                 ? AppColors.accentOrange
-                : Colors
-                      .red, // Orange for purchase growth? Maybe red if cost increases? sticking to design
+                : Colors.red,
             primaryColor: AppColors.accentOrange,
             bars: normalizedBars,
+            labels: state.chartLabels,
           ),
         ),
         const SizedBox(height: 24),
@@ -261,10 +322,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Spending Insights',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
         ),
@@ -301,25 +362,29 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       decimalDigits: 2,
     );
 
+    // Normalize chartSales for summary chart
+    final maxSale = state.chartSales.fold<double>(
+      0,
+      (prev, curr) => curr > prev ? curr : prev,
+    );
+
+    final normalizedBars = state.chartSales
+        .map((e) => maxSale > 0 ? e / maxSale : 0.0)
+        .toList();
+
     return Column(
       children: [
-        // Main Chart Section (Summary - Sales mainly?)
-        // Reusing Sales chart for summary but maybe combining?
-        // Let's us total Revenue (sales) for Monthly Performance chart
+        // Main Chart Section (Summary)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildChartSection(
-            title: 'Monthly Performance',
+            title: 'Performance (${state.chartPeriod})',
             amount: formatter.format(state.totalSales),
             percentage: '+${state.salesGrowth.toStringAsFixed(1)}%',
             percentageColor: AppColors.primary,
             primaryColor: AppColors.primary,
-            bars: state.monthlySales.map((e) {
-              final max = state.monthlySales.reduce(
-                (curr, next) => curr > next ? curr : next,
-              );
-              return max > 0 ? e / max : 0.0;
-            }).toList(),
+            bars: normalizedBars,
+            labels: state.chartLabels,
           ),
         ),
 
@@ -330,10 +395,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Business Highlights',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.textPrimary,
             ),
           ),
         ),
@@ -346,20 +411,29 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           child: Column(
             children: [
               _buildSummaryCard(
-                title: 'Monthly Sales',
-                value: formatter.format(state.monthlySales.last),
-                subtitle: 'Current Month',
+                title: 'Total Sales',
+                value: formatter.format(state.totalSales),
+                subtitle: state.chartPeriod,
                 icon: Icons.trending_up,
                 iconColor: AppColors.primary,
                 iconBgColor: AppColors.primary.withOpacity(0.1),
               ),
               const SizedBox(height: 16),
               _buildSummaryCard(
+                title: 'Total Expenses',
+                value: formatter.format(state.totalExpenses),
+                subtitle: state.chartPeriod,
+                icon: Icons.money_off,
+                iconColor: Colors.deepOrange,
+                iconBgColor: Colors.deepOrange.withOpacity(0.1),
+              ),
+              const SizedBox(height: 16),
+              _buildSummaryCard(
                 title: 'Net Profit (Est)',
                 value: formatter.format(
-                  state.totalSales - state.totalPurchases,
+                  state.totalSales - state.totalPurchases - state.totalExpenses,
                 ),
-                subtitle: 'Sales - Purchases',
+                subtitle: 'Sales - Purchases - Expenses',
                 icon: Icons.account_balance_wallet,
                 iconColor: Colors.blue,
                 iconBgColor: Colors.blue.withOpacity(0.1),
@@ -379,21 +453,20 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     required String percentage,
     required Color primaryColor,
     required List<double> bars,
+    required List<String> labels,
     Color? percentageColor,
   }) {
-    // Generate month labels for last 6 months
-    final now = DateTime.now();
-    final months = List.generate(6, (i) {
-      final d = DateTime(now.year, now.month - (5 - i), 1);
-      return DateFormat('MMM').format(d).toUpperCase();
-    });
+    // Use provided labels and bars
+    final displayLabels = labels;
+    final displayBars = bars;
+    final count = displayBars.length;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -412,8 +485,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppColors.greyText,
+                    style: TextStyle(
+                      color: context.textMuted,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -421,9 +494,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                   const SizedBox(height: 4),
                   Text(
                     amount,
-                    style: const TextStyle(
-                      color: AppColors.textDark,
-                      fontSize: 24, // Reduced slightly to fit huge numbers
+                    style: TextStyle(
+                      color: context.textPrimary,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -452,14 +525,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             height: 180,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(6, (index) {
+              children: List.generate(count, (index) {
                 return Expanded(
                   child: _buildBar(
                     primaryColor,
-                    months[index],
-                    bars.length > index ? bars[index] : 0.0,
-                    bars.length > index ? bars[index] > 0 : false,
-                    isCurrent: index == 5,
+                    index < displayLabels.length ? displayLabels[index] : '',
+                    index < displayBars.length ? displayBars[index] : 0.0,
+                    index < displayBars.length ? displayBars[index] > 0 : false,
+                    isCurrent: index == count - 1, // Highlight last bar?
                   ),
                 );
               }),
@@ -473,25 +546,25 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   Widget _buildAppBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
-      ),
+      decoration: BoxDecoration(color: context.appBarBackground),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Expanded(
-            child: Text(
-              'Reports & Analytics',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: Icon(Icons.arrow_back_ios, color: context.textPrimary),
+          ),
+          Text(
+            'Reports & Analytics',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: context.textPrimary,
             ),
           ),
-          // const SizedBox(width: 40), // No back button so no balancing needed if title centered by Expanded
+          const SizedBox(
+            width: 48,
+          ), // Balance the back button (icon button roughly 48px)
         ],
       ),
     );
@@ -499,13 +572,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
   Widget _buildTabs() {
     return Container(
-      color: Colors.white,
+      color: context.appBarBackground,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           _buildTab('Sales', 0, AppColors.primary),
           _buildTab('Purchases', 1, AppColors.accentOrange),
-          _buildTab('Summary', 2, AppColors.primary),
+          _buildTab('Expense', 2, Colors.purple),
+          _buildTab('Summary', 3, AppColors.primary),
         ],
       ),
     );
@@ -536,7 +610,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: isSelected ? activeColor : AppColors.greyText,
+              color: isSelected ? activeColor : context.textMuted,
             ),
           ),
         ),
@@ -559,12 +633,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor.withOpacity(0.1) : Colors.white,
+          color: isSelected ? activeColor.withOpacity(0.1) : context.cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? activeColor.withOpacity(0.2)
-                : const Color(0xFFE5E7EB),
+                : context.borderColor,
           ),
         ),
         child: Row(
@@ -572,7 +646,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? activeColor : Colors.grey[600],
+              color: isSelected ? activeColor : context.textMuted,
             ),
             const SizedBox(width: 8),
             Text(
@@ -580,7 +654,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? activeColor : Colors.grey[600],
+                color: isSelected ? activeColor : context.textMuted,
               ),
             ),
           ],
@@ -633,7 +707,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: isColored ? color : Colors.grey[400],
+            color: isColored ? color : context.textMuted,
           ),
         ),
       ],
@@ -652,9 +726,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -671,19 +745,19 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.greyText,
+                  color: context.textMuted,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),

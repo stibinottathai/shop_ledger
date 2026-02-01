@@ -4,30 +4,33 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
+
 import 'package:shop_ledger/features/suppliers/domain/entities/supplier.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/suppliers/presentation/providers/supplier_provider.dart';
 import 'package:shop_ledger/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:shop_ledger/features/reports/presentation/providers/reports_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
-import 'package:shop_ledger/features/reports/presentation/providers/all_transactions_provider.dart';
+
 import 'package:shop_ledger/features/inventory/presentation/providers/inventory_provider.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 
 class PurchaseItem {
   final Item item;
-  final int count; // Number of items
-  final double quantity; // Kg
-  final double pricePerKg;
+  final int count; // Number of items (relevant for kg)
+  final double quantity; // Qty in Unit
+  final double pricePerUnit;
+  final String unit;
 
   PurchaseItem({
     required this.item,
     required this.count,
     required this.quantity,
-    required this.pricePerKg,
+    required this.pricePerUnit,
+    required this.unit,
   });
 
-  double get total => quantity * pricePerKg;
+  double get total => quantity * pricePerUnit;
 }
 
 class AddPurchasePage extends ConsumerStatefulWidget {
@@ -57,9 +60,13 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
 
   // Select Items Logic
   Item? _selectedItem;
+  String _selectedUnit = 'kg';
+  final List<String> _unitOptions = ['kg', 'box', 'piece', 'liter'];
+
   final TextEditingController _countController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _paidAmountController = TextEditingController();
   final List<PurchaseItem> _addedItems = [];
 
   @override
@@ -70,6 +77,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
     _countController.dispose();
     _quantityController.dispose();
     _priceController.dispose();
+    _paidAmountController.dispose();
     super.dispose();
   }
 
@@ -99,13 +107,20 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
       return;
     }
 
+    // If unit is NOT kg, count is irrelevant (or implicit).
+    // User said "maintain number of items only for kg".
+    // For Box/Piece/Liter, we can treat count as 0 or equal to quantity if integer?
+    // Let's set count to 0 for non-kg to avoid confusion, or purely use it for display.
+    final finalCount = _selectedUnit == 'kg' ? count : 0;
+
     setState(() {
       _addedItems.add(
         PurchaseItem(
           item: _selectedItem!,
-          count: count,
+          count: finalCount,
           quantity: qty,
-          pricePerKg: pricePerKg,
+          pricePerUnit: pricePerKg,
+          unit: _selectedUnit,
         ),
       );
 
@@ -134,10 +149,15 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
           final qty = e.quantity
               .toStringAsFixed(1)
               .replaceAll(RegExp(r'\.0$'), '');
-          // Format: "2 Items, 5.0 Kg Rubber @ 150.0 = 750.0" (using a distinct separator pattern helps)
-          // We'll use a specific format that our regex can easily find, or continue using the loose text and parse it out.
-          // Let's use: "{count} Items, {qty} Kg {name} (Rate: {rate}, Total: {total})"
-          return "${e.count} Items, $qty Kg ${e.item.name} (Rate: ${e.pricePerKg.toStringAsFixed(2)}, Total: ${e.total.toStringAsFixed(2)})";
+
+          if (e.unit == 'kg') {
+            return "${e.count} Items, $qty Kg ${e.item.name} (Rate: ${e.pricePerUnit.toStringAsFixed(2)}, Total: ${e.total.toStringAsFixed(2)})";
+          } else {
+            // For Box, Piece, Liter
+            String unitLabel = e.unit;
+            if (e.quantity > 1) unitLabel += "s"; // pluralize roughly
+            return "$qty $unitLabel ${e.item.name} (Rate: ${e.pricePerUnit.toStringAsFixed(2)}, Total: ${e.total.toStringAsFixed(2)})";
+          }
         })
         .join(", ");
   }
@@ -181,16 +201,59 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
         details = _generateDetailsFromItems();
       }
 
+      final paidAmount = _paidAmountController.text.isNotEmpty
+          ? double.tryParse(_paidAmountController.text) ?? 0.0
+          : null;
+
       final transaction = Transaction(
         supplierId: widget.supplier.id,
         amount: amount,
         type: TransactionType.purchase,
         date: _selectedDate,
         details: details,
+        receivedAmount:
+            paidAmount, // Reusing receivedAmount field for Amount Paid
       );
 
       final repository = ref.read(transactionRepositoryProvider);
       await repository.addTransaction(transaction);
+
+      // 2. Save Payment Out Transaction (if amount paid > 0)
+      final paidAmountStr = _paidAmountController.text;
+      if (paidAmountStr.isNotEmpty) {
+        final paidAmount = double.tryParse(paidAmountStr);
+        if (paidAmount != null && paidAmount > 0) {
+          final paymentTransaction = Transaction(
+            supplierId: widget.supplier.id,
+            amount: paidAmount,
+            type: TransactionType.paymentOut,
+            date: _selectedDate,
+            details: 'Payment made for purchase',
+          );
+          await repository.addTransaction(paymentTransaction);
+        }
+      }
+
+      // 3. Update Inventory Stock
+      print(
+        'Debug: EntryMode: $_entryMode, AddedItems: ${_addedItems.length}',
+      ); // Debug log
+      if (_entryMode == 1 && _addedItems.isNotEmpty) {
+        final inventoryNotifier = ref.read(inventoryProvider.notifier);
+        for (final purchaseItem in _addedItems) {
+          final originalItem = purchaseItem.item;
+          final currentQty = originalItem.totalQuantity ?? 0;
+          final newQty = currentQty + purchaseItem.quantity;
+
+          print(
+            'Debug: Updating ${originalItem.name}. Current: $currentQty, Adding: ${purchaseItem.quantity}, New: $newQty',
+          ); // Debug log
+
+          final updatedItem = originalItem.copyWith(totalQuantity: newQty);
+          await inventoryNotifier.updateItem(updatedItem);
+          print('Debug: Update complete for ${originalItem.name}'); // Debug log
+        }
+      }
 
       // Trigger global update for dashboard
       await Future.delayed(const Duration(milliseconds: 1000));
@@ -224,21 +287,25 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
     final inventoryAsync = ref.watch(inventoryProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: context.background,
       appBar: AppBar(
         title: Text(
           'Add Purchase',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: Colors.black,
+            color: context.textPrimary,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: context.appBarBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: context.textPrimary,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
       ),
@@ -251,7 +318,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
               padding: const EdgeInsets.all(16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: context.subtleBackground,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(4),
@@ -268,7 +335,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: const Color(0xFFE8F5E9),
+              color: AppColors.primary.withOpacity(0.1),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -276,7 +343,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     'Supplier',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: const Color(0xFF2E7D32),
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -285,7 +352,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: context.textPrimary,
                     ),
                   ),
                 ],
@@ -310,7 +377,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -324,20 +391,20 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                       style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey[800],
+                        color: context.textPrimary,
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: context.cardColor,
                         hintText: '0.00',
-                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        hintStyle: TextStyle(color: context.textMuted),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: context.borderColor),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: context.borderColor),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -353,16 +420,16 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                         vertical: 16,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: context.subtleBackground,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(color: context.borderColor),
                       ),
                       child: Text(
                         "₹${_calculatedTotal.toStringAsFixed(2)}",
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: context.textPrimary,
                         ),
                       ),
                     ),
@@ -374,13 +441,14 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _dateController,
                     readOnly: true,
+                    style: TextStyle(color: context.textPrimary),
                     onTap: () async {
                       final picked = await showDatePicker(
                         context: context,
@@ -399,24 +467,128 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                     },
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
-                      suffixIcon: const Icon(
+                      fillColor: context.cardColor,
+                      suffixIcon: Icon(
                         Icons.calendar_today_outlined,
                         size: 20,
-                        color: Colors.grey,
+                        color: context.textMuted,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: context.borderColor),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 16,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Amount Paid & Balance
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Amount Paid',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _paidAmountController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) => setState(() {}),
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: context.textPrimary,
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: context.cardColor,
+                            hintText: '0.00',
+                            prefixText: '₹ ',
+                            hintStyle: TextStyle(color: context.textMuted),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: context.borderColor,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Balance Display
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Balance',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 53, // Match TextField height approx
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.red.withOpacity(0.2),
+                            ),
+                          ),
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '₹ ${(() {
+                              final total = _entryMode == 0 ? (double.tryParse(_amountController.text) ?? 0) : _calculatedTotal;
+                              final paid = double.tryParse(_paidAmountController.text) ?? 0;
+                              return (total - paid).toStringAsFixed(2);
+                            })()}',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -506,7 +678,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? context.cardColor : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           boxShadow: isSelected
               ? [
@@ -523,7 +695,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
           label,
           style: GoogleFonts.inter(
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? Colors.black87 : Colors.grey[600],
+            color: isSelected ? context.textPrimary : context.textMuted,
             fontSize: 14,
           ),
         ),
@@ -542,25 +714,26 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _manualDetailsController,
             maxLines: 3,
+            style: TextStyle(color: context.textPrimary),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white,
+              fillColor: context.cardColor,
               hintText: 'Enter purchase details...',
-              hintStyle: TextStyle(color: Colors.grey[400]),
+              hintStyle: TextStyle(color: context.textMuted),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: context.borderColor),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: context.borderColor),
               ),
             ),
           ),
@@ -583,30 +756,40 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             data: (items) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: context.borderColor),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<Item>(
                   value: _selectedItem,
                   isExpanded: true,
+                  dropdownColor: context.cardColor,
                   hint: Text(
                     'Select Item',
-                    style: GoogleFonts.inter(color: Colors.grey[600]),
+                    style: GoogleFonts.inter(color: context.textMuted),
                   ),
                   items: items.map((item) {
                     return DropdownMenuItem(
                       value: item,
                       child: Text(
                         item.name,
-                        style: GoogleFonts.inter(color: Colors.black87),
+                        style: GoogleFonts.inter(color: context.textPrimary),
                       ),
                     );
                   }).toList(),
                   onChanged: (val) {
                     setState(() {
                       _selectedItem = val;
+                      // Logic to auto-select unit based on item if needed
+                      if (_selectedItem != null) {
+                        if (_selectedItem!.unit == 'pcs') {
+                          _selectedUnit = 'piece';
+                        } else {
+                          // Default or 'kg'
+                          _selectedUnit = 'kg';
+                        }
+                      }
                     });
                   },
                 ),
@@ -618,52 +801,98 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
 
           const SizedBox(height: 16),
 
+          // Unit Dropdown
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: context.cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.borderColor),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedUnit,
+                isExpanded: true,
+                dropdownColor: context.cardColor,
+                hint: Text(
+                  'Select Unit',
+                  style: TextStyle(color: context.textMuted),
+                ),
+                items: _unitOptions.map((u) {
+                  String label = u[0].toUpperCase() + u.substring(1);
+                  if (u == 'liter') label = 'Liter (l)';
+                  if (u == 'kg') label = 'Kilogram (kg)';
+                  return DropdownMenuItem(
+                    value: u,
+                    child: Text(
+                      label,
+                      style: GoogleFonts.inter(color: context.textPrimary),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedUnit = val!;
+                  });
+                },
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // Number of Items and Quantity Row
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _countController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    labelText: 'No. Items',
-                    labelStyle: TextStyle(color: Colors.grey[600]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
+              if (_selectedUnit == 'kg') ...[
+                Expanded(
+                  child: TextField(
+                    controller: _countController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: context.textPrimary),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: context.cardColor,
+                      labelText: 'No. Items',
+                      labelStyle: TextStyle(color: context.textMuted),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: context.borderColor),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: context.borderColor),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                 child: TextField(
                   controller: _quantityController,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  style: TextStyle(color: context.textPrimary),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.white,
-                    labelText: 'Quantity (Kg)',
-                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    fillColor: context.cardColor,
+                    labelText: _selectedUnit == 'kg'
+                        ? 'Quantity (Kg)'
+                        : 'Quantity (${_selectedUnit[0].toUpperCase()}${_selectedUnit.substring(1)})',
+                    labelStyle: TextStyle(color: context.textMuted),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: BorderSide(color: context.borderColor),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -681,18 +910,20 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
           TextField(
             controller: _priceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(color: context.textPrimary),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white,
-              labelText: 'Price / Kg',
-              labelStyle: TextStyle(color: Colors.grey[600]),
+              fillColor: context.cardColor,
+              labelText:
+                  'Price / ${_selectedUnit == 'liter' ? 'ltr' : _selectedUnit}',
+              labelStyle: TextStyle(color: context.textMuted),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: context.borderColor),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: context.borderColor),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -731,9 +962,9 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: context.borderColor),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -756,7 +987,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: context.textMuted,
                             ),
                           ),
                         ),
@@ -767,7 +998,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: context.textMuted,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -779,7 +1010,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: context.textMuted,
                             ),
                             textAlign: TextAlign.right,
                           ),
@@ -800,7 +1031,10 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                       final qty = item.quantity
                           .toStringAsFixed(1)
                           .replaceAll(RegExp(r'\.0$'), '');
-                      final rate = item.pricePerKg.toStringAsFixed(0);
+                      String unitSuffix = item.unit;
+                      if (item.unit == 'liter') unitSuffix = 'l';
+
+                      final rate = item.pricePerUnit.toStringAsFixed(0);
                       final total = item.total.toStringAsFixed(0);
                       return Padding(
                         padding: const EdgeInsets.symmetric(
@@ -819,6 +1053,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                                     style: GoogleFonts.inter(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
+                                      color: context.textPrimary,
                                     ),
                                   ),
                                   if (item.count > 0)
@@ -826,7 +1061,7 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                                       "${item.count} Items",
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
-                                        color: Colors.grey[600],
+                                        color: context.textMuted,
                                       ),
                                     ),
                                 ],
@@ -835,10 +1070,10 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                             Expanded(
                               flex: 4,
                               child: Text(
-                                "$qty Kg x ₹$rate",
+                                "$qty $unitSuffix x ₹$rate",
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
-                                  color: Colors.grey[700],
+                                  color: context.textMuted,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
