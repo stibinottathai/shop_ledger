@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -388,6 +389,10 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(8),
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
                       style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w500,
@@ -516,6 +521,12 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(8),
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ],
                           onChanged: (_) => setState(() {}),
                           style: GoogleFonts.inter(
                             fontSize: 16,
@@ -849,6 +860,10 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                   child: TextField(
                     controller: _countController,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ],
                     style: TextStyle(color: context.textPrimary),
                     decoration: InputDecoration(
                       filled: true,
@@ -878,6 +893,10 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(6),
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
                   style: TextStyle(color: context.textPrimary),
                   decoration: InputDecoration(
                     filled: true,
@@ -910,6 +929,10 @@ class _AddPurchasePageState extends ConsumerState<AddPurchasePage> {
           TextField(
             controller: _priceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(8),
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            ],
             style: TextStyle(color: context.textPrimary),
             decoration: InputDecoration(
               filled: true,

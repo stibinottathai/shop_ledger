@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -151,6 +152,10 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
                 fontSize: 24,
                 prefixText: '₹ ',
                 controller: _amountController,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(8),
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
               ),
             ),
 
@@ -283,6 +288,7 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
     bool isBold = false,
     double fontSize = 16,
     String? prefixText,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,6 +303,7 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
         ),
         const SizedBox(height: 8),
         TextField(
+          inputFormatters: inputFormatters,
           keyboardType: keyboardType,
           maxLines: maxLines,
           controller: controller,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -609,6 +610,12 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                         const TextInputType.numberWithOptions(
                                           decimal: true,
                                         ),
+                                    inputFormatters: [
+                                      LengthLimitingTextInputFormatter(6),
+                                      FilteringTextInputFormatter.allow(
+                                        RegExp(r'[0-9.]'),
+                                      ),
+                                    ],
                                     onChanged: (_) => setState(() {}),
                                     style: TextStyle(
                                       color: context.textPrimary,
@@ -830,6 +837,10 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                         decimal: true,
                       ),
                       prefixText: '₹ ',
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(8),
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
                       onChanged: (val) => setState(() {}),
                     ),
                   ),
@@ -1016,6 +1027,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
     double fontSize = 16,
     String? prefixText,
     bool readOnly = false,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1031,6 +1043,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
         const SizedBox(height: 8),
         TextField(
           readOnly: readOnly,
+          inputFormatters: inputFormatters,
           keyboardType: keyboardType,
           maxLines: maxLines,
           controller: controller,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -204,6 +205,9 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                           label: 'Item Name',
                           hint: 'e.g., Golden Apple',
                           icon: Icons.inventory_2_outlined,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(20),
+                          ],
                           validator: (val) =>
                               val == null || val.isEmpty ? 'Required' : null,
                         ),
@@ -287,7 +291,16 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                 label: 'Price (₹/${_selectedUnit})',
                                 hint: '0.00',
                                 icon: Icons.currency_rupee,
-                                inputType: TextInputType.number,
+                                inputType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                inputFormatters: [
+                                  LengthLimitingTextInputFormatter(8),
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'[0-9.]'),
+                                  ),
+                                ],
                                 validator: (val) {
                                   if (val == null || val.isEmpty)
                                     return 'Required';
@@ -305,7 +318,16 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                                 label: 'Quantity (${_selectedUnit})',
                                 hint: '0.00',
                                 icon: Icons.scale_outlined,
-                                inputType: TextInputType.number,
+                                inputType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                inputFormatters: [
+                                  LengthLimitingTextInputFormatter(6),
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'[0-9.]'),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -447,6 +469,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     TextInputType inputType = TextInputType.text,
     String? Function(String?)? validator,
     Widget? suffix,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,6 +486,7 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
         TextFormField(
           controller: controller,
           keyboardType: inputType,
+          inputFormatters: inputFormatters,
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w500,
             color: context.textPrimary,
