@@ -87,7 +87,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/customers',
-                builder: (context, state) => const CustomerListPage(),
+                builder: (context, state) {
+                  final filter = state.uri.queryParameters['filter'];
+                  final showHighDueOnly = filter == 'highDue';
+                  return CustomerListPage(showHighDueOnly: showHighDueOnly);
+                },
                 routes: [
                   GoRoute(
                     path: 'add',
