@@ -1,8 +1,11 @@
+import 'dart:io';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shop_ledger/core/router/app_router.dart';
+import 'package:shop_ledger/core/services/notification_service.dart';
 import 'package:shop_ledger/core/theme/app_theme.dart';
 import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,6 +26,13 @@ void main() async {
     url: 'https://sdcibdhdkbwdzmuzqtwu.supabase.co',
     anonKey: 'sb_publishable_0BoS3JOgkmBr-SQcV6cxQw_0sBKe4VY',
   );
+
+  // Initialize Android Alarm Manager (Android only)
+  if (Platform.isAndroid) {
+    await AndroidAlarmManager.initialize();
+    await NotificationService.initialize();
+    await NotificationService.scheduleAlarms();
+  }
 
   runApp(const ProviderScope(child: MyApp()));
 }

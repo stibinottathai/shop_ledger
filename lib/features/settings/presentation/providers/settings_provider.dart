@@ -13,22 +13,26 @@ final sharedPreferencesProvider = FutureProvider<SharedPreferences>((
 class SettingsState {
   final bool hideSensitiveData;
   final double maxCreditLimit;
+  final double lowStockThreshold;
   final ThemeMode themeMode;
 
   const SettingsState({
     this.hideSensitiveData = false,
     this.maxCreditLimit = 5000.0,
+    this.lowStockThreshold = 10.0,
     this.themeMode = ThemeMode.system,
   });
 
   SettingsState copyWith({
     bool? hideSensitiveData,
     double? maxCreditLimit,
+    double? lowStockThreshold,
     ThemeMode? themeMode,
   }) {
     return SettingsState(
       hideSensitiveData: hideSensitiveData ?? this.hideSensitiveData,
       maxCreditLimit: maxCreditLimit ?? this.maxCreditLimit,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       themeMode: themeMode ?? this.themeMode,
     );
   }
@@ -46,6 +50,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
     final prefs = await ref.watch(sharedPreferencesProvider.future);
     final hide = prefs.getBool('hide_sensitive_data') ?? false;
     final limit = prefs.getDouble('max_credit_limit') ?? 5000.0;
+    final lowStock = prefs.getDouble('low_stock_threshold') ?? 10.0;
 
     final themeIndex =
         prefs.getInt('theme_mode') ?? 0; // 0: system, 1: light, 2: dark
@@ -56,6 +61,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
     state = state.copyWith(
       hideSensitiveData: hide,
       maxCreditLimit: limit,
+      lowStockThreshold: lowStock,
       themeMode: themeMode,
     );
   }
@@ -70,6 +76,12 @@ class SettingsNotifier extends Notifier<SettingsState> {
     state = state.copyWith(maxCreditLimit: value);
     final prefs = await ref.read(sharedPreferencesProvider.future);
     await prefs.setDouble('max_credit_limit', value);
+  }
+
+  Future<void> updateLowStockThreshold(double value) async {
+    state = state.copyWith(lowStockThreshold: value);
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    await prefs.setDouble('low_stock_threshold', value);
   }
 
   Future<void> updateThemeMode(ThemeMode mode) async {
