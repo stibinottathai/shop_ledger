@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -26,6 +27,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
 
   final List<String> _categories = [
     'Food',
+    'Fuel',
     'Travel',
     'Rent',
     'Bills',
@@ -171,9 +173,11 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
+                ],
                 style: GoogleFonts.inter(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

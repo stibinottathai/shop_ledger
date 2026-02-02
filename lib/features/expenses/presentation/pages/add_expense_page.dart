@@ -190,38 +190,10 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: TextInputType.number,
                 inputFormatters: [
-                  // Only allow digits and decimal point
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  // Custom formatter to enforce max 8 digits before decimal
-                  TextInputFormatter.withFunction((oldValue, newValue) {
-                    final text = newValue.text;
-
-                    // Allow empty
-                    if (text.isEmpty) return newValue;
-
-                    // Don't allow text to start with a decimal point
-                    if (text == '.') return oldValue;
-
-                    // Don't allow multiple decimal points
-                    if ('.'.allMatches(text).length > 1) return oldValue;
-
-                    // Split by decimal point
-                    final parts = text.split('.');
-
-                    // Limit integer part to 8 digits
-                    if (parts[0].length > 8) return oldValue;
-
-                    // Ensure it's a valid number format
-                    if (RegExp(r'^\d{1,8}(\.\d*)?$').hasMatch(text)) {
-                      return newValue;
-                    }
-
-                    return oldValue;
-                  }),
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
                 ],
                 style: GoogleFonts.inter(
                   fontSize: 24,
