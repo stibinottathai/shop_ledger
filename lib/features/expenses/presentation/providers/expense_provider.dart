@@ -4,6 +4,7 @@ import 'package:shop_ledger/features/expenses/data/datasources/expense_remote_da
 import 'package:shop_ledger/features/expenses/data/repositories/expense_repository_impl.dart';
 import 'package:shop_ledger/features/expenses/domain/entities/expense.dart';
 import 'package:shop_ledger/features/expenses/domain/repositories/expense_repository.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 
 // --- Data Layer Providers ---
 
@@ -82,6 +83,8 @@ class ExpenseListNotifier extends AsyncNotifier<List<Expense>> {
   Future<List<Expense>> build() async {
     // Watch for expense updates
     ref.watch(expenseUpdateProvider);
+    // Watch auth state to force refresh when user changes
+    ref.watch(authStateProvider);
     final filter = ref.watch(expenseFilterProvider);
     return _fetchExpenses(filter);
   }
@@ -157,6 +160,8 @@ class RecentExpensesNotifier extends AsyncNotifier<List<Expense>> {
   Future<List<Expense>> build() async {
     // Watch for expense updates
     ref.watch(expenseUpdateProvider);
+    // Watch auth state to force refresh when user changes
+    ref.watch(authStateProvider);
     final repository = ref.watch(expenseRepositoryProvider);
     return await repository.getExpenses(limit: 5);
   }
