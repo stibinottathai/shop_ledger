@@ -259,40 +259,40 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: 12),
 
           // Test Notification Button
-          _buildSettingsTile(
-            context,
-            icon: Icons.notifications_active_outlined,
-            title: 'Test Notification',
-            subtitle: 'Check if notifications are working',
-            onTap: () async {
-              // Test notification by showing a simple notification
-              try {
-                await notifier.testNotification();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Test notification sent! Check your notification panel.',
-                      ),
-                      backgroundColor: AppColors.primary,
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-          ),
+          // _buildSettingsTile(
+          //   context,
+          //   icon: Icons.notifications_active_outlined,
+          //   title: 'Test Notification',
+          //   subtitle: 'Check if notifications are working',
+          //   onTap: () async {
+          //     // Test notification by showing a simple notification
+          //     try {
+          //       await notifier.testNotification();
+          //       if (context.mounted) {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           const SnackBar(
+          //             content: Text(
+          //               'Test notification sent! Check your notification panel.',
+          //             ),
+          //             backgroundColor: AppColors.primary,
+          //             duration: Duration(seconds: 3),
+          //           ),
+          //         );
+          //       }
+          //     } catch (e) {
+          //       if (context.mounted) {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           SnackBar(
+          //             content: Text('Error: $e'),
+          //             backgroundColor: Colors.red,
+          //           ),
+          //         );
+          //       }
+          //     }
+          //   },
+          // ),
 
-          const SizedBox(height: 12),
+          // const SizedBox(height: 12),
 
           // Business Card
           _buildSettingsTile(
