@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
@@ -99,8 +100,12 @@ final reportsProvider = AsyncNotifierProvider<ReportsNotifier, ReportsState>(
 class ReportsNotifier extends AsyncNotifier<ReportsState> {
   @override
   Future<ReportsState> build() async {
+    // Watch auth state to force refresh when user changes (logout/login)
+    ref.watch(authStateProvider);
     // Rebuild when transactions update
     ref.watch(transactionUpdateProvider);
+    // Rebuild when expenses update
+    ref.watch(expenseUpdateProvider);
     // Rebuild when filter updates
     ref.watch(reportsFilterProvider);
     return _calculateReports();
@@ -186,10 +191,11 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
         if (t.type == TransactionType.sale) {
           totalSales += t.amount;
           chartSales[getIndex(t.date)] += t.amount;
-        } else {
+        } else if (t.type == TransactionType.purchase) {
           totalPurchases += t.amount;
           chartPurchases[getIndex(t.date)] += t.amount;
         }
+        // Ignore paymentIn and paymentOut for sales/purchases calculation
       }
       for (var e in expenses) {
         totalExpenses += e.amount;
@@ -233,10 +239,11 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
           if (t.type == TransactionType.sale) {
             totalSales += t.amount;
             chartSales[dayIndex] += t.amount;
-          } else {
+          } else if (t.type == TransactionType.purchase) {
             totalPurchases += t.amount;
             chartPurchases[dayIndex] += t.amount;
           }
+          // Ignore paymentIn and paymentOut for sales/purchases calculation
         }
       }
       for (var e in expenses) {
@@ -265,9 +272,10 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
 
       // Count months
       int months = (end.year - start.year) * 12 + end.month - start.month + 1;
-      if (months > 6)
+      if (months > 6) {
         months =
             6; // Cap at 6 for UI? Or let UI scroll? UI expects 6 fixed currently.
+      }
       // If fixed 6, take last 6 months of the range?
 
       // Actually, if user selects broad range, maybe we just show last 6 months ENDING at Range End.
@@ -298,10 +306,11 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
           // So iterating it is safe for totals.
 
           _addToMonthly(chartSales, t.date, t.amount, plotEnd);
-        } else {
+        } else if (t.type == TransactionType.purchase) {
           totalPurchases += t.amount;
           _addToMonthly(chartPurchases, t.date, t.amount, plotEnd);
         }
+        // Ignore paymentIn and paymentOut for sales/purchases calculation
       }
       // Totals are accumulating?
       // logic error: `totalSales` is inside the loop.

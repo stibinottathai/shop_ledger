@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
@@ -37,7 +38,10 @@ final dashboardStatsProvider =
 class DashboardStatsNotifier extends AsyncNotifier<DashboardStats> {
   @override
   Future<DashboardStats> build() async {
-    // Watch for updates
+    // Watch auth state to force refresh when user changes (logout/login)
+    ref.watch(authStateProvider);
+
+    // Watch for transaction updates
     final updateCount = ref.watch(transactionUpdateProvider);
     print('DashboardStatsNotifier: build triggered. UpdateCount: $updateCount');
     return _calculateStats();

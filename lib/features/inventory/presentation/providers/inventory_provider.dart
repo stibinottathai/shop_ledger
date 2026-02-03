@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/inventory/data/repositories/item_repository.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 
@@ -16,6 +17,8 @@ final inventoryProvider = AsyncNotifierProvider<InventoryNotifier, List<Item>>(
 class InventoryNotifier extends AsyncNotifier<List<Item>> {
   @override
   Future<List<Item>> build() async {
+    // Watch auth state to force refresh when user changes (logout/login)
+    ref.watch(authStateProvider);
     return ref.read(itemRepositoryProvider).getItems();
   }
 

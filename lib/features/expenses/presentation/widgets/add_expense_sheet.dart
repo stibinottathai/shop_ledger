@@ -89,6 +89,9 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
 
         await ref.read(expenseListProvider.notifier).addExpense(expense);
 
+        // Increment expense update counter to trigger all watchers
+        ref.read(expenseUpdateProvider.notifier).increment();
+
         // Force refresh dashboard providers
         ref.refresh(recentExpensesProvider);
         ref.refresh(totalExpenseProvider);

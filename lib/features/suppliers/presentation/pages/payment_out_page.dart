@@ -92,6 +92,9 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
       ref.invalidate(supplierTransactionListProvider(widget.supplier.id!));
       ref.invalidate(allTransactionsProvider);
 
+      // Refresh supplier list to update balances
+      ref.read(supplierListProvider.notifier).refresh();
+
       if (mounted) {
         context.pop();
       }

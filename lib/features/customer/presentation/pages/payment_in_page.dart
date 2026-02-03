@@ -18,15 +18,32 @@ class PaymentInPage extends ConsumerStatefulWidget {
 
 class _PaymentInPageState extends ConsumerState<PaymentInPage> {
   final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _outstandingBalanceController =
+      TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
   final TextEditingController _dateController = TextEditingController(
     text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
   );
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
+  double _enteredAmount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController.addListener(_updateAmount);
+  }
+
+  void _updateAmount() {
+    setState(() {
+      _enteredAmount = double.tryParse(_amountController.text) ?? 0;
+    });
+  }
 
   @override
   void dispose() {
+    _amountController.removeListener(_updateAmount);
+    _outstandingBalanceController.dispose();
     _amountController.dispose();
     _detailsController.dispose();
     _dateController.dispose();
@@ -141,22 +158,213 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
 
             const SizedBox(height: 24),
 
-            // Amount Given Input
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildTextField(
-                label: 'Amount Given',
-                hint: '0.00',
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                isBold: true,
-                fontSize: 24,
-                prefixText: '₹ ',
-                controller: _amountController,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(8),
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
-              ),
+            // Outstanding Balance Display
+            Consumer(
+              builder: (context, ref, child) {
+                final stats = ref.watch(
+                  customerStatsProvider(widget.customer.id!),
+                );
+                final outstanding = stats.outstandingBalance;
+                final remaining = outstanding - _enteredAmount;
+
+                // Update controller text if different to avoid infinite loops
+                final newText = remaining.toStringAsFixed(2);
+                if (_outstandingBalanceController.text != newText) {
+                  // Schedule update to avoid build-phase modification errors
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _outstandingBalanceController.text = newText;
+                    }
+                  });
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildTextField(
+                    label: 'Outstanding Amount',
+                    hint: '0.00',
+                    controller: _outstandingBalanceController,
+                    isBold: true,
+                    fontSize: 18,
+                    prefixText: '₹ ',
+                    readOnly: true,
+                    textColor: remaining < 0
+                        ? AppColors.primary
+                        : context.textPrimary,
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            // Amount Given with Max button
+            Consumer(
+              builder: (context, ref, child) {
+                final stats = ref.watch(
+                  customerStatsProvider(widget.customer.id!),
+                );
+                final outstanding = stats.outstandingBalance;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Amount Received',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _amountController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(8),
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9.]'),
+                                ),
+                              ],
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: '0.00',
+                                hintStyle: TextStyle(color: context.textMuted),
+                                filled: true,
+                                fillColor: context.cardColor,
+                                prefixText: '₹ ',
+                                prefixStyle: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textPrimary,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: context.borderColor,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: context.borderColor,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Max button
+                          Material(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              onTap: () {
+                                _amountController.text = outstanding
+                                    .toStringAsFixed(2);
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 18,
+                                ),
+                                child: const Text(
+                                  'Max',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Remaining Balance Display
+            Consumer(
+              builder: (context, ref, child) {
+                final stats = ref.watch(
+                  customerStatsProvider(widget.customer.id!),
+                );
+                final outstanding = stats.outstandingBalance;
+                final remaining = outstanding - _enteredAmount;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Remaining Balance',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: remaining > 0
+                              ? Colors.red.withOpacity(0.05)
+                              : AppColors.primary.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: remaining > 0
+                                ? Colors.red.withOpacity(0.2)
+                                : AppColors.primary.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Text(
+                          '₹ ${remaining.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: remaining > 0
+                                ? Colors.red.shade700
+                                : AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -289,6 +497,8 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
     double fontSize = 16,
     String? prefixText,
     List<TextInputFormatter>? inputFormatters,
+    bool readOnly = false,
+    Color? textColor,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,10 +517,11 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
           keyboardType: keyboardType,
           maxLines: maxLines,
           controller: controller,
+          readOnly: readOnly,
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: context.textPrimary,
+            color: textColor ?? context.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -318,11 +529,13 @@ class _PaymentInPageState extends ConsumerState<PaymentInPage> {
             prefixStyle: TextStyle(
               fontSize: fontSize,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: context.textPrimary,
+              color: textColor ?? context.textPrimary,
             ),
             hintStyle: TextStyle(color: context.textMuted),
             filled: true,
-            fillColor: context.cardColor,
+            fillColor: readOnly
+                ? context.cardColor.withOpacity(0.5)
+                : context.cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: context.borderColor),

@@ -245,6 +245,133 @@ class SettingsPage extends ConsumerWidget {
 
           const SizedBox(height: 12),
 
+          // Low Stock Threshold
+          _buildSettingsTile(
+            context,
+            icon: Icons.inventory_2_outlined,
+            title: 'Low Stock Threshold',
+            subtitle:
+                '${settingsState.lowStockThreshold.toStringAsFixed(0)} units',
+            onTap: () {
+              final controller = TextEditingController(
+                text: settingsState.lowStockThreshold.toStringAsFixed(0),
+              );
+              showDialog(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  backgroundColor: dialogContext.cardColor,
+                  title: Text(
+                    'Set Low Stock Threshold',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      color: dialogContext.textPrimary,
+                    ),
+                  ),
+                  content: TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: dialogContext.textPrimary),
+                    decoration: InputDecoration(
+                      labelText: 'Quantity',
+                      labelStyle: TextStyle(color: dialogContext.textMuted),
+                      filled: true,
+                      fillColor: dialogContext.subtleBackground,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: dialogContext.borderColor,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: dialogContext.borderColor,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      counterText: "",
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => dialogContext.pop(),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(
+                          color: dialogContext.textMuted,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final value = double.tryParse(controller.text);
+                        if (value != null) {
+                          notifier.updateLowStockThreshold(value);
+                          dialogContext.pop();
+                        }
+                      },
+                      child: Text(
+                        'Save',
+                        style: GoogleFonts.inter(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // Test Notification Button
+          _buildSettingsTile(
+            context,
+            icon: Icons.notifications_active_outlined,
+            title: 'Test Notification',
+            subtitle: 'Check if notifications are working',
+            onTap: () async {
+              // Test notification by showing a simple notification
+              try {
+                await notifier.testNotification();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Test notification sent! Check your notification panel.',
+                      ),
+                      backgroundColor: AppColors.primary,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
+
+          const SizedBox(height: 12),
+
           // Business Card
           _buildSettingsTile(
             context,

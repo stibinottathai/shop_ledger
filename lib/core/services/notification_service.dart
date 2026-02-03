@@ -22,6 +22,22 @@ class NotificationService {
     await _notifications.initialize(initSettings);
   }
 
+  /// Request notification permissions (required for Android 13+)
+  static Future<bool> requestPermissions() async {
+    final androidImplementation = _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    if (androidImplementation != null) {
+      // Request permission for Android 13+ (API 33+)
+      final granted = await androidImplementation
+          .requestNotificationsPermission();
+      return granted ?? false;
+    }
+    return true; // For older Android versions, permission is granted at install
+  }
+
   /// Schedule alarms for 9 AM and 7 PM IST
   static Future<void> scheduleAlarms() async {
     final now = DateTime.now();

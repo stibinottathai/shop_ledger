@@ -31,6 +31,8 @@ void main() async {
   if (Platform.isAndroid) {
     await AndroidAlarmManager.initialize();
     await NotificationService.initialize();
+    // Request notification permissions (shows popup on first launch for Android 13+)
+    await NotificationService.requestPermissions();
     await NotificationService.scheduleAlarms();
   }
 

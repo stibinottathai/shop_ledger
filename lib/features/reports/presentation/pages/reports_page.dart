@@ -43,53 +43,58 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                     ref.refresh(reportsProvider);
                   },
                 ),
-                data: (state) => SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTabs(),
-                      const Divider(height: 1),
+                data: (state) => RefreshIndicator(
+                  onRefresh: () async {
+                    ref.read(reportsProvider.notifier).refresh();
+                  },
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTabs(),
+                        const Divider(height: 1),
 
-                      // Chips
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildChip(
-                                icon: Icons.calendar_today,
-                                label: 'Today',
-                                isSelected: _selectedDateFilter == 0,
-                                onTap: () => _onFilterChanged(0),
-                              ),
-                              const SizedBox(width: 12),
-                              _buildChip(
-                                icon: Icons.calendar_month,
-                                label: 'This Week',
-                                isSelected: _selectedDateFilter == 1,
-                                onTap: () => _onFilterChanged(1),
-                              ),
-                              const SizedBox(width: 12),
-                              _buildChip(
-                                icon: Icons.date_range,
-                                label:
-                                    _selectedDateFilter == 2 &&
-                                        _selectedDateRange != null
-                                    ? '${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}'
-                                    : 'Range',
-                                isSelected: _selectedDateFilter == 2,
-                                onTap: _selectDateRange,
-                              ),
-                            ],
+                        // Chips
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _buildChip(
+                                  icon: Icons.calendar_today,
+                                  label: 'Today',
+                                  isSelected: _selectedDateFilter == 0,
+                                  onTap: () => _onFilterChanged(0),
+                                ),
+                                const SizedBox(width: 12),
+                                _buildChip(
+                                  icon: Icons.calendar_month,
+                                  label: 'This Week',
+                                  isSelected: _selectedDateFilter == 1,
+                                  onTap: () => _onFilterChanged(1),
+                                ),
+                                const SizedBox(width: 12),
+                                _buildChip(
+                                  icon: Icons.date_range,
+                                  label:
+                                      _selectedDateFilter == 2 &&
+                                          _selectedDateRange != null
+                                      ? '${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}'
+                                      : 'Range',
+                                  isSelected: _selectedDateFilter == 2,
+                                  onTap: _selectDateRange,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
 
-                      // Dynamic Content based on Tab
-                      _buildTabContent(state),
-                    ],
+                        // Dynamic Content based on Tab
+                        _buildTabContent(state),
+                      ],
+                    ),
                   ),
                 ),
               ),

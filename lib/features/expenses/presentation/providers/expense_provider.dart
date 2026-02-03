@@ -18,6 +18,18 @@ final expenseRepositoryProvider = Provider<ExpenseRepository>((ref) {
   return ExpenseRepositoryImpl(remoteDataSource: remoteDataSource);
 });
 
+// --- Update Counter Provider ---
+final expenseUpdateProvider = NotifierProvider<ExpenseUpdateNotifier, int>(
+  () => ExpenseUpdateNotifier(),
+);
+
+class ExpenseUpdateNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() => state++;
+}
+
 // --- Filter State ---
 
 class ExpenseFilter {
@@ -68,6 +80,8 @@ final expenseListProvider =
 class ExpenseListNotifier extends AsyncNotifier<List<Expense>> {
   @override
   Future<List<Expense>> build() async {
+    // Watch for expense updates
+    ref.watch(expenseUpdateProvider);
     final filter = ref.watch(expenseFilterProvider);
     return _fetchExpenses(filter);
   }
@@ -141,6 +155,8 @@ final recentExpensesProvider =
 class RecentExpensesNotifier extends AsyncNotifier<List<Expense>> {
   @override
   Future<List<Expense>> build() async {
+    // Watch for expense updates
+    ref.watch(expenseUpdateProvider);
     final repository = ref.watch(expenseRepositoryProvider);
     return await repository.getExpenses(limit: 5);
   }
