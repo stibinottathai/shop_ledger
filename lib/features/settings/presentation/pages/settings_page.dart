@@ -330,6 +330,16 @@ class SettingsPage extends ConsumerWidget {
             subtitle: 'Manage your account details',
             onTap: () => context.push('/home/profile'),
           ),
+
+          const SizedBox(height: 12),
+
+          _buildSettingsTile(
+            context,
+            icon: Icons.lock_reset,
+            title: 'Change Password',
+            subtitle: 'Update your account password',
+            onTap: () => context.push('/home/settings/change-password'),
+          ),
         ],
       ),
     );

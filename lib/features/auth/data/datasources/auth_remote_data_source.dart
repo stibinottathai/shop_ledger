@@ -24,12 +24,26 @@ abstract class AuthRemoteDataSource {
     required String email,
     required String token,
   });
+
+  Future<void> resetPasswordForEmail({required String email});
+
+  Future<void> updatePassword({required String newPassword});
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final SupabaseClient supabaseClient;
 
   AuthRemoteDataSourceImpl(this.supabaseClient);
+
+  @override
+  Future<void> updatePassword({required String newPassword}) async {
+    await supabaseClient.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
+  @override
+  Future<void> resetPasswordForEmail({required String email}) async {
+    await supabaseClient.auth.resetPasswordForEmail(email);
+  }
 
   @override
   Future<AuthResponse> verifyOtp({

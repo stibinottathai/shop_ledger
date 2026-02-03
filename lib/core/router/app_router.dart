@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/change_password_page.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/signup_page.dart';
@@ -56,6 +58,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
       GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
         path: '/low-stock-settings',
         builder: (context, state) => const LowStockSettingsPage(),
       ),
@@ -78,6 +84,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: 'settings',
                     builder: (context, state) => const SettingsPage(),
                     routes: [
+                      GoRoute(
+                        path: 'change-password',
+                        builder: (context, state) => const ChangePasswordPage(),
+                      ),
                       GoRoute(
                         path: 'reports',
                         builder: (context, state) => const ReportsPage(),
