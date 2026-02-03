@@ -565,11 +565,20 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                       if (item.unit == 'ml') priceUnit = 'l';
                                       if (item.unit == 'mg') priceUnit = 'g';
 
+                                      final quantity = item.totalQuantity ?? 0;
+                                      final isOutOfStock = quantity <= 0;
+
                                       return DropdownMenuItem(
                                         value: item,
+                                        enabled: !isOutOfStock,
                                         child: Text(
-                                          '${item.name} (₹${item.pricePerKg}/$priceUnit)',
+                                          '${item.name} (₹${item.pricePerKg}/$priceUnit)${isOutOfStock ? ' - Out of Stock' : ''}',
                                           overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: isOutOfStock
+                                                ? context.textMuted
+                                                : context.textPrimary,
+                                          ),
                                         ),
                                       );
                                     }).toList(),

@@ -17,7 +17,8 @@ class ReportsPage extends ConsumerStatefulWidget {
 
 class _ReportsPageState extends ConsumerState<ReportsPage> {
   int _selectedTabIndex = 3; // Default to 'Summary' (3)
-  int _selectedDateFilter = 0; // 0: Today, 1: This Week, 2: Range
+  int _selectedDateFilter =
+      2; // 0: Today, 1: This Week, 2: This Month, 3: Range
   DateTimeRange? _selectedDateRange;
 
   @override
@@ -77,13 +78,20 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                                 ),
                                 const SizedBox(width: 12),
                                 _buildChip(
+                                  icon: Icons.calendar_month,
+                                  label: 'This Month',
+                                  isSelected: _selectedDateFilter == 2,
+                                  onTap: () => _onFilterChanged(2),
+                                ),
+                                const SizedBox(width: 12),
+                                _buildChip(
                                   icon: Icons.date_range,
                                   label:
-                                      _selectedDateFilter == 2 &&
+                                      _selectedDateFilter == 3 &&
                                           _selectedDateRange != null
                                       ? '${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}'
                                       : 'Range',
-                                  isSelected: _selectedDateFilter == 2,
+                                  isSelected: _selectedDateFilter == 3,
                                   onTap: _selectDateRange,
                                 ),
                               ],
@@ -149,7 +157,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     if (picked != null) {
       setState(() {
         _selectedDateRange = picked;
-        _selectedDateFilter = 2;
+        _selectedDateFilter = 3;
       });
       _updateProviders(picked);
     }
@@ -173,6 +181,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       final start = now.subtract(Duration(days: now.weekday - 1));
       range = DateTimeRange(
         start: DateTime(start.year, start.month, start.day),
+        end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+      );
+    } else if (index == 2) {
+      // This Month
+      range = DateTimeRange(
+        start: DateTime(now.year, now.month, 1),
         end: DateTime(now.year, now.month, now.day, 23, 59, 59),
       );
     } else {

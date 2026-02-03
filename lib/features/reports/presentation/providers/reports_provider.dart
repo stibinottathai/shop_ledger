@@ -78,10 +78,10 @@ final reportsFilterProvider =
 class ReportsFilterNotifier extends Notifier<DateTimeRange?> {
   @override
   DateTimeRange? build() {
-    // Default to "Today"
+    // Default to "This Month"
     final now = DateTime.now();
     return DateTimeRange(
-      start: DateTime(now.year, now.month, now.day),
+      start: DateTime(now.year, now.month, 1),
       end: DateTime(now.year, now.month, now.day, 23, 59, 59),
     );
   }
@@ -125,9 +125,9 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
 
     DateTime start, end;
     if (filterRange == null) {
-      // Fallback default if null (though notifier defaults to Today)
+      // Fallback default if null (though notifier defaults to This Month)
       final now = DateTime.now();
-      start = DateTime(now.year, now.month, now.day);
+      start = DateTime(now.year, now.month, 1);
       end = DateTime(now.year, now.month, now.day, 23, 59, 59);
     } else {
       start = filterRange.start;
@@ -201,17 +201,24 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
         totalExpenses += e.amount;
         chartExpenses[getIndex(e.date)] += e.amount;
       }
-    } else if (duration.inDays <= 7) {
-      // THIS WEEK / WEEKLY
-      chartPeriod = 'This Week';
-      // Generate labels for the days in range (or standard Mon-Sun if "This Week" is strictly aligned)
-      // Adjust logic: dynamic buckets based on days in range.
+    } else if (duration.inDays <= 31) {
+      // THIS WEEK or THIS MONTH (Up to 31 days) -> Daily buckets
+      chartPeriod = duration.inDays <= 7 ? 'This Week' : 'This Month';
+
+      // Generate labels for the days in range
+      // For This Month, standard 1..30/31 labels or Day Names?
+      // If > 7 days, Day number (1, 2, 3...) is better.
+      // If <= 7 days, Day name (Mon, Tue...) is better.
+      final useDayName = duration.inDays <= 7;
+
       final days = duration.inDays + 1;
       chartSales = List.filled(days, 0.0);
       chartPurchases = List.filled(days, 0.0);
       chartExpenses = List.filled(days, 0.0);
 
-      final DateFormat dayFormat = DateFormat('E'); // Mon, Tue...
+      final DateFormat dayFormat = useDayName
+          ? DateFormat('E')
+          : DateFormat('d');
       chartLabels = List.generate(
         days,
         (i) => dayFormat.format(start.add(Duration(days: i))),
@@ -219,13 +226,6 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
 
       for (var t in transactions) {
         final localDate = t.date.toLocal();
-        // Calculate difference in days from start (Local)
-        // Ensure start is treated as start of day for correct diff?
-        // Start is already 00:00:00 Local.
-        // But localDate might have time components.
-        // Difference in days:
-        // (localDate - start).inDays might be tricky if hours affect it.
-        // Safe way: Normalize both to midnight.
         final localDateMidnight = DateTime(
           localDate.year,
           localDate.month,
@@ -243,7 +243,6 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
             totalPurchases += t.amount;
             chartPurchases[dayIndex] += t.amount;
           }
-          // Ignore paymentIn and paymentOut for sales/purchases calculation
         }
       }
       for (var e in expenses) {
