@@ -33,6 +33,21 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        
+        ndk {
+            // Specify ABIs to include (removes unused architectures)
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+        }
+    }
+
+    // Split APK by ABI for smaller downloads
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = true  // Also generate a universal APK
+        }
     }
 
     signingConfigs {

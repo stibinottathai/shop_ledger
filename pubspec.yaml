@@ -123,3 +123,13 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        # Use the same regular font for other weights
+        # The system will synthesize bold/medium from regular
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 500  # Medium
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 600  # SemiBold
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 700  # Bold
+
