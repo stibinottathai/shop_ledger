@@ -209,6 +209,31 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
 
     final count = int.tryParse(_itemCountController.text) ?? 1;
 
+    // Check available stock
+    final availableStock = _selectedInventoryItem!.totalQuantity ?? 0;
+
+    // Calculate total quantity already added for this item in the current sale
+    final alreadyAddedQty = _selectedItems
+        .where((sItem) => sItem.item.id == _selectedInventoryItem!.id)
+        .fold(0.0, (sum, sItem) => sum + sItem.quantity);
+
+    // Check if the new quantity plus already added quantity exceeds available stock
+    if ((alreadyAddedQty + qty) > availableStock) {
+      final remaining = availableStock - alreadyAddedQty;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            remaining > 0
+                ? 'Not enough stock! Only ${remaining.toStringAsFixed(2)} ${_selectedInventoryItem!.unit} available.'
+                : 'Not enough stock! No more ${_selectedInventoryItem!.name} available.',
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _selectedItems.add(
         SelectedSaleItem(
@@ -333,19 +358,33 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
       // 3. Update Inventory Stock (Deduct Items)
       if (!_isManualMode && _selectedItems.isNotEmpty) {
         final inventoryNotifier = ref.read(inventoryProvider.notifier);
-        for (final sItem in _selectedItems) {
-          final originalItem = sItem.item;
-          final currentQty = originalItem.totalQuantity ?? 0;
-          final soldQty = sItem.quantity;
+        final currentInventory = await ref.read(inventoryProvider.future);
 
+        for (final sItem in _selectedItems) {
+          // Get the current item from inventory (not the cached one)
+          final currentItem = currentInventory.firstWhere(
+            (item) => item.id == sItem.item.id,
+            orElse: () => sItem.item,
+          );
+
+          final currentQty = currentItem.totalQuantity ?? 0;
+          final soldQty = sItem.quantity;
           final newQty = currentQty - soldQty;
 
           // Debug log
           print(
-            'Debug: Sale - Deducting ${originalItem.name}. Current: $currentQty, Sold: $soldQty, New: $newQty',
+            'Debug: Sale - Deducting ${currentItem.name}. Current: $currentQty, Sold: $soldQty, New: $newQty',
           );
 
-          final updatedItem = originalItem.copyWith(totalQuantity: newQty);
+          // Ensure we don't go negative (safety check)
+          if (newQty < 0) {
+            print('WARNING: Stock would go negative for ${currentItem.name}');
+            throw Exception(
+              'Insufficient stock for ${currentItem.name}. Available: $currentQty, Requested: $soldQty',
+            );
+          }
+
+          final updatedItem = currentItem.copyWith(totalQuantity: newQty);
           await inventoryNotifier.updateItem(updatedItem);
         }
       }

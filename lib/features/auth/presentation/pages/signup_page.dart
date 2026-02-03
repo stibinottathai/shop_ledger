@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -257,6 +258,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                               primaryColor: primaryColor,
                               textMainDark: textMainDark,
                               textMainLight: textMainLight,
+                              maxLength: 20,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Shop Name is required';
@@ -285,6 +287,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                               primaryColor: primaryColor,
                               textMainDark: textMainDark,
                               textMainLight: textMainLight,
+                              maxLength: 20,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Owner Name is required';
@@ -302,7 +305,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             ),
                             _buildTextField(
                               controller: _phoneController,
-                              hint: '+91 9495622667',
+                              hint: '9495622667',
                               icon: Icons.phone_outlined,
                               inputType: TextInputType.phone,
                               isDark: isDark,
@@ -314,13 +317,17 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                               primaryColor: primaryColor,
                               textMainDark: textMainDark,
                               textMainLight: textMainLight,
+                              maxLength: 10,
+                              prefixText: '+91 ',
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Phone number is required';
                                 }
-                                // Basic phone regex or length check
-                                if (value.length < 10) {
-                                  return 'Please enter a valid phone number';
+                                if (value.length != 10) {
+                                  return 'Please enter a valid 10-digit phone number';
                                 }
                                 return null;
                               },
@@ -521,14 +528,24 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     required Color textMainDark,
     required Color textMainLight,
     TextInputType inputType = TextInputType.text,
+    int? maxLength,
+    String? prefixText,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: inputType,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
       validator: validator,
       style: GoogleFonts.inter(color: isDark ? textMainDark : textMainLight),
       decoration: InputDecoration(
+        prefixText: prefixText,
+        prefixStyle: GoogleFonts.inter(
+          color: isDark ? textMainDark : textMainLight,
+          fontWeight: FontWeight.w500,
+        ),
         hintText: hint,
         hintStyle: GoogleFonts.inter(color: textMutedLight.withOpacity(0.7)),
         filled: true,
