@@ -52,6 +52,30 @@ class InventoryNotifier extends AsyncNotifier<List<Item>> {
     await future;
   }
 
+  /// Update low stock threshold for a specific item
+  Future<void> updateItemLowStockThreshold(
+    String itemId,
+    double threshold,
+  ) async {
+    final currentState = state.value;
+    if (currentState == null) return;
+
+    // Find the item and update its threshold
+    final itemIndex = currentState.indexWhere((item) => item.id == itemId);
+    if (itemIndex == -1) return;
+
+    final updatedItem = currentState[itemIndex].copyWith(
+      lowStockThreshold: threshold,
+    );
+
+    await ref.read(itemRepositoryProvider).updateItem(updatedItem);
+
+    // Update local state immediately for better UX
+    final newState = List<Item>.from(currentState);
+    newState[itemIndex] = updatedItem;
+    state = AsyncData(newState);
+  }
+
   Future<void> deleteItem(String id) async {
     await ref.read(itemRepositoryProvider).deleteItem(id);
     // Optimistic removal

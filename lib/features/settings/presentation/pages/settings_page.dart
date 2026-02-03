@@ -249,88 +249,10 @@ class SettingsPage extends ConsumerWidget {
           _buildSettingsTile(
             context,
             icon: Icons.inventory_2_outlined,
-            title: 'Low Stock Threshold',
-            subtitle:
-                '${settingsState.lowStockThreshold.toStringAsFixed(0)} units',
+            title: 'Low Stock Thresholds',
+            subtitle: 'Manage individual item thresholds',
             onTap: () {
-              final controller = TextEditingController(
-                text: settingsState.lowStockThreshold.toStringAsFixed(0),
-              );
-              showDialog(
-                context: context,
-                builder: (dialogContext) => AlertDialog(
-                  backgroundColor: dialogContext.cardColor,
-                  title: Text(
-                    'Set Low Stock Threshold',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      color: dialogContext.textPrimary,
-                    ),
-                  ),
-                  content: TextField(
-                    controller: controller,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: dialogContext.textPrimary),
-                    decoration: InputDecoration(
-                      labelText: 'Quantity',
-                      labelStyle: TextStyle(color: dialogContext.textMuted),
-                      filled: true,
-                      fillColor: dialogContext.subtleBackground,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: dialogContext.borderColor,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: dialogContext.borderColor,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: AppColors.primary,
-                          width: 2,
-                        ),
-                      ),
-                      counterText: "",
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(6),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => dialogContext.pop(),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.inter(
-                          color: dialogContext.textMuted,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        final value = double.tryParse(controller.text);
-                        if (value != null) {
-                          notifier.updateLowStockThreshold(value);
-                          dialogContext.pop();
-                        }
-                      },
-                      child: Text(
-                        'Save',
-                        style: GoogleFonts.inter(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
+              context.push('/low-stock-settings');
             },
           ),
 

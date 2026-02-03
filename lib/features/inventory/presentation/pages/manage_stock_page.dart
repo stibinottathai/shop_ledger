@@ -29,6 +29,9 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
+  // Stock Filter
+  String _stockFilter = 'all'; // 'all', 'low', 'out'
+
   // Unit Selection
   String _selectedUnit = 'kg'; // Default
 
@@ -845,30 +848,54 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                   Expanded(
                     child: itemsAsync.when(
                       data: (items) {
+                        // Debug logging
+                        for (var item in items) {
+                          if (item.totalQuantity != null &&
+                              item.totalQuantity! <=
+                                  (item.lowStockThreshold ?? 10)) {
+                            print(
+                              'DEBUG ManageStock: Low Stock Item: ${item.name}, Qty: ${item.totalQuantity}, Threshold: ${item.lowStockThreshold}',
+                            );
+                          }
+                        }
+
                         // 1. Calculate Stats
                         final totalItems = items.length;
                         final totalValue = items.fold(0.0, (sum, item) {
                           return sum +
                               (item.pricePerKg * (item.totalQuantity ?? 0));
                         });
-                        final lowStockCount = items
-                            .where(
-                              (i) =>
-                                  (i.totalQuantity ?? 0) > 0 &&
-                                  (i.totalQuantity ?? 0) < 5,
-                            )
-                            .length;
+                        final lowStockCount = items.where((i) {
+                          final qty = i.totalQuantity ?? 0;
+                          final threshold = i.lowStockThreshold ?? 10.0;
+                          return qty > 0 && qty <= threshold;
+                        }).length;
                         final outOfStockCount = items
                             .where((i) => (i.totalQuantity ?? 0) <= 0)
                             .length;
 
-                        // 2. Filter Items (Only Search + Limit 5)
+                        // 2. Filter Items (Search + Stock Filter + Limit 5)
                         final filteredItems = items
                             .where((item) {
+                              // Search filter
                               final matchesSearch = item.name
                                   .toLowerCase()
                                   .contains(_searchQuery);
-                              return matchesSearch;
+
+                              // Stock filter
+                              bool matchesStockFilter = true;
+                              if (_stockFilter == 'low') {
+                                final qty = item.totalQuantity ?? 0;
+                                final threshold =
+                                    item.lowStockThreshold ?? 10.0;
+                                matchesStockFilter =
+                                    qty > 0 && qty <= threshold;
+                              } else if (_stockFilter == 'out') {
+                                matchesStockFilter =
+                                    (item.totalQuantity ?? 0) <= 0;
+                              }
+
+                              return matchesSearch && matchesStockFilter;
                             })
                             .take(5)
                             .toList();
@@ -884,7 +911,32 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Filter Chips Removed
+                            // Filter Chips
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildFilterChip(
+                                    'All Items',
+                                    'all',
+                                    totalItems,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildFilterChip(
+                                    'Low Stock',
+                                    'low',
+                                    lowStockCount,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildFilterChip(
+                                    'Out of Stock',
+                                    'out',
+                                    outOfStockCount,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
 
                             // List Header
                             if (_searchQuery.isNotEmpty)
@@ -1199,7 +1251,92 @@ class _ManageStockPageState extends ConsumerState<ManageStockPage> {
     );
   }
 
-  // Removed _buildFilterChip as it is no longer used here
+  Widget _buildFilterChip(String label, String value, int count) {
+    final isSelected = _stockFilter == value;
+    final isDark = context.isDarkMode;
+
+    Color chipColor;
+    Color textColor;
+    Color borderColor;
+
+    if (isSelected) {
+      chipColor = AppColors.primary;
+      textColor = Colors.white;
+      borderColor = AppColors.primary;
+    } else {
+      chipColor = context.cardColor;
+      textColor = context.textMuted;
+      borderColor = context.borderColor;
+    }
+
+    // Special styling for active "Low" and "Out" filters
+    if (isSelected) {
+      if (value == 'low') {
+        chipColor = AppColors.accentOrange;
+        borderColor = AppColors.accentOrange;
+      } else if (value == 'out') {
+        chipColor = AppColors.danger;
+        borderColor = AppColors.danger;
+      }
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _stockFilter = value;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: chipColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: chipColor.withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: textColor,
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withOpacity(0.2)
+                      : (isDark ? Colors.grey[800] : Colors.grey[200]),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildEmptyState() {
     return Center(

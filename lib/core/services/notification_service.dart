@@ -3,6 +3,7 @@ import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shop_ledger/core/theme/app_colors.dart';
 
 /// Notification service for scheduled stock and customer alerts.
 /// This runs in a background isolate via AndroidAlarmManager.
@@ -103,33 +104,32 @@ class NotificationService {
     final lowStockThreshold = prefs.getDouble('low_stock_threshold') ?? 10.0;
     final maxCreditLimit = prefs.getDouble('max_credit_limit') ?? 5000.0;
 
-    final alerts = <String>[];
+    // Initialize lists to store alert details
+    final outOfStockItems = <String>[];
+    final lowStockItems = <String>[];
+    final highDueCustomers = <String>[];
 
-    // Check inventory for low/out of stock
     try {
       final inventoryResponse = await supabase
           .from('items')
-          .select('name, total_quantity')
+          .select('name, total_quantity, unit, low_stock_threshold')
           .eq('user_id', user.id);
 
       final items = inventoryResponse as List;
-      int outOfStock = 0;
-      int lowStock = 0;
 
       for (final item in items) {
         final qty = (item['total_quantity'] ?? 0).toDouble();
-        if (qty <= 0) {
-          outOfStock++;
-        } else if (qty <= lowStockThreshold) {
-          lowStock++;
-        }
-      }
+        final name = item['name'] as String;
+        // Use item-specific threshold if set, otherwise use global default
+        final threshold =
+            (item['low_stock_threshold'] as num?)?.toDouble() ??
+            lowStockThreshold;
 
-      if (outOfStock > 0) {
-        alerts.add('$outOfStock items out of stock');
-      }
-      if (lowStock > 0) {
-        alerts.add('$lowStock items low on stock');
+        if (qty <= 0) {
+          outOfStockItems.add(name);
+        } else if (qty <= threshold) {
+          lowStockItems.add('$name ($qty left)');
+        }
       }
     } catch (_) {
       // Ignore errors
@@ -143,39 +143,95 @@ class NotificationService {
           .eq('user_id', user.id);
 
       final customers = customersResponse as List;
-      int highDue = 0;
 
       for (final customer in customers) {
         final balance = (customer['balance'] ?? 0).toDouble();
         if (balance > maxCreditLimit) {
-          highDue++;
+          highDueCustomers.add(customer['name'] as String);
         }
-      }
-
-      if (highDue > 0) {
-        alerts.add('$highDue customers exceeded credit limit');
       }
     } catch (_) {
       // Ignore errors
     }
 
-    // Show notification if there are alerts
-    if (alerts.isNotEmpty) {
-      await _showNotification('Shop Ledger Alert', alerts.join(', '));
+    // Construct Notification Content
+    if (outOfStockItems.isNotEmpty ||
+        lowStockItems.isNotEmpty ||
+        highDueCustomers.isNotEmpty) {
+      final sb = StringBuffer();
+
+      if (outOfStockItems.isNotEmpty) {
+        sb.writeln('🔴 Out of Stock: ${outOfStockItems.length}');
+        sb.writeln(outOfStockItems.take(3).map((e) => '• $e').join('\n'));
+        if (outOfStockItems.length > 3) {
+          sb.writeln('• and ${outOfStockItems.length - 3} more...');
+        }
+        sb.writeln();
+      }
+
+      if (lowStockItems.isNotEmpty) {
+        sb.writeln('⚠️ Low Stock: ${lowStockItems.length}');
+        sb.writeln(lowStockItems.take(3).map((e) => '• $e').join('\n'));
+        if (lowStockItems.length > 3) {
+          sb.writeln('• and ${lowStockItems.length - 3} more...');
+        }
+        sb.writeln();
+      }
+
+      if (highDueCustomers.isNotEmpty) {
+        sb.writeln('📉 Credit Limit Exceeded: ${highDueCustomers.length}');
+        sb.writeln(highDueCustomers.take(3).map((e) => '• $e').join('\n'));
+        if (highDueCustomers.length > 3) {
+          sb.writeln('• and ${highDueCustomers.length - 3} more...');
+        }
+      }
+
+      // Summary for collapsed view
+      final summaryParts = <String>[];
+      if (outOfStockItems.isNotEmpty) {
+        summaryParts.add('${outOfStockItems.length} out of stock');
+      }
+      if (lowStockItems.isNotEmpty) {
+        summaryParts.add('${lowStockItems.length} low stock');
+      }
+      if (highDueCustomers.isNotEmpty) {
+        summaryParts.add('${highDueCustomers.length} credit alert');
+      }
+
+      await _showNotification(
+        'Inventory & Credit Alert',
+        summaryParts.join(' • '),
+        bodyDetail: sb.toString().trim(),
+      );
     }
   }
 
-  static Future<void> _showNotification(String title, String body) async {
-    const androidDetails = AndroidNotificationDetails(
+  static Future<void> _showNotification(
+    String title,
+    String body, {
+    String? bodyDetail,
+  }) async {
+    final styleInformation = bodyDetail != null
+        ? BigTextStyleInformation(
+            bodyDetail,
+            contentTitle: '<b>$title</b>',
+            htmlFormatContentTitle: true,
+            summaryText: body,
+          )
+        : null;
+
+    final androidDetails = AndroidNotificationDetails(
       'shop_ledger_alerts',
       'Shop Ledger Alerts',
       channelDescription: 'Alerts for low stock and customer credit limits',
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/launcher_icon',
+      color: AppColors.primary,
+      styleInformation: styleInformation,
     );
 
-    const details = NotificationDetails(android: androidDetails);
+    final details = NotificationDetails(android: androidDetails);
 
     await _notifications.show(0, title, body, details);
   }

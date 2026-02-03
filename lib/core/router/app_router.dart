@@ -31,6 +31,7 @@ import 'package:shop_ledger/features/inventory/presentation/pages/all_stock_page
 import 'package:shop_ledger/features/expenses/presentation/pages/expenses_page.dart';
 import 'package:shop_ledger/features/expenses/presentation/pages/add_expense_page.dart';
 import 'package:shop_ledger/features/expenses/presentation/pages/all_expenses_page.dart';
+import 'package:shop_ledger/features/inventory/presentation/pages/low_stock_settings_page.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // We do NOT watch authStateProvider here to prevent GoRouter from rebuilding
@@ -54,6 +55,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
+      GoRoute(
+        path: '/low-stock-settings',
+        builder: (context, state) => const LowStockSettingsPage(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return DashboardPage(navigationShell: navigationShell);
