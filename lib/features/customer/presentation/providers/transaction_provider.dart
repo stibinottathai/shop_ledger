@@ -113,11 +113,11 @@ final allTransactionsProvider =
 class AllTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   @override
   Future<List<Transaction>> build() async {
+    // Watch auth state to force refresh when user changes (logout/login)
+    ref.watch(authStateProvider);
+
     // Watch transaction update signals for refresh
     ref.watch(transactionUpdateProvider);
-
-    // Keep this provider alive to maintain cache
-    ref.keepAlive();
 
     return _fetchAllTransactions();
   }

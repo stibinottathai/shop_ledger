@@ -54,6 +54,8 @@ dependencies:
   mobile_scanner: ^7.1.4
   fl_chart: ^1.1.1
   gal: ^2.3.2
+  android_alarm_manager_plus: ^4.0.4
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:
@@ -121,3 +123,13 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        # Use the same regular font for other weights
+        # The system will synthesize bold/medium from regular
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 500  # Medium
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 600  # SemiBold
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 700  # Bold
+

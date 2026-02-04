@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shop_ledger/core/theme/app_colors.dart';
@@ -167,6 +168,7 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
                 label: 'Supplier Name',
                 hint: 'Enter full name',
                 controller: _nameController,
+                inputFormatters: [LengthLimitingTextInputFormatter(20)],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a name';
@@ -180,6 +182,10 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
                 prefixText: '+91',
                 keyboardType: TextInputType.phone,
                 controller: _phoneController,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a phone number';
@@ -195,6 +201,20 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
                 hint: 'Enter GSTIN if available',
                 textCapitalization: TextCapitalization.characters,
                 controller: _gstController,
+                inputFormatters: [LengthLimitingTextInputFormatter(15)],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return null; // GST is optional
+                  }
+                  // GST Regex: 2 digits, 5 chars, 4 digits, 1 char, 1 char/digit, Z, 1 char/digit
+                  final gstRegex = RegExp(
+                    r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$',
+                  );
+                  if (!gstRegex.hasMatch(value)) {
+                    return 'Invalid GST Number format';
+                  }
+                  return null;
+                },
               ),
               // Spacer
               const SizedBox(height: 32),
@@ -258,6 +278,7 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
     TextInputType keyboardType = TextInputType.text,
     TextCapitalization textCapitalization = TextCapitalization.none,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -278,6 +299,7 @@ class _AddSupplierPageState extends ConsumerState<AddSupplierPage> {
             keyboardType: keyboardType,
             textCapitalization: textCapitalization,
             validator: validator,
+            inputFormatters: inputFormatters,
             style: TextStyle(color: context.textPrimary),
             decoration: InputDecoration(
               hintText: hint,

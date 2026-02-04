@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart'; // Assuming standard font used
@@ -179,6 +180,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       'GST Number',
                       editGstController,
                       isRequired: false,
+                      isGST: true,
                     ),
                   ],
                 ),
@@ -249,6 +251,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     TextEditingController controller, {
     bool isPhone = false,
     bool isRequired = true,
+    bool isGST = false,
   }) {
     return Builder(
       builder: (context) {
@@ -260,6 +263,26 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         final borderCol = isDark
             ? Colors.white.withOpacity(0.1)
             : const Color(0xFFF1F5F9);
+
+        // Determine input formatters based on field type
+        List<TextInputFormatter> inputFormatters = [];
+
+        if (isPhone) {
+          // Phone: Only digits, max 10 characters
+          inputFormatters = [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ];
+        } else if (isGST) {
+          // GST: Alphanumeric, max 15 characters
+          inputFormatters = [
+            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+            LengthLimitingTextInputFormatter(15),
+          ];
+        } else {
+          // Shop Name and Owner Name: max 30 characters
+          inputFormatters = [LengthLimitingTextInputFormatter(30)];
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,9 +299,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             TextFormField(
               controller: controller,
               keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+              inputFormatters: inputFormatters,
               validator: (val) {
                 if (isRequired && (val == null || val.isEmpty)) {
-                  return 'Required';
+                  return 'This field is required';
+                }
+                if (isPhone && val != null && val.isNotEmpty) {
+                  if (val.length != 10) {
+                    return 'Phone number must be 10 digits';
+                  }
+                }
+                if (isGST && val != null && val.isNotEmpty) {
+                  if (val.length != 15) {
+                    return 'GST number must be 15 characters';
+                  }
                 }
                 return null;
               },

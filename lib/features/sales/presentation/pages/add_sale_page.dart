@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -208,6 +209,31 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
 
     final count = int.tryParse(_itemCountController.text) ?? 1;
 
+    // Check available stock
+    final availableStock = _selectedInventoryItem!.totalQuantity ?? 0;
+
+    // Calculate total quantity already added for this item in the current sale
+    final alreadyAddedQty = _selectedItems
+        .where((sItem) => sItem.item.id == _selectedInventoryItem!.id)
+        .fold(0.0, (sum, sItem) => sum + sItem.quantity);
+
+    // Check if the new quantity plus already added quantity exceeds available stock
+    if ((alreadyAddedQty + qty) > availableStock) {
+      final remaining = availableStock - alreadyAddedQty;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            remaining > 0
+                ? 'Not enough stock! Only ${remaining.toStringAsFixed(2)} ${_selectedInventoryItem!.unit} available.'
+                : 'Not enough stock! No more ${_selectedInventoryItem!.name} available.',
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _selectedItems.add(
         SelectedSaleItem(
@@ -332,19 +358,33 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
       // 3. Update Inventory Stock (Deduct Items)
       if (!_isManualMode && _selectedItems.isNotEmpty) {
         final inventoryNotifier = ref.read(inventoryProvider.notifier);
-        for (final sItem in _selectedItems) {
-          final originalItem = sItem.item;
-          final currentQty = originalItem.totalQuantity ?? 0;
-          final soldQty = sItem.quantity;
+        final currentInventory = await ref.read(inventoryProvider.future);
 
+        for (final sItem in _selectedItems) {
+          // Get the current item from inventory (not the cached one)
+          final currentItem = currentInventory.firstWhere(
+            (item) => item.id == sItem.item.id,
+            orElse: () => sItem.item,
+          );
+
+          final currentQty = currentItem.totalQuantity ?? 0;
+          final soldQty = sItem.quantity;
           final newQty = currentQty - soldQty;
 
           // Debug log
           print(
-            'Debug: Sale - Deducting ${originalItem.name}. Current: $currentQty, Sold: $soldQty, New: $newQty',
+            'Debug: Sale - Deducting ${currentItem.name}. Current: $currentQty, Sold: $soldQty, New: $newQty',
           );
 
-          final updatedItem = originalItem.copyWith(totalQuantity: newQty);
+          // Ensure we don't go negative (safety check)
+          if (newQty < 0) {
+            print('WARNING: Stock would go negative for ${currentItem.name}');
+            throw Exception(
+              'Insufficient stock for ${currentItem.name}. Available: $currentQty, Requested: $soldQty',
+            );
+          }
+
+          final updatedItem = currentItem.copyWith(totalQuantity: newQty);
           await inventoryNotifier.updateItem(updatedItem);
         }
       }
@@ -564,11 +604,20 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                       if (item.unit == 'ml') priceUnit = 'l';
                                       if (item.unit == 'mg') priceUnit = 'g';
 
+                                      final quantity = item.totalQuantity ?? 0;
+                                      final isOutOfStock = quantity <= 0;
+
                                       return DropdownMenuItem(
                                         value: item,
+                                        enabled: !isOutOfStock,
                                         child: Text(
-                                          '${item.name} (₹${item.pricePerKg}/$priceUnit)',
+                                          '${item.name} (₹${item.pricePerKg}/$priceUnit)${isOutOfStock ? ' - Out of Stock' : ''}',
                                           overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: isOutOfStock
+                                                ? context.textMuted
+                                                : context.textPrimary,
+                                          ),
                                         ),
                                       );
                                     }).toList(),
@@ -609,6 +658,12 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                                         const TextInputType.numberWithOptions(
                                           decimal: true,
                                         ),
+                                    inputFormatters: [
+                                      LengthLimitingTextInputFormatter(6),
+                                      FilteringTextInputFormatter.allow(
+                                        RegExp(r'[0-9.]'),
+                                      ),
+                                    ],
                                     onChanged: (_) => setState(() {}),
                                     style: TextStyle(
                                       color: context.textPrimary,
@@ -830,6 +885,10 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
                         decimal: true,
                       ),
                       prefixText: '₹ ',
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(8),
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
                       onChanged: (val) => setState(() {}),
                     ),
                   ),
@@ -1016,6 +1075,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
     double fontSize = 16,
     String? prefixText,
     bool readOnly = false,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1031,6 +1091,7 @@ class _AddSalePageState extends ConsumerState<AddSalePage> {
         const SizedBox(height: 8),
         TextField(
           readOnly: readOnly,
+          inputFormatters: inputFormatters,
           keyboardType: keyboardType,
           maxLines: maxLines,
           controller: controller,

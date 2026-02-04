@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,6 +91,9 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
       // Refresh the list
       ref.invalidate(supplierTransactionListProvider(widget.supplier.id!));
       ref.invalidate(allTransactionsProvider);
+
+      // Refresh supplier list to update balances
+      ref.read(supplierListProvider.notifier).refresh();
 
       if (mounted) {
         context.pop();
@@ -230,6 +234,12 @@ class _PaymentOutPageState extends ConsumerState<PaymentOutPage> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(8),
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9.]'),
+                              ),
+                            ],
                             style: GoogleFonts.inter(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,

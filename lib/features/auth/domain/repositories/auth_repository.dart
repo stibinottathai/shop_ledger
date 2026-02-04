@@ -26,4 +26,8 @@ abstract class AuthRepository {
     required String email,
     required String token,
   });
+
+  Future<Either<Failure, void>> resetPasswordForEmail({required String email});
+
+  Future<Either<Failure, void>> updatePassword({required String newPassword});
 }

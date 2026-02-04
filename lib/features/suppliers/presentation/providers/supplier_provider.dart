@@ -277,6 +277,7 @@ final supplierOverviewStatsProvider =
     FutureProvider<Map<String, SupplierStats>>((ref) async {
       // Watch for updates
       ref.watch(transactionUpdateProvider);
+      ref.watch(authStateProvider);
 
       final transactionRepo = ref.read(transactionRepositoryProvider);
       final transactions = await transactionRepo.getAllTransactions();

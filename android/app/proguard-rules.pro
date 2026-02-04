@@ -8,3 +8,7 @@
 
 # Share Plus
 -keep class dev.fluttercommunity.plus.share.** { *; }
+
+# Fix R8 errors for missing Play Core classes
+-dontwarn com.google.android.play.core.**
+-dontwarn io.flutter.embedding.engine.deferredcomponents.**

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/inventory/data/repositories/item_repository.dart';
 import 'package:shop_ledger/features/inventory/domain/entities/item.dart';
 
@@ -16,6 +17,8 @@ final inventoryProvider = AsyncNotifierProvider<InventoryNotifier, List<Item>>(
 class InventoryNotifier extends AsyncNotifier<List<Item>> {
   @override
   Future<List<Item>> build() async {
+    // Watch auth state to force refresh when user changes (logout/login)
+    ref.watch(authStateProvider);
     return ref.read(itemRepositoryProvider).getItems();
   }
 
@@ -47,6 +50,30 @@ class InventoryNotifier extends AsyncNotifier<List<Item>> {
     await ref.read(itemRepositoryProvider).updateItem(item);
     ref.invalidateSelf();
     await future;
+  }
+
+  /// Update low stock threshold for a specific item
+  Future<void> updateItemLowStockThreshold(
+    String itemId,
+    double threshold,
+  ) async {
+    final currentState = state.value;
+    if (currentState == null) return;
+
+    // Find the item and update its threshold
+    final itemIndex = currentState.indexWhere((item) => item.id == itemId);
+    if (itemIndex == -1) return;
+
+    final updatedItem = currentState[itemIndex].copyWith(
+      lowStockThreshold: threshold,
+    );
+
+    await ref.read(itemRepositoryProvider).updateItem(updatedItem);
+
+    // Update local state immediately for better UX
+    final newState = List<Item>.from(currentState);
+    newState[itemIndex] = updatedItem;
+    state = AsyncData(newState);
   }
 
   Future<void> deleteItem(String id) async {

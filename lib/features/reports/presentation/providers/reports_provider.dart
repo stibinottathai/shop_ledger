@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shop_ledger/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shop_ledger/features/customer/domain/entities/transaction.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 import 'package:shop_ledger/features/customer/presentation/providers/customer_provider.dart';
@@ -77,10 +78,10 @@ final reportsFilterProvider =
 class ReportsFilterNotifier extends Notifier<DateTimeRange?> {
   @override
   DateTimeRange? build() {
-    // Default to "Today"
+    // Default to "This Month"
     final now = DateTime.now();
     return DateTimeRange(
-      start: DateTime(now.year, now.month, now.day),
+      start: DateTime(now.year, now.month, 1),
       end: DateTime(now.year, now.month, now.day, 23, 59, 59),
     );
   }
@@ -99,8 +100,12 @@ final reportsProvider = AsyncNotifierProvider<ReportsNotifier, ReportsState>(
 class ReportsNotifier extends AsyncNotifier<ReportsState> {
   @override
   Future<ReportsState> build() async {
+    // Watch auth state to force refresh when user changes (logout/login)
+    ref.watch(authStateProvider);
     // Rebuild when transactions update
     ref.watch(transactionUpdateProvider);
+    // Rebuild when expenses update
+    ref.watch(expenseUpdateProvider);
     // Rebuild when filter updates
     ref.watch(reportsFilterProvider);
     return _calculateReports();
@@ -120,9 +125,9 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
 
     DateTime start, end;
     if (filterRange == null) {
-      // Fallback default if null (though notifier defaults to Today)
+      // Fallback default if null (though notifier defaults to This Month)
       final now = DateTime.now();
-      start = DateTime(now.year, now.month, now.day);
+      start = DateTime(now.year, now.month, 1);
       end = DateTime(now.year, now.month, now.day, 23, 59, 59);
     } else {
       start = filterRange.start;
@@ -186,26 +191,34 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
         if (t.type == TransactionType.sale) {
           totalSales += t.amount;
           chartSales[getIndex(t.date)] += t.amount;
-        } else {
+        } else if (t.type == TransactionType.purchase) {
           totalPurchases += t.amount;
           chartPurchases[getIndex(t.date)] += t.amount;
         }
+        // Ignore paymentIn and paymentOut for sales/purchases calculation
       }
       for (var e in expenses) {
         totalExpenses += e.amount;
         chartExpenses[getIndex(e.date)] += e.amount;
       }
-    } else if (duration.inDays <= 7) {
-      // THIS WEEK / WEEKLY
-      chartPeriod = 'This Week';
-      // Generate labels for the days in range (or standard Mon-Sun if "This Week" is strictly aligned)
-      // Adjust logic: dynamic buckets based on days in range.
+    } else if (duration.inDays <= 31) {
+      // THIS WEEK or THIS MONTH (Up to 31 days) -> Daily buckets
+      chartPeriod = duration.inDays <= 7 ? 'This Week' : 'This Month';
+
+      // Generate labels for the days in range
+      // For This Month, standard 1..30/31 labels or Day Names?
+      // If > 7 days, Day number (1, 2, 3...) is better.
+      // If <= 7 days, Day name (Mon, Tue...) is better.
+      final useDayName = duration.inDays <= 7;
+
       final days = duration.inDays + 1;
       chartSales = List.filled(days, 0.0);
       chartPurchases = List.filled(days, 0.0);
       chartExpenses = List.filled(days, 0.0);
 
-      final DateFormat dayFormat = DateFormat('E'); // Mon, Tue...
+      final DateFormat dayFormat = useDayName
+          ? DateFormat('E')
+          : DateFormat('d');
       chartLabels = List.generate(
         days,
         (i) => dayFormat.format(start.add(Duration(days: i))),
@@ -213,13 +226,6 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
 
       for (var t in transactions) {
         final localDate = t.date.toLocal();
-        // Calculate difference in days from start (Local)
-        // Ensure start is treated as start of day for correct diff?
-        // Start is already 00:00:00 Local.
-        // But localDate might have time components.
-        // Difference in days:
-        // (localDate - start).inDays might be tricky if hours affect it.
-        // Safe way: Normalize both to midnight.
         final localDateMidnight = DateTime(
           localDate.year,
           localDate.month,
@@ -233,7 +239,7 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
           if (t.type == TransactionType.sale) {
             totalSales += t.amount;
             chartSales[dayIndex] += t.amount;
-          } else {
+          } else if (t.type == TransactionType.purchase) {
             totalPurchases += t.amount;
             chartPurchases[dayIndex] += t.amount;
           }
@@ -265,9 +271,10 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
 
       // Count months
       int months = (end.year - start.year) * 12 + end.month - start.month + 1;
-      if (months > 6)
+      if (months > 6) {
         months =
             6; // Cap at 6 for UI? Or let UI scroll? UI expects 6 fixed currently.
+      }
       // If fixed 6, take last 6 months of the range?
 
       // Actually, if user selects broad range, maybe we just show last 6 months ENDING at Range End.
@@ -298,10 +305,11 @@ class ReportsNotifier extends AsyncNotifier<ReportsState> {
           // So iterating it is safe for totals.
 
           _addToMonthly(chartSales, t.date, t.amount, plotEnd);
-        } else {
+        } else if (t.type == TransactionType.purchase) {
           totalPurchases += t.amount;
           _addToMonthly(chartPurchases, t.date, t.amount, plotEnd);
         }
+        // Ignore paymentIn and paymentOut for sales/purchases calculation
       }
       // Totals are accumulating?
       // logic error: `totalSales` is inside the loop.

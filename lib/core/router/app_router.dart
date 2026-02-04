@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/change_password_page.dart';
+import 'package:shop_ledger/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/login_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:shop_ledger/features/auth/presentation/pages/signup_page.dart';
@@ -31,6 +33,7 @@ import 'package:shop_ledger/features/inventory/presentation/pages/all_stock_page
 import 'package:shop_ledger/features/expenses/presentation/pages/expenses_page.dart';
 import 'package:shop_ledger/features/expenses/presentation/pages/add_expense_page.dart';
 import 'package:shop_ledger/features/expenses/presentation/pages/all_expenses_page.dart';
+import 'package:shop_ledger/features/inventory/presentation/pages/low_stock_settings_page.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // We do NOT watch authStateProvider here to prevent GoRouter from rebuilding
@@ -54,6 +57,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: '/low-stock-settings',
+        builder: (context, state) => const LowStockSettingsPage(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return DashboardPage(navigationShell: navigationShell);
@@ -74,6 +85,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => const SettingsPage(),
                     routes: [
                       GoRoute(
+                        path: 'change-password',
+                        builder: (context, state) => const ChangePasswordPage(),
+                      ),
+                      GoRoute(
                         path: 'reports',
                         builder: (context, state) => const ReportsPage(),
                       ),
@@ -87,7 +102,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/customers',
-                builder: (context, state) => const CustomerListPage(),
+                builder: (context, state) {
+                  final filter = state.uri.queryParameters['filter'];
+                  final showHighDueOnly = filter == 'highDue';
+                  return CustomerListPage(showHighDueOnly: showHighDueOnly);
+                },
                 routes: [
                   GoRoute(
                     path: 'add',

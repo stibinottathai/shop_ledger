@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,6 +28,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
 
   final List<String> _categories = [
     'Food',
+    'Fuel',
     'Travel',
     'Rent',
     'Bills',
@@ -40,18 +42,58 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
   final List<String> _recurringOptions = ['None', 'Daily', 'Weekly', 'Monthly'];
 
   Future<void> _selectDate(BuildContext context) async {
+    final bool isDark = context.isDarkMode;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
-      builder: (context, child) {
+      builder: (dialogContext, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              onSurface: AppColors.textDark,
+          data: Theme.of(dialogContext).copyWith(
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: AppColors.surfaceDark,
+                    onSurface: AppColors.textDarkTheme,
+                  )
+                : ColorScheme.light(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    onSurface: AppColors.textDark,
+                  ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+              headerBackgroundColor: AppColors.primary,
+              headerForegroundColor: Colors.white,
+              dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.white;
+                }
+                return isDark ? AppColors.textDarkTheme : AppColors.textDark;
+              }),
+              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.primary;
+                }
+                return Colors.transparent;
+              }),
+              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.white;
+                }
+                return isDark ? AppColors.textDarkTheme : AppColors.textDark;
+              }),
+              yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.primary;
+                }
+                return Colors.transparent;
+              }),
             ),
           ),
           child: child!,
@@ -148,18 +190,22 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _amountController,
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
+                ],
                 style: GoogleFonts.inter(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: context.textPrimary,
                 ),
                 decoration: InputDecoration(
                   prefixText: '₹ ',
                   prefixStyle: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: context.textPrimary,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -357,6 +403,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
               TextFormField(
                 controller: _notesController,
                 maxLines: 3,
+                inputFormatters: [LengthLimitingTextInputFormatter(100)],
                 decoration: InputDecoration(
                   hintText: 'Add a note...',
                   border: OutlineInputBorder(

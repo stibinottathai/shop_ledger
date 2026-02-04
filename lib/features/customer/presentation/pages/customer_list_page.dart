@@ -9,9 +9,12 @@ import 'package:shop_ledger/features/customer/presentation/providers/customer_pr
 import 'package:shop_ledger/features/customer/presentation/providers/transaction_provider.dart';
 
 import 'package:shop_ledger/core/widgets/common_error_widget.dart';
+import 'package:shop_ledger/features/settings/presentation/providers/settings_provider.dart';
 
 class CustomerListPage extends ConsumerStatefulWidget {
-  const CustomerListPage({super.key});
+  final bool showHighDueOnly;
+
+  const CustomerListPage({super.key, this.showHighDueOnly = false});
 
   @override
   ConsumerState<CustomerListPage> createState() => _CustomerListPageState();
@@ -46,14 +49,38 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Back button (only when filtering high due customers)
+                if (widget.showHighDueOnly)
+                  Container(
+                    height: 36,
+                    width: 36,
+                    decoration: BoxDecoration(
+                      color: context.subtleBackground,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: context.borderColor),
+                    ),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        Icons.arrow_back_ios_new,
+                        size: 16,
+                        color: context.iconColor,
+                      ),
+                      onPressed: () => context.pop(),
+                    ),
+                  ),
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 40),
+                        padding: EdgeInsets.only(
+                          left: widget.showHighDueOnly ? 0 : 40,
+                        ),
                         child: Text(
-                          'Customers',
+                          widget.showHighDueOnly
+                              ? 'High Due Customers'
+                              : 'Customers',
                           style: GoogleFonts.inter(
                             color: context.textPrimary,
                             fontSize: 20,
@@ -225,7 +252,25 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
 
                   // List Header
                   customerListAsync.when(
-                    data: (customers) {
+                    data: (allCustomers) {
+                      // Filter customers if showing high due only
+                      final settingsState = ref.watch(settingsProvider);
+                      final maxCreditLimit = settingsState.maxCreditLimit;
+
+                      List<Customer> customers = allCustomers;
+                      if (widget.showHighDueOnly) {
+                        customers = allCustomers.where((customer) {
+                          final stats = ref.watch(
+                            customerStatsProvider(customer.id!),
+                          );
+                          return stats.outstandingBalance > maxCreditLimit;
+                        }).toList();
+                      }
+
+                      final headerText = widget.showHighDueOnly
+                          ? 'HIGH DUE CUSTOMERS (${customers.length})'
+                          : 'ALL CUSTOMERS (${customers.length})';
+
                       return Expanded(
                         child: Column(
                           children: [
@@ -233,7 +278,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'ALL CUSTOMERS (${customers.length})',
+                                  headerText,
                                   style: GoogleFonts.inter(
                                     color: context.textMuted,
                                     fontSize: 12,

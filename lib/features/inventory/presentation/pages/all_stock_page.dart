@@ -335,13 +335,11 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
                     child: itemsAsync.when(
                       data: (items) {
                         // Calculate counts
-                        final lowStockCount = items
-                            .where(
-                              (i) =>
-                                  (i.totalQuantity ?? 0) > 0 &&
-                                  (i.totalQuantity ?? 0) < 5,
-                            )
-                            .length;
+                        final lowStockCount = items.where((i) {
+                          final qty = i.totalQuantity ?? 0;
+                          final threshold = i.lowStockThreshold ?? 10.0;
+                          return qty > 0 && qty <= threshold;
+                        }).length;
                         final outOfStockCount = items
                             .where((i) => (i.totalQuantity ?? 0) <= 0)
                             .length;
@@ -358,8 +356,9 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
 
                           // Filter check
                           if (_selectedFilter == 'Low Stock') {
-                            return (item.totalQuantity ?? 0) > 0 &&
-                                (item.totalQuantity ?? 0) < 5;
+                            final qty = item.totalQuantity ?? 0;
+                            final threshold = item.lowStockThreshold ?? 10.0;
+                            return qty > 0 && qty <= threshold;
                           } else if (_selectedFilter == 'Out of Stock') {
                             return (item.totalQuantity ?? 0) <= 0;
                           }

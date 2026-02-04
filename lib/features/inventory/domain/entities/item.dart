@@ -6,6 +6,7 @@ class Item {
   final String unit; // 'kg' or 'pcs'
   final DateTime? createdAt;
   final String? barcode;
+  final double? lowStockThreshold; // Threshold for low stock alerts
 
   Item({
     this.id,
@@ -15,6 +16,7 @@ class Item {
     this.unit = 'kg',
     this.createdAt,
     this.barcode,
+    this.lowStockThreshold,
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -30,6 +32,9 @@ class Item {
           ? DateTime.parse(json['created_at'] as String)
           : null,
       barcode: json['barcode'] as String?,
+      lowStockThreshold: json['low_stock_threshold'] != null
+          ? (json['low_stock_threshold'] as num).toDouble()
+          : null,
     );
   }
 
@@ -41,6 +46,7 @@ class Item {
       if (totalQuantity != null) 'total_quantity': totalQuantity,
       'unit': unit,
       if (barcode != null) 'barcode': barcode,
+      if (lowStockThreshold != null) 'low_stock_threshold': lowStockThreshold,
     };
   }
 
@@ -52,6 +58,7 @@ class Item {
     String? unit,
     DateTime? createdAt,
     String? barcode,
+    double? lowStockThreshold,
   }) {
     return Item(
       id: id ?? this.id,
@@ -61,6 +68,7 @@ class Item {
       unit: unit ?? this.unit,
       createdAt: createdAt ?? this.createdAt,
       barcode: barcode ?? this.barcode,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
     );
   }
 }

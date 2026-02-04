@@ -473,28 +473,35 @@ class _HomePageState extends ConsumerState<HomePage> {
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    RichText(
-                                      text: TextSpan(
-                                        style: GoogleFonts.inter(
-                                          color: context.textMuted,
-                                          fontSize: 12,
-                                          height: 1.5,
-                                        ),
-                                        children: [
-                                          const TextSpan(text: "You have "),
-                                          TextSpan(
-                                            text:
-                                                "${stats.highDueCustomerCount} customers",
-                                            style: GoogleFonts.inter(
-                                              color: context.textPrimary,
-                                              fontWeight: FontWeight.bold,
+                                    GestureDetector(
+                                      onTap: () => context.push(
+                                        '/customers?filter=highDue',
+                                      ),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: GoogleFonts.inter(
+                                            color: context.textMuted,
+                                            fontSize: 12,
+                                            height: 1.5,
+                                          ),
+                                          children: [
+                                            const TextSpan(text: "You have "),
+                                            TextSpan(
+                                              text:
+                                                  "${stats.highDueCustomerCount} customers",
+                                              style: GoogleFonts.inter(
+                                                color: AppColors.primary,
+                                                fontWeight: FontWeight.bold,
+                                                decoration:
+                                                    TextDecoration.underline,
+                                              ),
                                             ),
-                                          ),
-                                          TextSpan(
-                                            text:
-                                                " with pending dues exceeding ${_formatCurrency(stats.creditLimit)}. Follow up today to improve cashflow.",
-                                          ),
-                                        ],
+                                            TextSpan(
+                                              text:
+                                                  " with pending dues exceeding ${_formatCurrency(stats.creditLimit)}. Follow up today to improve cashflow.",
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],

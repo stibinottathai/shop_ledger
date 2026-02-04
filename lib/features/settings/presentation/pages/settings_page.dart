@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -203,7 +204,12 @@ class SettingsPage extends ConsumerWidget {
                           width: 2,
                         ),
                       ),
+                      counterText: "",
                     ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(8),
+                    ],
                   ),
                   actions: [
                     TextButton(
@@ -238,6 +244,55 @@ class SettingsPage extends ConsumerWidget {
           ),
 
           const SizedBox(height: 12),
+
+          // Low Stock Threshold
+          _buildSettingsTile(
+            context,
+            icon: Icons.inventory_2_outlined,
+            title: 'Low Stock Thresholds',
+            subtitle: 'Manage individual item thresholds',
+            onTap: () {
+              context.push('/low-stock-settings');
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // Test Notification Button
+          // _buildSettingsTile(
+          //   context,
+          //   icon: Icons.notifications_active_outlined,
+          //   title: 'Test Notification',
+          //   subtitle: 'Check if notifications are working',
+          //   onTap: () async {
+          //     // Test notification by showing a simple notification
+          //     try {
+          //       await notifier.testNotification();
+          //       if (context.mounted) {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           const SnackBar(
+          //             content: Text(
+          //               'Test notification sent! Check your notification panel.',
+          //             ),
+          //             backgroundColor: AppColors.primary,
+          //             duration: Duration(seconds: 3),
+          //           ),
+          //         );
+          //       }
+          //     } catch (e) {
+          //       if (context.mounted) {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           SnackBar(
+          //             content: Text('Error: $e'),
+          //             backgroundColor: Colors.red,
+          //           ),
+          //         );
+          //       }
+          //     }
+          //   },
+          // ),
+
+          // const SizedBox(height: 12),
 
           // Business Card
           _buildSettingsTile(
@@ -274,6 +329,16 @@ class SettingsPage extends ConsumerWidget {
             title: 'Profile',
             subtitle: 'Manage your account details',
             onTap: () => context.push('/home/profile'),
+          ),
+
+          const SizedBox(height: 12),
+
+          _buildSettingsTile(
+            context,
+            icon: Icons.lock_reset,
+            title: 'Change Password',
+            subtitle: 'Update your account password',
+            onTap: () => context.push('/home/settings/change-password'),
           ),
         ],
       ),
