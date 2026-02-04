@@ -55,9 +55,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     ref.listen<AsyncValue<AuthResponse?>>(authControllerProvider, (
       previous,
       next,
-    ) {
-      next.when(
-        data: (response) {
+    ) async {
+      await next.when(
+        data: (response) async {
           if (response != null && response.session == null) {
             // Email confirmation required (OTP)
             final otpController = TextEditingController();
@@ -123,11 +123,13 @@ class _SignupPageState extends ConsumerState<SignupPage> {
               ),
             );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Verification Successful!')),
-            );
-            // Navigate to dashboard instead of popping
-            context.go('/home');
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Verification Successful!')),
+              );
+              // Navigate to dashboard instead of popping
+              context.go('/home');
+            }
           }
         },
         error: (e, stack) {

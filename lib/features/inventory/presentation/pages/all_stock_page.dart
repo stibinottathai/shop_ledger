@@ -515,16 +515,338 @@ class _AllStockPageState extends ConsumerState<AllStockPage> {
         );
       },
       onDismissed: (direction) => _deleteItem(item.id!),
-      child: StockItemCard(
-        item: item,
-        onTap: () {
-          // Reuse edit logic or placeholder
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Editing from 'View All' coming soon"),
+      child: StockItemCard(item: item, onTap: () => _showEditItemDialog(item)),
+    );
+  }
+
+  void _showEditItemDialog(Item item) {
+    final nameController = TextEditingController(text: item.name);
+    final priceController = TextEditingController(
+      text: item.pricePerKg.toString(),
+    );
+    final qtyController = TextEditingController(
+      text: item.totalQuantity?.toString() ?? '',
+    );
+    final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.isDarkMode ? AppColors.cardDark : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          final isDark = sheetContext.isDarkMode;
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+              left: 24,
+              right: 24,
+              top: 32,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Edit Stock Item',
+                        style: GoogleFonts.inter(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: sheetContext.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          // Delete button
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: AppColors.danger,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              _showDeleteConfirmFromSheet(item);
+                            },
+                          ),
+                          // Close button
+                          IconButton(
+                            icon: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.surfaceDark
+                                    : AppColors.slate50,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: sheetContext.borderColor,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: sheetContext.textPrimary,
+                              ),
+                            ),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Form
+                  Form(
+                    key: formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Item Name
+                        _buildEditInputField(
+                          controller: nameController,
+                          label: 'Item Name',
+                          hint: 'Enter item name',
+                          icon: Icons.inventory_2_outlined,
+                          isDark: isDark,
+                          validator: (val) =>
+                              val == null || val.isEmpty ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Price
+                        _buildEditInputField(
+                          controller: priceController,
+                          label: 'Price per ${item.unit}',
+                          hint: 'Enter price',
+                          icon: Icons.currency_rupee,
+                          isDark: isDark,
+                          inputType: TextInputType.number,
+                          validator: (val) {
+                            if (val == null || val.isEmpty) return 'Required';
+                            if (double.tryParse(val) == null) return 'Invalid';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Quantity
+                        _buildEditInputField(
+                          controller: qtyController,
+                          label: 'Quantity (${item.unit})',
+                          hint: 'Enter quantity',
+                          icon: Icons.production_quantity_limits,
+                          isDark: isDark,
+                          inputType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Save Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    if (!formKey.currentState!.validate())
+                                      return;
+
+                                    setSheetState(() => isSaving = true);
+
+                                    try {
+                                      final updatedItem = item.copyWith(
+                                        name: nameController.text.trim(),
+                                        pricePerKg: double.parse(
+                                          priceController.text.trim(),
+                                        ),
+                                        totalQuantity:
+                                            qtyController.text.trim().isNotEmpty
+                                            ? double.tryParse(
+                                                qtyController.text.trim(),
+                                              )
+                                            : null,
+                                      );
+
+                                      await ref
+                                          .read(inventoryProvider.notifier)
+                                          .updateItem(updatedItem);
+
+                                      if (ctx.mounted) {
+                                        Navigator.pop(ctx);
+                                        ScaffoldMessenger.of(
+                                          this.context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Item updated successfully',
+                                            ),
+                                            backgroundColor: AppColors.primary,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      setSheetState(() => isSaving = false);
+                                      if (ctx.mounted) {
+                                        ScaffoldMessenger.of(
+                                          this.context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error: $e'),
+                                            backgroundColor: AppColors.danger,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: isSaving
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    'Update Item',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildEditInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required bool isDark,
+    TextInputType inputType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: context.textMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: inputType,
+          style: GoogleFonts.inter(
+            color: context.textPrimary,
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.inter(color: context.textMuted),
+            prefixIcon: Icon(icon, color: context.textMuted, size: 20),
+            filled: true,
+            fillColor: isDark ? AppColors.surfaceDark : AppColors.slate50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: context.borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+          validator: validator,
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteConfirmFromSheet(Item item) {
+    final isDark = context.isDarkMode;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+        title: Text(
+          'Delete Item',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: context.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${item.name}"?',
+          style: TextStyle(color: context.textMuted),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(
+                color: context.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _deleteItem(item.id!);
+            },
+            child: Text(
+              'Delete',
+              style: GoogleFonts.inter(
+                color: AppColors.danger,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

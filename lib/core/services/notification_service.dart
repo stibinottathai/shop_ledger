@@ -9,7 +9,8 @@ import 'package:shop_ledger/core/theme/app_colors.dart';
 /// This runs in a background isolate via AndroidAlarmManager.
 class NotificationService {
   static const int morningAlarmId = 1;
-  static const int eveningAlarmId = 2;
+  static const int afternoonAlarmId = 2;
+  static const int eveningAlarmId = 3;
 
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
@@ -39,7 +40,7 @@ class NotificationService {
     return true; // For older Android versions, permission is granted at install
   }
 
-  /// Schedule alarms for 9 AM and 7 PM IST
+  /// Schedule alarms for 9 AM, 3:15 PM, and 7 PM IST
   static Future<void> scheduleAlarms() async {
     final now = DateTime.now();
 
@@ -48,6 +49,14 @@ class NotificationService {
     if (now.isAfter(morningTime)) {
       morningTime = morningTime.add(const Duration(days: 1));
     }
+
+    // TESTING: Trigger 2 minutes after login - COMMENT OUT AFTER TESTING
+    var afternoonTime = now.add(const Duration(minutes: 2));
+    // Production code (uncomment after testing):
+    // var afternoonTime = DateTime(now.year, now.month, now.day, 15, 15, 0);
+    // if (now.isAfter(afternoonTime)) {
+    //   afternoonTime = afternoonTime.add(const Duration(days: 1));
+    // }
 
     // Calculate next 7 PM (19:00) IST
     var eveningTime = DateTime(now.year, now.month, now.day, 19, 0, 0);
@@ -64,6 +73,17 @@ class NotificationService {
       exact: true,
       wakeup: true,
       rescheduleOnReboot: true,
+    );
+
+    // Schedule afternoon alarm - using oneShot for testing (more reliable)
+    // TESTING: Using oneShot for 2-minute test - CHANGE BACK TO PERIODIC AFTER TESTING
+    await AndroidAlarmManager.oneShot(
+      const Duration(minutes: 2),
+      afternoonAlarmId,
+      checkAndNotify,
+      exact: true,
+      wakeup: true,
+      alarmClock: true, // Uses AlarmClock API for highest priority
     );
 
     // Schedule evening alarm (7 PM) - repeating daily
@@ -95,12 +115,13 @@ class NotificationService {
     await initialize();
 
     final supabase = Supabase.instance.client;
-    final user = supabase.auth.currentUser;
 
-    if (user == null) return; // Not logged in
-
-    // Get settings
+    // Get user ID from SharedPreferences instead of auth.currentUser
+    // This is necessary because background isolates don't have access to auth state
     final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+
+    if (userId == null) return; // Not logged in
     final lowStockThreshold = prefs.getDouble('low_stock_threshold') ?? 10.0;
     final maxCreditLimit = prefs.getDouble('max_credit_limit') ?? 5000.0;
 
@@ -113,7 +134,7 @@ class NotificationService {
       final inventoryResponse = await supabase
           .from('items')
           .select('name, total_quantity, unit, low_stock_threshold')
-          .eq('user_id', user.id);
+          .eq('user_id', userId);
 
       final items = inventoryResponse as List;
 
@@ -140,7 +161,7 @@ class NotificationService {
       final customersResponse = await supabase
           .from('customers')
           .select('id, name, balance')
-          .eq('user_id', user.id);
+          .eq('user_id', userId);
 
       final customers = customersResponse as List;
 
@@ -202,6 +223,14 @@ class NotificationService {
         'Inventory & Credit Alert',
         summaryParts.join(' • '),
         bodyDetail: sb.toString().trim(),
+      );
+    } else {
+      // TESTING: Always show notification for testing - COMMENT OUT AFTER TESTING
+      await _showNotification(
+        'Shop Ledger - Auto Test',
+        'Background alarm triggered at ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')} ✓',
+        bodyDetail:
+            'This automatic notification confirms the alarm system is working!\n\n✅ No inventory issues\n✅ No credit limit issues',
       );
     }
   }
