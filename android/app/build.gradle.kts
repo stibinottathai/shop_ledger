@@ -33,14 +33,13 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
-        
-        ndk {
-            // Specify ABIs to include (removes unused architectures)
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
-        }
     }
 
     // Split APK by ABI for smaller downloads
+    // NOTE: Commented out for App Bundle builds (Play Store)
+    // Uncomment these lines when building APKs with --split-per-abi flag
+    // Google Play handles ABI splitting automatically for App Bundles
+    /*
     splits {
         abi {
             isEnable = true
@@ -49,6 +48,7 @@ android {
             isUniversalApk = true  // Also generate a universal APK
         }
     }
+    */
 
     signingConfigs {
         create("release") {
